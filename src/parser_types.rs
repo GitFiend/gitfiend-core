@@ -1,4 +1,6 @@
 use crate::input::Input;
+use crate::parser::Parser;
+use crate::parser::ParserResult;
 
 fn character(c: char) -> Box<dyn Fn(Input) -> Option<char>> {
   Box::new(move |mut input: Input| {
@@ -12,6 +14,90 @@ fn character(c: char) -> Box<dyn Fn(Input) -> Option<char>> {
       None
     }
   })
+}
+
+// fn characterF(c: char) -> Fn(Vec<char>, usize) -> Option<Result<char>> {
+//   |code: Vec<char>, pos: usize| {
+//
+//   }
+// }
+
+// fn character3(c: char) -> Box<dyn Fn(Vec<char>, usize) -> Option<char>> {
+//   Box::new(|code: Vec<char>, pos: usize| {
+//     let r = code[pos];
+//     // let r = input.next_char();
+//
+//     if r == c {
+//       // input.advance();
+//
+//       Some(r)
+//     } else {
+//       None
+//     }
+//   })
+// }
+
+// fn character2(c: char) -> Box<dyn Fn(Input) -> Option<char>> {
+//   Box::new(|mut input: Input| {
+//     let r = input.next_char();
+//
+//     if r == c {
+//       input.advance();
+//
+//       Some(r)
+//     } else {
+//       None
+//     }
+//   })
+// }
+
+// fn character5(c: char) -> fn(Vec<char>, usize) -> Option<ParserResult<char>> {
+//   fn (code: Vec<char>, pos: usize)  {
+//     let r = code[pos];
+//
+//     if r == c {
+//       Some(ParserResult {
+//         value: r,
+//         position: pos + 1,
+//       })
+//     } else {
+//       None
+//     }
+//   }
+// }
+
+fn character4(c: char) -> impl Fn(Vec<char>, usize) -> Option<ParserResult<char>> {
+  move |code: Vec<char>, pos: usize| {
+    let r = code[pos];
+
+    if r == c {
+      Some(ParserResult {
+        value: r,
+        position: pos + 1,
+      })
+    } else {
+      None
+    }
+  }
+}
+
+fn character5(c: char) -> Box<dyn Fn(Vec<char>, usize) -> Option<ParserResult<char>>> {
+  Box::new(move |code: Vec<char>, pos: usize| {
+    let r = code[pos];
+
+    if r == c {
+      Some(ParserResult {
+        value: r,
+        position: pos + 1,
+      })
+    } else {
+      None
+    }
+  })
+}
+
+fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
+  Box::new(|x| x + 1)
 }
 
 fn word(str: &str) -> Box<dyn Fn(Input) -> Option<String>> {
@@ -65,4 +151,29 @@ mod tests {
 
     assert_eq!(p(input), None)
   }
+
+  #[test]
+  fn test_new_char_parser() {
+    let text: Vec<char> = String::from("x").chars().collect();
+
+    assert_eq!(text[0], 'x');
+
+    let p = character5('x');
+    let res = p(text, 0);
+
+    println!("{}", res);
+    // p()
+    // assert_eq!(p(input), None)
+  }
+
+  // #[test]
+  // fn test_using_input_twice() {
+  //   let input = Input::new("omg2");
+  //
+  //   let p = word("omg");
+  //   let p2 = character('2');
+  //
+  //   assert_eq!(p(input), Some(String::from("omg")));
+  //   assert_eq!(p2(input), None)
+  // }
 }

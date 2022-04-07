@@ -96,6 +96,33 @@ fn character5(c: char) -> Box<dyn Fn(Vec<char>, usize) -> Option<ParserResult<ch
   })
 }
 
+// fn character6(input: &mut Input) {
+//   let r = input.next_char();
+//
+//   if r == $c {
+//     Some(ParserResult {
+//     value: r,
+//     position: pos + 1,
+//   })
+// } else {
+//   None
+//   }
+// }
+macro_rules! character3 {
+  ($c:expr) => {
+    |input: &mut Input| {
+      let r = input.next_char();
+
+      if r == $c {
+        input.advance();
+        Some(r)
+      } else {
+        None
+      }
+    }
+  };
+}
+
 macro_rules! character2 {
   ($c:expr) => {
     |code: Vec<char>, pos: usize| {
@@ -126,6 +153,12 @@ macro_rules! foo {
   };
 }
 
+macro_rules! vs {
+  ($s:expr) => {
+    String::from($s).chars().collect()
+  };
+}
+
 fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
   Box::new(|x| x + 1)
 }
@@ -148,7 +181,7 @@ fn word(str: &str) -> Box<dyn Fn(Input) -> Option<String>> {
     Some(text.clone())
   })
 }
-
+let sum = |a, b| a + b;
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -157,16 +190,22 @@ mod tests {
   fn test_mac() {
     let p = character2!('3');
 
-    let text: Vec<char> = String::from("3").chars().collect();
+    // let text: Vec<char> = String::from("3").chars().collect();
+    let text = vs!("3");
 
     let result = p(text, 0);
-
-    // let s = Some(ParserResult {
-    //   value: '3',
-    //   position: 1,
-    // });
-
     assert_eq!(result.unwrap().value, '3');
+
+    let mut input = Input::new("3");
+    let p2 = character3!('3');
+    let p3 = character3!('4');
+
+    let result2 = p2(&mut input);
+
+    input.set_position(0);
+    let result3 = p3(&mut input);
+
+    assert_eq!(result2.unwrap(), '3');
   }
 
   #[test]

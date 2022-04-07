@@ -96,6 +96,36 @@ fn character5(c: char) -> Box<dyn Fn(Vec<char>, usize) -> Option<ParserResult<ch
   })
 }
 
+macro_rules! character2 {
+  ($c:expr) => {
+    |code: Vec<char>, pos: usize| {
+      let r = code[pos];
+
+      if r == $c {
+        Some(ParserResult {
+          value: r,
+          position: pos + 1,
+        })
+      } else {
+        None
+      }
+    }
+  };
+}
+
+macro_rules! foo {
+  // macro foo {
+  ($name: ident) => {
+    pub struct $name;
+
+    impl $name {
+      pub fn new() -> $name {
+        $name
+      }
+    }
+  };
+}
+
 fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
   Box::new(|x| x + 1)
 }
@@ -122,6 +152,22 @@ fn word(str: &str) -> Box<dyn Fn(Input) -> Option<String>> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn test_mac() {
+    let p = character2!('3');
+
+    let text: Vec<char> = String::from("3").chars().collect();
+
+    let result = p(text, 0);
+
+    // let s = Some(ParserResult {
+    //   value: '3',
+    //   position: 1,
+    // });
+
+    assert_eq!(result.unwrap().value, '3');
+  }
 
   #[test]
   fn test_char() {
@@ -161,7 +207,7 @@ mod tests {
     let p = character5('x');
     let res = p(text, 0);
 
-    println!("{}", res);
+    // println!("{}", res);
     // p()
     // assert_eq!(p(input), None)
   }

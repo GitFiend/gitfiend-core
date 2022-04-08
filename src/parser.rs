@@ -1,15 +1,33 @@
 use crate::Input;
 
-pub struct ParserResult<T> {
-  pub value: T,
-  pub position: usize,
+pub type Parser<T> = fn(&mut Input) -> Option<T>;
+
+pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
+  parse_inner(parser, text, true)
 }
 
-pub type Parser<T> = fn(Vec<char>, usize) -> ParserResult<T>;
+fn parse_inner<T>(parser: Parser<T>, text: &str, must_parse_all: bool) -> Option<T> {
+  let mut input = Input::new(text);
 
-fn omg() {
-  let thing = vec![1, 2, 3];
-  let t = thing.as_slice();
+  let result = parser(&mut input);
+
+  if must_parse_all && !input.end() {
+    eprintln!(
+      r#"
+PARSE FAILURE AT POSITION {}:
+  SUCCESSFULLY PARSED:
+  "{}"
+  
+  FAILED AT:
+  "{}"
+"#,
+      input.attempted_position,
+      input.successfully_parsed(),
+      input.unparsed()
+    );
+
+    return None;
+  }
+
+  result
 }
-
-pub type Parser2<T> = fn(&mut Input) -> Option<T>;

@@ -3,7 +3,7 @@
 pub struct Input {
   pub code: Vec<char>,
   pub position: usize,
-  attempted_position: usize,
+  pub attempted_position: usize,
 }
 
 impl Input {
@@ -33,6 +33,18 @@ impl Input {
     }
     self.position = pos;
   }
+
+  pub fn end(&self) -> bool {
+    self.position >= self.code.len()
+  }
+
+  pub fn successfully_parsed(&self) -> String {
+    String::from_iter(&self.code[..self.attempted_position])
+  }
+
+  pub fn unparsed(&self) -> String {
+    String::from_iter(&self.code[self.attempted_position..])
+  }
 }
 
 #[cfg(test)]
@@ -49,5 +61,12 @@ mod tests {
 
     assert_eq!(input.position, 1);
     assert_eq!(input.next_char(), 'o');
+  }
+
+  #[test]
+  fn test_end() {
+    let input = Input::new("");
+
+    assert_eq!(input.end(), true);
   }
 }

@@ -11,10 +11,20 @@ mod parser_types;
 use std::fs;
 // use std::ops::ShlAssign;
 // use std::str;
+use crate::input::Input;
+use crate::parser_types::P_3;
 use std::time::Instant;
 
 fn main() {
-  read_file();
+  // read_file();
+  let mut input = Input::new("3");
+
+  let res = P_3(&mut input).unwrap();
+
+  input.set_position(0);
+
+  println!("{res}");
+
   // commands_test();
   // let now = Instant::now();
   //

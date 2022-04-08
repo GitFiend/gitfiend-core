@@ -1,7 +1,7 @@
 //
 
 pub struct Input {
-  code: Vec<char>,
+  pub code: Vec<char>,
   pub position: usize,
   attempted_position: usize,
 }

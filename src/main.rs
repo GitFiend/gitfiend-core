@@ -1,15 +1,10 @@
+mod git;
 mod parser;
 
-// use std::process::Command;
-// use std::io::{self, Write};
-// use std::borrow::BorrowMut;
-// use std::collections::HashMap;
-// use std::env;
-// use std::fmt;
-use std::fs;
-// use std::ops::ShlAssign;
-// use std::str;
+use crate::git::queries::*;
+use crate::git::thing;
 use parser::input::Input;
+use std::fs;
 use std::time::Instant;
 
 fn main() {
@@ -17,6 +12,8 @@ fn main() {
   let mut input = Input::new("3");
 
   input.set_position(0);
+
+  thing();
 
   // commands_test();
   // let now = Instant::now();

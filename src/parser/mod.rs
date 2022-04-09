@@ -2,21 +2,35 @@ use crate::Input;
 
 pub mod input;
 mod parser_types;
+mod standard_parsers;
 
 pub type Parser<T> = fn(&mut Input) -> Option<T>;
 
 pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
-  parse_inner(parser, text, true)
+  run_parser(
+    parser,
+    text,
+    ParseOptions {
+      must_parse_all: true,
+      print_error: true,
+    },
+  )
 }
 
-fn parse_inner<T>(parser: Parser<T>, text: &str, must_parse_all: bool) -> Option<T> {
+struct ParseOptions {
+  pub must_parse_all: bool,
+  pub print_error: bool,
+}
+
+fn run_parser<T>(parser: Parser<T>, text: &str, options: ParseOptions) -> Option<T> {
   let mut input = Input::new(text);
 
   let result = parser(&mut input);
 
-  if must_parse_all && !input.end() {
-    eprintln!(
-      r#"
+  if options.must_parse_all && !input.end() {
+    if options.print_error {
+      eprintln!(
+        r#"
 PARSE FAILURE AT POSITION {}:
   SUCCESSFULLY PARSED:
   "{}"
@@ -24,10 +38,11 @@ PARSE FAILURE AT POSITION {}:
   FAILED AT:
   "{}"
 "#,
-      input.attempted_position,
-      input.successfully_parsed(),
-      input.unparsed()
-    );
+        input.attempted_position,
+        input.successfully_parsed(),
+        input.unparsed()
+      );
+    }
 
     return None;
   }

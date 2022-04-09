@@ -1,4 +1,3 @@
-use crate::parser::input::Input;
 use crate::parser::Parser;
 
 #[macro_export]
@@ -60,10 +59,49 @@ macro_rules! word {
   };
 }
 
+#[macro_export]
+macro_rules! take_char_while {
+  ($function:expr) => {
+    |input: &mut Input| -> Option<String> {
+      let start_pos = input.position;
+
+      while !input.end() && $function(input.next_char()) {
+        input.advance();
+      }
+
+      if start_pos == input.position {
+        None
+      } else {
+        Some(String::from_iter(&input.code[start_pos..input.position]))
+      }
+    }
+  };
+}
+
+#[macro_export]
+macro_rules! optional_take_char_while {
+  ($function:expr) => {
+    |input: &mut Input| -> Option<String> {
+      let start_pos = input.position;
+
+      while !input.end() && $function(input.next_char()) {
+        input.advance();
+      }
+
+      if start_pos == input.position {
+        Some(String::from(""))
+      } else {
+        Some(String::from_iter(&input.code[start_pos..input.position]))
+      }
+    }
+  };
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
   use crate::parser::parse_all;
+  use crate::Input;
 
   pub const P_3: Parser<char> = character!('3');
   const ALL: Parser<(char, char, char)> = and!(P_3, P_3, P_3);

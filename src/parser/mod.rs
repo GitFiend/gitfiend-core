@@ -2,7 +2,7 @@ use crate::Input;
 
 pub mod input;
 mod parser_types;
-mod standard_parsers;
+pub(crate) mod standard_parsers;
 
 pub type Parser<T> = fn(&mut Input) -> Option<T>;
 

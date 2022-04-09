@@ -24,6 +24,23 @@ macro_rules! and {
 }
 
 #[macro_export]
+macro_rules! or {
+  ( $($p:expr),* ) => {
+    |input: &mut Input| {
+      $({
+        let res = $p(input);
+
+        if res.is_some() {
+          return res
+        }
+      })*
+
+      None
+    }
+  }
+}
+
+#[macro_export]
 macro_rules! character {
   ($c:expr) => {
     |input: &mut Input| -> Option<char> {
@@ -127,6 +144,18 @@ mod tests {
 
     // Expect parse fail due to not all text parsed.
     assert_eq!(result, None);
+  }
+
+  #[test]
+  fn test_or() {
+    let result = parse_all(or!(word!("a"), word!("b")), "b");
+
+    assert_eq!(result.is_some(), true);
+    assert_eq!(result.unwrap(), "b");
+
+    let result = parse_all(or!(word!("a"), word!("b"), word!("p")), "c");
+
+    assert_eq!(result.is_none(), true);
   }
 
   #[test]

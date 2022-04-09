@@ -1,4 +1,4 @@
-use crate::input::Input;
+use crate::parser::input::Input;
 use crate::parser::Parser;
 
 #[macro_export]

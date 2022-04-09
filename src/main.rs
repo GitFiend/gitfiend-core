@@ -1,6 +1,4 @@
-mod input;
 mod parser;
-mod parser_types;
 
 // use std::process::Command;
 // use std::io::{self, Write};
@@ -11,7 +9,7 @@ mod parser_types;
 use std::fs;
 // use std::ops::ShlAssign;
 // use std::str;
-use crate::input::Input;
+use parser::input::Input;
 use std::time::Instant;
 
 fn main() {

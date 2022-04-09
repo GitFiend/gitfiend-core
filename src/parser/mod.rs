@@ -1,5 +1,8 @@
 use crate::Input;
 
+pub mod input;
+mod parser_types;
+
 pub type Parser<T> = fn(&mut Input) -> Option<T>;
 
 pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {

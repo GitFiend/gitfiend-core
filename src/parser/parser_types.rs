@@ -44,14 +44,15 @@ macro_rules! or {
 macro_rules! character {
   ($c:expr) => {
     |input: &mut Input| -> Option<char> {
-      let r = input.next_char();
+      if !input.end() {
+        let r = input.next_char();
 
-      if r == $c {
-        input.advance();
-        Some(r)
-      } else {
-        None
+        if r == $c {
+          input.advance();
+          return Some(r);
+        }
       }
+      None
     }
   };
 }

@@ -1,22 +1,21 @@
 use crate::parser::input::Input;
 use crate::parser::Parser;
-use crate::{and, character, map, optional_take_char_while, or, take_char_while, word};
+use crate::{and, map, optional_take_char_while, or, take_char_while, word};
 
 pub const ANY_WORD: Parser<String> = take_char_while!(|c: char| { c.is_alphanumeric() });
 pub const UNSIGNED_INT: Parser<String> = take_char_while!(|c: char| { c.is_numeric() });
-// pub const SIGNED_INT: Parser<String> = map!(and!(or!(word!("-"), WS), UNSIGNED_INT), |res: (
-//   String,
-//   String
-// )| {
-//   res.0.to_string() + &res.1
-// });
+pub const SIGNED_INT: Parser<String> = map!(
+  and!(or!(word!("-"), word!("+"), WS_STR), UNSIGNED_INT),
+  |res: (&str, String)| { res.0.to_string() + &res.1 }
+);
 
 pub const WS: Parser<String> = optional_take_char_while!(|c: char| { c.is_whitespace() });
+pub const WS_STR: Parser<&str> = map!(WS, |res: String| { "" });
 
 #[cfg(test)]
 mod tests {
   use crate::parser::input::Input;
-  use crate::parser::standard_parsers::{ANY_WORD, UNSIGNED_INT, WS};
+  use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, WS};
   use crate::parser::{parse_all, run_parser, ParseOptions};
   use crate::take_char_while;
 
@@ -53,6 +52,20 @@ mod tests {
     let result = parse_all(ANY_WORD, "@@@@@");
 
     assert_eq!(result, None);
+  }
+
+  #[test]
+  fn test_signed_int() {
+    let result = parse_all(SIGNED_INT, "1234");
+
+    assert_eq!(result.unwrap(), "1234");
+
+    // Should fail for non alpha-numeric.
+    let result = parse_all(ANY_WORD, "@@@@@");
+
+    assert_eq!(result, None);
+
+    assert_eq!(parse_all(SIGNED_INT, "-1234").unwrap(), "-1234")
   }
 
   #[test]

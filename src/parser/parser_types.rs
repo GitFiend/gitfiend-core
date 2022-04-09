@@ -115,6 +115,32 @@ macro_rules! optional_take_char_while {
   };
 }
 
+macro_rules! rep_parser_sep {
+  ($parser:expr, $sep_parser:expr) => {
+    |input: &mut Input| {
+      let mut results = Vec::new();
+
+      while !input.end() {
+        let result = $parser(input);
+
+        if result.is_some() {
+          results.extend(result);
+        } else {
+          break;
+        }
+
+        let sep_result = $sep_parser(input);
+
+        if sep_result.is_none() {
+          break;
+        }
+      }
+
+      Some(results)
+    }
+  };
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -157,6 +183,16 @@ mod tests {
     let result = parse_all(or!(word!("a"), word!("b"), word!("p")), "c");
 
     assert_eq!(result.is_none(), true);
+  }
+
+  #[test]
+  fn test_rep_parser_sep() {
+    let parser: Parser<Vec<&str>> = rep_parser_sep!(word!("a"), word!(","));
+
+    let result = parse_all(parser, "a,a,a");
+
+    assert_eq!(result.is_some(), true);
+    assert_eq!(result.unwrap().len(), 3);
   }
 
   #[test]

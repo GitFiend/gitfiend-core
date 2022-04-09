@@ -10,7 +10,7 @@ pub const SIGNED_INT: Parser<String> = map!(
 );
 
 pub const WS: Parser<String> = optional_take_char_while!(|c: char| { c.is_whitespace() });
-pub const WS_STR: Parser<&str> = map!(WS, |res: String| { "" });
+pub const WS_STR: Parser<&str> = map!(WS, |_: String| { "" });
 
 #[cfg(test)]
 mod tests {
@@ -21,8 +21,6 @@ mod tests {
 
   #[test]
   fn test_take_while() {
-    let thing = String::from("omg") + &String::from("a");
-
     let parser = take_char_while!(|c: char| { c.is_alphanumeric() });
 
     let result = parse_all(parser, "abcd55");

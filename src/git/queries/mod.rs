@@ -1,14 +1,15 @@
+mod refs;
+
 use crate::git::git_types::DateResult;
 use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, WS};
 use crate::parser::Parser;
 use crate::{and, map, or, rep_parser_sep, take_char_while, until_str};
 use crate::{character, Input};
-use std::io::SeekFrom::End;
 
 const END: &str = "4a41380f-a4e8-4251-9ca2-bf55186ed32a";
 
 const P_GROUP: Parser<String> = take_char_while!(|c: char| { c != ',' });
-const P_SEP: Parser<char> = map!(and!(WS, character!(','), WS), |res: (
+const P_SEP: Parser<char> = map!(and!(WS, character!(','), WS), |_: (
   String,
   char,
   String
@@ -43,8 +44,10 @@ pub const P_COMMIT_ROW: Parser<(
   Vec<String>,
   char,
   String,
-)> =
-  and!(P_GROUP, P_SEP, P_EMAIL, P_SEP, P_DATE, P_SEP, P_GROUP, P_SEP, P_PARENTS, P_SEP, P_MESSAGE);
+  char,
+)> = and!(
+  P_GROUP, P_SEP, P_EMAIL, P_SEP, P_DATE, P_SEP, P_GROUP, P_SEP, P_PARENTS, P_SEP, P_MESSAGE, P_SEP
+);
 
 #[cfg(test)]
 mod tests {

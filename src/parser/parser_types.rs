@@ -115,6 +115,34 @@ macro_rules! optional_take_char_while {
   };
 }
 
+#[macro_export]
+macro_rules! until_str {
+  ($str:expr) => {
+    |input: &mut Input| -> Option<String> {
+      let char_vec: Vec<char> = $str.chars().collect();
+      let str_len = $str.len();
+      let start_pos = input.position;
+      let end = input.code.len() - str_len;
+
+      while input.position <= end {
+        let p = input.position;
+
+        if &input.code[p..p + str_len] == char_vec {
+          input.set_position(p + str_len);
+
+          return Some(String::from_iter(&input.code[start_pos..p]));
+        }
+
+        input.advance();
+      }
+
+      input.set_position(start_pos);
+      None
+    }
+  };
+}
+
+#[macro_export]
 macro_rules! rep_parser_sep {
   ($parser:expr, $sep_parser:expr) => {
     |input: &mut Input| {
@@ -193,6 +221,16 @@ mod tests {
 
     assert_eq!(result.is_some(), true);
     assert_eq!(result.unwrap().len(), 3);
+  }
+
+  #[test]
+  fn test_until_str() {
+    let parser: Parser<String> = until_str!("omg");
+
+    let result = parse_all(parser, "aaaaaaaomg");
+
+    assert_eq!(result.is_some(), true);
+    assert_eq!(result.unwrap(), "aaaaaaa");
   }
 
   #[test]

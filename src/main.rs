@@ -2,41 +2,16 @@ mod git;
 mod parser;
 
 use crate::git::queries::*;
-use crate::git::thing;
 use parser::input::Input;
 use std::fs;
 use std::time::Instant;
 
 fn main() {
-  // read_file();
-  let mut input = Input::new("3");
+  let now = Instant::now();
 
-  input.set_position(0);
+  crate::git::queries::commits::load_commits(5000);
 
-  thing();
-
-  // commands_test();
-  // let now = Instant::now();
-  //
-  // let git = "git";
-  //
-  // let output = Command::new(git)
-  //   .arg("--help")
-  //   .output()
-  //   .expect("failed to execute process");
-  //
-  // let text = str::from_utf8(&output.stdout).unwrap();
-  //
-  // text.chars().for_each(|c| {
-  //   // print!("{}", c);
-  //   if c == '\n' {
-  //     println!("OMG");
-  //   }
-  // });
-  //
-  // // let mut res: Vec<char> = text.chars().collect();
-  //
-  // println!("{}ms", now.elapsed().as_millis());
+  println!("load commits took {}ms", now.elapsed().as_millis());
 }
 
 fn read_file() {

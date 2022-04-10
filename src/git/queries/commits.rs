@@ -1,12 +1,42 @@
 use crate::git::git_types::{Commit, DateResult};
 use crate::git::queries::refs::make_ref_info;
 use crate::git::queries::{RefInfo, RefInfoPart, P_OPTIONAL_REFS};
+use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, WS};
-use crate::parser::Parser;
+use crate::parser::{parse_all, Parser};
 use crate::Input;
 use crate::{and, character, many, map, or, rep_parser_sep, take_char_while, until_str};
+use std::time::Instant;
+
+pub fn load_commits(num: u32) -> Option<Vec<Commit>> {
+  let text = run_git(RunGitOptions {
+    args: vec![
+      "log".to_string(),
+      "--branches".to_string(),
+      "--tags".to_string(),
+      "--remotes".to_string(),
+      "--decorate=full".to_string(),
+      PRETTY_FORMATTED.to_string(),
+      ("-n".to_string()) + &num.to_string(),
+      "--date=raw".to_string(),
+    ],
+    repo_path: "/home/toby/Repos/vscode".to_string(),
+  });
+
+  let now = Instant::now();
+  let result = parse_all(P_COMMITS, text.as_str());
+  println!(
+    "Took {}ms to parse {} commits",
+    now.elapsed().as_millis(),
+    num
+  );
+
+  result
+}
 
 const END: &str = "4a41380f-a4e8-4251-9ca2-bf55186ed32a";
+const PRETTY_FORMATTED: &str =
+  "--pretty=format:%an, %ae, %ad, %H, %P, %B4a41380f-a4e8-4251-9ca2-bf55186ed32a, %d";
 
 const P_GROUP: Parser<String> = take_char_while!(|c: char| { c != ',' });
 const P_SEP: Parser<char> = map!(and!(WS, character!(','), WS), |_res: (
@@ -95,7 +125,7 @@ pub const P_COMMITS: Parser<Vec<Commit>> = many!(P_COMMIT_ROW);
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::commits::{P_COMMIT_ROW, P_GROUP};
+  use crate::git::queries::commits::{load_commits, P_COMMIT_ROW, P_GROUP};
   use crate::parser::{parse_all, parse_part};
 
   #[test]
@@ -116,5 +146,12 @@ mod tests {
     );
 
     assert_eq!(res.is_some(), true);
+  }
+
+  #[test]
+  fn test_load_commits() {
+    let result = load_commits(5000);
+
+    assert!(result.is_some());
   }
 }

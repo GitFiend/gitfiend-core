@@ -1,5 +1,5 @@
+use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
-// use crate::Input;
 
 #[macro_export]
 macro_rules! and {
@@ -144,6 +144,13 @@ macro_rules! until_str {
 }
 
 #[macro_export]
+macro_rules! rep_sep {
+  ($parser:expr, $sep:expr) => {
+    rep_parser_sep!($parser, and!(WS, word!($sep), WS))
+  };
+}
+
+#[macro_export]
 macro_rules! rep_parser_sep {
   ($parser:expr, $sep_parser:expr) => {
     |input: &mut Input| {
@@ -219,6 +226,16 @@ mod tests {
     let parser: Parser<Vec<&str>> = rep_parser_sep!(word!("a"), word!(","));
 
     let result = parse_all(parser, "a,a,a");
+
+    assert_eq!(result.is_some(), true);
+    assert_eq!(result.unwrap().len(), 3);
+  }
+
+  #[test]
+  fn test_rep_sep() {
+    let parser: Parser<Vec<&str>> = rep_sep!(word!("a"), ",");
+
+    let result = parse_all(parser, "a, a , a");
 
     assert_eq!(result.is_some(), true);
     assert_eq!(result.unwrap().len(), 3);

@@ -1,7 +1,8 @@
 use crate::git::git_types::{RefInfoPart, RefLocation, RefType};
+use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
-use crate::Input;
-use crate::{map, take_char_while};
+use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
+use crate::{or, Input};
 
 const REF_NAME_PARSER: Parser<String> =
   take_char_while!(|c: char| { !c.is_whitespace() && c != ',' && c != '(' && c != ')' });
@@ -22,6 +23,30 @@ const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: String| {
     head: false,
   }
 });
+
+const P_TAG_REF: Parser<RefInfoPart> = map!(and!(word!("tag: "), P_REF_NAME), |result: (
+  &str,
+  RefInfoPart,
+)| { result.1 });
+
+const P_HEAD_REF: Parser<RefInfoPart> = map!(and!(word!("HEAD -> "), P_REF_NAME), |result: (
+  &str,
+  RefInfoPart,
+)| { result.1 });
+
+const P_COMMIT_REF: Parser<RefInfoPart> = or!(P_TAG_REF, P_HEAD_REF, P_REF_NAME);
+
+const P_COMMIT_REFS: Parser<Vec<RefInfoPart>> = map!(
+  and!(
+    character!('('),
+    rep_sep!(P_COMMIT_REF, ","),
+    character!(')')
+  ),
+  |result: (char, Vec<RefInfoPart>, char)| { result.1 }
+);
+
+pub const P_OPTIONAL_REFS: Parser<Vec<RefInfoPart>> =
+  or!(P_COMMIT_REFS, map!(WS, |s: String| { Vec::new() }));
 
 fn get_type_from_name(part: &str) -> RefType {
   match part {
@@ -60,7 +85,10 @@ fn get_remote_name(parts: &Vec<&str>) -> Option<String> {
 #[cfg(test)]
 mod tests {
   use crate::git::git_types::RefLocation::Local;
-  use crate::git::queries::refs::{get_ref_location, get_remote_name, get_short_name, P_REF_NAME};
+  use crate::git::queries::refs::{
+    get_ref_location, get_remote_name, get_short_name, P_COMMIT_REFS, P_HEAD_REF, P_OPTIONAL_REFS,
+    P_REF_NAME, P_TAG_REF,
+  };
   use crate::parser::parse_all;
 
   #[test]
@@ -99,5 +127,52 @@ mod tests {
     let res = parse_all(P_REF_NAME, "refs/heads/git-lib");
 
     assert_eq!(res.is_some(), true);
+  }
+
+  #[test]
+  fn test_p_tag_ref() {
+    let result = parse_all(P_TAG_REF, "tag: refs/tags/v0.11.2");
+    assert_eq!(result.is_some(), true);
+  }
+
+  #[test]
+  fn test_p_head_ref() {
+    let result = parse_all(P_HEAD_REF, "HEAD -> refs/heads/master");
+
+    assert!(result.is_some());
+    assert_eq!(result.unwrap().id, "refs/heads/master");
+  }
+
+  #[test]
+  fn test_p_commit_refs() {
+    let a = "(HEAD -> refs/heads/master, refs/remotes/origin/master, refs/remotes/origin/HEAD)";
+    let result = parse_all(P_COMMIT_REFS, a);
+
+    assert!(result.is_some());
+    assert_eq!(result.as_ref().unwrap().len(), 3);
+    assert_eq!(result.as_ref().unwrap()[1].id, "refs/remotes/origin/master");
+  }
+
+  #[test]
+  fn test_p_optional_refs() {
+    let a = "(HEAD -> refs/heads/master, refs/remotes/origin/master)";
+    let result = parse_all(P_OPTIONAL_REFS, a);
+
+    assert!(result.is_some());
+
+    let refs = result.unwrap();
+
+    assert_eq!(refs.len(), 2);
+    assert_eq!(refs[0].id, "refs/heads/master");
+
+    let b = "(HEAD -> refs/heads/master, refs/remotes/origin/master, refs/remotes/origin/HEAD)";
+    let result = parse_all(P_OPTIONAL_REFS, b);
+
+    assert!(result.is_some());
+
+    let refs = result.unwrap();
+
+    assert_eq!(refs.len(), 3);
+    assert_eq!(refs[1].id, "refs/remotes/origin/master");
   }
 }

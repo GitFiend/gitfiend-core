@@ -1,6 +1,6 @@
 mod refs;
 
-use crate::git::git_types::{DateResult, RefInfoPart};
+use crate::git::git_types::{Commit, DateResult, RefInfo, RefInfoPart};
 use crate::git::queries::refs::P_OPTIONAL_REFS;
 use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, WS};
 use crate::parser::Parser;
@@ -35,35 +35,88 @@ const P_MESSAGE: Parser<String> = until_str!(END);
 
 const P_ANYTHING: Parser<(String, char, String)> = and!(P_GROUP, P_SEP, P_EMAIL);
 
-const P_COMMIT_ROW: Parser<(
-  /*  1 */ String,
-  /*  2 */ char,
-  /*  3 */ String,
-  /*  4 */ char,
-  /*  5 */ DateResult,
-  /*  6 */ char,
-  /*  7 */ String,
-  /*  8 */ char,
-  /*  9 */ Vec<String>,
-  /* 10 */ char,
-  /* 11 */ String,
-  /* 12 */ char,
-  /* 13 */ Vec<RefInfoPart>,
-)> = and!(
-  /*  1 */ P_GROUP, // author
-  /*  2 */ P_SEP,
-  /*  3 */ P_EMAIL,
-  /*  4 */ P_SEP,
-  /*  5 */ P_DATE,
-  /*  6 */ P_SEP,
-  /*  7 */ P_GROUP, // commit id
-  /*  8 */ P_SEP,
-  /*  9 */ P_PARENTS,
-  /* 10 */ P_SEP,
-  /* 11 */ P_MESSAGE,
-  /* 12 */ P_SEP,
-  /* 13 */ P_OPTIONAL_REFS
-); // Don't put a comma on the last one otherwise the macro will complain
+// Don't put a comma on the last one otherwise the macro will complain
+const P_COMMIT_ROW: Parser<Commit> = map!(
+  and!(
+    /*  0 */ P_GROUP, // author
+    /*  1 */ P_SEP,
+    /*  2 */ P_EMAIL,
+    /*  3 */ P_SEP,
+    /*  4 */ P_DATE,
+    /*  5 */ P_SEP,
+    /*  6 */ P_GROUP, // commit id
+    /*  7 */ P_SEP,
+    /*  8 */ P_PARENTS,
+    /*  9 */ P_SEP,
+    /* 10 */ P_MESSAGE,
+    /* 11 */ P_SEP,
+    /* 12 */ P_OPTIONAL_REFS
+  ),
+  |result: (
+    /*  0 */ String,
+    /*  1 */ char,
+    /*  2 */ String,
+    /*  3 */ char,
+    /*  4 */ DateResult,
+    /*  5 */ char,
+    /*  6 */ String,
+    /*  7 */ char,
+    /*  8 */ Vec<String>,
+    /*  9 */ char,
+    /* 10 */ String,
+    /* 11 */ char,
+    /* 12 */ Vec<RefInfoPart>,
+  )| {
+    let refs = result
+      .12
+      .into_iter()
+      .map(|info: RefInfoPart| make_ref_info(info, result.6.to_owned(), result.4.ms))
+      .collect::<Vec<RefInfo>>();
+
+    let num_parents = result.8.len();
+
+    Commit {
+      author: result.0,
+      email: result.2,
+      date: result.4,
+      id: result.6,
+      index: 0,
+      parent_ids: result.8,
+      is_merge: num_parents > 1,
+      message: result.10,
+      stash_id: None,
+      refs,
+      filtered: false,
+      num_skipped: 0,
+    }
+  }
+);
+
+fn make_ref_info(info: RefInfoPart, commit_id: String, time: i64) -> RefInfo {
+  match info {
+    RefInfoPart {
+      id,
+      location,
+      full_name,
+      short_name,
+      remote_name,
+      sibling_id,
+      ref_type,
+      head,
+    } => RefInfo {
+      id,
+      location,
+      full_name,
+      short_name,
+      remote_name,
+      sibling_id,
+      ref_type,
+      head,
+      commit_id,
+      time,
+    },
+  }
+}
 
 #[cfg(test)]
 mod tests {

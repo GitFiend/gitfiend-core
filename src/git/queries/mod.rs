@@ -4,7 +4,7 @@ use crate::git::git_types::{Commit, DateResult, RefInfo, RefInfoPart};
 use crate::git::queries::refs::P_OPTIONAL_REFS;
 use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, WS};
 use crate::parser::Parser;
-use crate::{and, map, or, rep_parser_sep, take_char_while, until_str, word};
+use crate::{and, many, map, or, rep_parser_sep, take_char_while, until_str, word};
 use crate::{character, Input};
 
 const END: &str = "4a41380f-a4e8-4251-9ca2-bf55186ed32a";
@@ -91,6 +91,8 @@ const P_COMMIT_ROW: Parser<Commit> = map!(
     }
   }
 );
+
+pub const P_COMMITS: Parser<Vec<Commit>> = many!(P_COMMIT_ROW);
 
 fn make_ref_info(info: RefInfoPart, commit_id: String, time: i64) -> RefInfo {
   match info {

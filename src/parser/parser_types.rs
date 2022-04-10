@@ -144,6 +144,26 @@ macro_rules! until_str {
 }
 
 #[macro_export]
+macro_rules! many {
+  ($parser:expr) => {
+    |input: &mut Input| {
+      let mut results = Vec::new();
+
+      while !input.end() {
+        let result = $parser(input);
+
+        if result.is_none() {
+          break;
+        }
+        results.extend(result);
+      }
+
+      Some(results)
+    }
+  };
+}
+
+#[macro_export]
 macro_rules! rep_sep {
   ($parser:expr, $sep:expr) => {
     rep_parser_sep!($parser, and!(WS, word!($sep), WS))
@@ -180,7 +200,7 @@ macro_rules! rep_parser_sep {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::parser::parse_all;
+  use crate::parser::{parse_all, parse_part};
   use crate::Input;
 
   pub const P_3: Parser<char> = character!('3');
@@ -249,6 +269,22 @@ mod tests {
 
     assert_eq!(result.is_some(), true);
     assert_eq!(result.unwrap(), "aaaaaaa");
+  }
+
+  #[test]
+  fn test_many() {
+    let parser = many!(character!('c'));
+
+    let result = parse_all(parser, "cccccc");
+
+    assert!(result.is_some());
+    assert_eq!(result.unwrap().len(), 6);
+
+    let result = parse_part(parser, "x");
+
+    // Succeed with no results.
+    assert!(result.is_some());
+    assert_eq!(result.unwrap().len(), 0);
   }
 
   #[test]

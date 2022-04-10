@@ -1,4 +1,4 @@
-use crate::git::git_types::{RefInfoPart, RefLocation, RefType};
+use crate::git::git_types::{RefInfo, RefInfoPart, RefLocation, RefType};
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
@@ -79,6 +79,32 @@ fn get_remote_name(parts: &Vec<&str>) -> Option<String> {
     Some(parts[2].to_string())
   } else {
     None
+  }
+}
+
+pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: i64) -> RefInfo {
+  match info {
+    RefInfoPart {
+      id,
+      location,
+      full_name,
+      short_name,
+      remote_name,
+      sibling_id,
+      ref_type,
+      head,
+    } => RefInfo {
+      id,
+      location,
+      full_name,
+      short_name,
+      remote_name,
+      sibling_id,
+      ref_type,
+      head,
+      commit_id,
+      time,
+    },
   }
 }
 

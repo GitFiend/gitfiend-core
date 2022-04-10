@@ -17,6 +17,18 @@ pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
   )
 }
 
+// Beware: Doesn't complain.
+pub fn parse_part<T>(parser: Parser<T>, text: &str) -> Option<T> {
+  run_parser(
+    parser,
+    text,
+    ParseOptions {
+      must_parse_all: false,
+      print_error: false,
+    },
+  )
+}
+
 struct ParseOptions {
   pub must_parse_all: bool,
   pub print_error: bool,

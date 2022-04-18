@@ -1,6 +1,8 @@
 use serde::Serialize;
+use ts_rs::TS;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
 pub struct DateResult {
   pub ms: i64,
   pub adjustment: i32,
@@ -17,21 +19,24 @@ pub struct RefInfoPart {
   pub head: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
 pub enum RefType {
   Branch,
   Tag,
   Stash,
 }
 
-#[derive(PartialEq, Eq, Debug, Serialize)]
+#[derive(PartialEq, Eq, Debug, Serialize, TS)]
+#[ts(export)]
 pub enum RefLocation {
   Local,
   Remote,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct Commit {
   pub author: String,
   pub email: String,
@@ -48,7 +53,8 @@ pub struct Commit {
   pub num_skipped: u32,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
 pub struct RefInfo {
   pub id: String,
   pub location: RefLocation,

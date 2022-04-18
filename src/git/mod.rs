@@ -26,9 +26,10 @@ mod tests {
   fn test_run_git() {
     let text = run_git(RunGitOptions {
       args: vec!["--help".to_string()],
-      repo_path: "/home/toby/Repos/vscode".to_string(),
+      repo_path: ".".to_string(),
     });
 
-    println!("{}", text);
+    assert!(text.len() > 0);
+    // println!("{}", text);
   }
 }

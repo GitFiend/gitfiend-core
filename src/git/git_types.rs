@@ -1,3 +1,6 @@
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
 pub struct DateResult {
   pub ms: i64,
   pub adjustment: i32,
@@ -14,18 +17,21 @@ pub struct RefInfoPart {
   pub head: bool,
 }
 
+#[derive(Debug, Serialize)]
 pub enum RefType {
   Branch,
   Tag,
   Stash,
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Serialize)]
 pub enum RefLocation {
   Local,
   Remote,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Commit {
   pub author: String,
   pub email: String,
@@ -42,6 +48,7 @@ pub struct Commit {
   pub num_skipped: u32,
 }
 
+#[derive(Debug, Serialize)]
 pub struct RefInfo {
   pub id: String,
   pub location: RefLocation,

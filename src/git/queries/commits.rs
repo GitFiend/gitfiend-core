@@ -8,7 +8,7 @@ use crate::Input;
 use crate::{and, character, many, map, or, rep_parser_sep, take_char_while, until_str};
 use std::time::Instant;
 
-pub fn load_commits(num: u32) -> Option<Vec<Commit>> {
+pub fn load_commits(repo_path: String, num: u32) -> Option<Vec<Commit>> {
   let text = run_git(RunGitOptions {
     args: vec![
       "log".to_string(),
@@ -20,7 +20,7 @@ pub fn load_commits(num: u32) -> Option<Vec<Commit>> {
       ("-n".to_string()) + &num.to_string(),
       "--date=raw".to_string(),
     ],
-    repo_path: "/home/toby/Repos/vscode".to_string(),
+    repo_path,
   });
 
   let now = Instant::now();
@@ -62,7 +62,7 @@ const P_PARENTS: Parser<Vec<String>> = rep_parser_sep!(ANY_WORD, WS);
 
 const P_MESSAGE: Parser<String> = until_str!(END);
 
-const P_ANYTHING: Parser<(String, char, String)> = and!(P_GROUP, P_SEP, P_EMAIL);
+// const P_ANYTHING: Parser<(String, char, String)> = and!(P_GROUP, P_SEP, P_EMAIL);
 
 // Don't put a comma on the last one otherwise the macro will complain
 const P_COMMIT_ROW: Parser<Commit> = map!(
@@ -127,6 +127,7 @@ pub const P_COMMITS: Parser<Vec<Commit>> = many!(P_COMMIT_ROW);
 mod tests {
   use crate::git::queries::commits::{load_commits, P_COMMIT_ROW, P_GROUP};
   use crate::parser::{parse_all, parse_part};
+  use std::env::current_dir;
 
   #[test]
   fn test_p_group() {
@@ -150,7 +151,10 @@ mod tests {
 
   #[test]
   fn test_load_commits() {
-    let result = load_commits(5000);
+    let cwd = current_dir().unwrap();
+    let repo_path = cwd.into_os_string().into_string().unwrap();
+
+    let result = load_commits(repo_path, 5);
 
     assert!(result.is_some());
   }

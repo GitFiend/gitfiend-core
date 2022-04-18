@@ -3,13 +3,13 @@ use crate::parser::Parser;
 
 #[macro_export]
 macro_rules! and {
-  ( $($p:expr),* ) => {
+  ( $($parser:expr),* ) => {
     |input: &mut Input| {
       let start_pos = input.position;
 
       Some((
         $({
-          let res = $p(input);
+          let res = $parser(input);
 
           if res.is_none() {
             input.set_position(start_pos);

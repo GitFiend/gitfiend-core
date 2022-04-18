@@ -4,18 +4,21 @@ use tiny_http::{Request, Response};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LoadCommitsRequestOptions {
+pub struct ReqCommitsOptions {
   repo_path: String,
   num_commits: u32,
 }
 
-pub fn req_load_commits(mut request: Request) {
+pub fn req_commits(mut request: Request) {
   let mut content = String::new();
   request.as_reader().read_to_string(&mut content).unwrap();
 
-  let options: LoadCommitsRequestOptions = serde_json::from_str(&content).unwrap();
+  let ReqCommitsOptions {
+    repo_path,
+    num_commits,
+  } = serde_json::from_str(&content).unwrap();
 
-  let result = load_commits(options.repo_path, options.num_commits);
+  let result = load_commits(repo_path, num_commits);
 
   let serialized = serde_json::to_string(&result).unwrap();
 

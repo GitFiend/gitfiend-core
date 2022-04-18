@@ -3,7 +3,7 @@ mod parser;
 mod server;
 
 use crate::git::queries::commits::load_commits;
-use crate::server::git_request::req_load_commits;
+use crate::server::git_request::req_commits;
 use parser::input::Input;
 use std::time::Instant;
 use tiny_http::{Response, Server};
@@ -12,6 +12,8 @@ use tiny_http::{Response, Server};
 const PORT: u16 = 29997;
 #[cfg(not(debug_assertions))]
 const PORT: u16 = 0;
+
+const ADDRESS: fn() -> String = || format!("127.0.0.1:{}", PORT);
 
 fn main() {
   // let now = Instant::now();
@@ -22,9 +24,7 @@ fn main() {
 }
 
 fn start_server() {
-  let addr = format!("127.0.0.1:{}", PORT);
-
-  let server = Server::http(addr).unwrap();
+  let server = Server::http(ADDRESS()).unwrap();
 
   let port = server.server_addr().port();
 
@@ -43,7 +43,7 @@ fn start_server() {
     println!("Req num {n}");
 
     match request.url() {
-      "/load-commits" => req_load_commits(request),
+      "/load-commits" => req_commits(request),
       _ => {
         let response = Response::from_string(format!("hello world {n}"));
         request.respond(response).expect("Result to be sent");

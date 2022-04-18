@@ -1,6 +1,3 @@
-use crate::parser::standard_parsers::WS;
-use crate::parser::Parser;
-
 #[macro_export]
 macro_rules! and {
   ( $($parser:expr),* ) => {
@@ -199,8 +196,8 @@ macro_rules! rep_parser_sep {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
-  use crate::parser::{parse_all, parse_part};
+  use crate::parser::standard_parsers::WS;
+  use crate::parser::{parse_all, parse_part, Parser};
   use crate::Input;
 
   pub const P_3: Parser<char> = character!('3');

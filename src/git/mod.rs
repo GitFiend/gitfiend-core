@@ -24,7 +24,7 @@ pub fn run_git<const COUNT: usize>(options: RunGitOptions<COUNT>) -> Option<Stri
 }
 
 // We should probably use a different function if we want progress.
-pub fn run_git_with_progress<const COUNT: usize>(options: RunGitOptions<COUNT>) {
+pub fn _run_git_with_progress<const COUNT: usize>(options: RunGitOptions<COUNT>) {
   let mut cmd = Command::new("git")
     .args(options.args)
     .current_dir(options.repo_path)

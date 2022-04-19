@@ -46,7 +46,7 @@ const P_COMMIT_REFS: Parser<Vec<RefInfoPart>> = map!(
 );
 
 pub const P_OPTIONAL_REFS: Parser<Vec<RefInfoPart>> =
-  or!(P_COMMIT_REFS, map!(WS, |s: String| { Vec::new() }));
+  or!(P_COMMIT_REFS, map!(WS, |_: String| { Vec::new() }));
 
 fn get_type_from_name(part: &str) -> RefType {
   match part {

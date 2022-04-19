@@ -320,8 +320,7 @@ mod tests {
     let c = &s[0..1];
     assert_eq!(c, "o");
 
-    // let t4 = and_again!(1, 2, 3);
-    let t4 = and!(P_3, P_3, P_3);
+    let _t4 = and!(P_3, P_3, P_3);
   }
 
   #[test]
@@ -339,22 +338,6 @@ mod tests {
     assert_eq!(res.is_none(), false);
 
     println!("{}", res.unwrap().0)
-  }
-
-  #[test]
-  fn test_mac() {
-    let mut input = Input::new("3");
-    let p2 = character!('3');
-    let p3 = character!('4');
-
-    let result2 = p2(&mut input);
-
-    input.set_position(0);
-    let result3 = p3(&mut input);
-
-    assert_eq!(result2.unwrap(), '3');
-
-    input.set_position(0);
   }
 
   #[test]

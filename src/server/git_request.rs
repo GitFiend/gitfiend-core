@@ -4,6 +4,12 @@ use tiny_http::{Request, Response};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ReqOptions {
+  pub repo_path: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReqCommitsOptions {
   repo_path: String,
   num_commits: u32,

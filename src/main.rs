@@ -3,9 +3,9 @@ mod parser;
 mod server;
 
 use crate::git::queries::commits::load_commits;
+use crate::git::queries::config::req_config;
 use crate::server::git_request::req_commits;
 use parser::input::Input;
-use std::time::Instant;
 use tiny_http::{Response, Server};
 
 #[cfg(debug_assertions)]
@@ -44,6 +44,7 @@ fn start_server() {
 
     match request.url() {
       "/load-commits" => req_commits(request),
+      "/load-config" => req_config(request),
       _ => {
         let response = Response::from_string(format!("hello world {n}"));
         request.respond(response).expect("Result to be sent");

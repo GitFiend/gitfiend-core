@@ -9,7 +9,7 @@ use crate::{and, character, many, map, or, rep_parser_sep, take_char_while, unti
 use std::time::Instant;
 
 pub fn load_commits(repo_path: String, num: u32) -> Option<Vec<Commit>> {
-  let text = run_git(RunGitOptions {
+  let out = run_git(RunGitOptions {
     args: [
       "log",
       "--branches",
@@ -24,7 +24,8 @@ pub fn load_commits(repo_path: String, num: u32) -> Option<Vec<Commit>> {
   });
 
   let now = Instant::now();
-  let result = parse_all(P_COMMITS, text.as_str());
+  let result = parse_all(P_COMMITS, out?.as_str());
+
   println!(
     "Took {}ms to parse {} commits",
     now.elapsed().as_millis(),

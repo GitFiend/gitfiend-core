@@ -1,5 +1,6 @@
+use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::UNTIL_LINE_END;
-use crate::parser::Parser;
+use crate::parser::{parse_all, Parser};
 use crate::{and, many, until_str, word};
 use crate::{map, Input};
 use std::collections::HashMap;
@@ -19,14 +20,27 @@ const P_REMOTE_NAME: Parser<String> = map!(
   |result: (&str, String, &str, String)| { result.1 }
 );
 
-pub fn load_full_config() {
-  //
+pub fn load_full_config(repo_path: String) -> Option<HashMap<String, String>> {
+  let result = run_git(RunGitOptions {
+    repo_path,
+    args: ["config", "--list"],
+  });
+
+  parse_all(P_CONFIG, result?.as_str())
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::config::{P_CONFIG, P_REMOTE_NAME};
+  use crate::git::queries::config::{load_full_config, P_CONFIG, P_REMOTE_NAME};
   use crate::parser::parse_all;
+
+  #[test]
+  fn load_config() {
+    let result = load_full_config(".".to_string());
+
+    assert!(result.is_some());
+    assert!(result.unwrap().len() > 0);
+  }
 
   #[test]
   fn test_p_config() {

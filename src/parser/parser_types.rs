@@ -141,6 +141,29 @@ macro_rules! until_str {
 }
 
 #[macro_export]
+macro_rules! until_parser {
+  ($parser:expr) => {
+    |input: &mut Input| -> Option<String> {
+      let start_pos = input.position;
+
+      while !input.end() {
+        let p = input.position;
+        let result = $parser(input);
+
+        if result.is_some() {
+          return Some(String::from_iter(&input.code[start_pos..p]));
+        }
+
+        input.advance();
+      }
+
+      input.set_position(start_pos);
+      None
+    }
+  };
+}
+
+#[macro_export]
 macro_rules! many {
   ($parser:expr) => {
     |input: &mut Input| {
@@ -331,5 +354,15 @@ mod tests {
     assert_eq!(result2.unwrap(), '3');
 
     input.set_position(0);
+  }
+
+  #[test]
+  fn test_until_parser() {
+    let parser: Parser<String> = until_parser!(word!("omg"));
+
+    let result = parse_all(parser, "aaaaaaaomg");
+
+    assert_eq!(result.is_some(), true);
+    assert_eq!(result.unwrap(), "aaaaaaa");
   }
 }

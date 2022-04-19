@@ -3,12 +3,12 @@ use std::process::Command;
 pub(crate) mod git_types;
 pub(crate) mod queries;
 
-pub struct RunGitOptions {
-  pub args: Vec<String>,
+pub struct RunGitOptions<'a, const COUNT: usize> {
+  pub args: [&'a str; COUNT],
   pub repo_path: String,
 }
 
-pub fn run_git(options: RunGitOptions) -> String {
+pub fn run_git<const COUNT: usize>(options: RunGitOptions<COUNT>) -> String {
   let out = Command::new("git")
     .args(options.args)
     .current_dir(options.repo_path)
@@ -25,11 +25,10 @@ mod tests {
   #[test]
   fn test_run_git() {
     let text = run_git(RunGitOptions {
-      args: vec!["--help".to_string()],
+      args: ["--help"],
       repo_path: ".".to_string(),
     });
 
     assert!(text.len() > 0);
-    // println!("{}", text);
   }
 }

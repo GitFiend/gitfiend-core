@@ -10,15 +10,15 @@ use std::time::Instant;
 
 pub fn load_commits(repo_path: String, num: u32) -> Option<Vec<Commit>> {
   let text = run_git(RunGitOptions {
-    args: vec![
-      "log".to_string(),
-      "--branches".to_string(),
-      "--tags".to_string(),
-      "--remotes".to_string(),
-      "--decorate=full".to_string(),
-      PRETTY_FORMATTED.to_string(),
-      ("-n".to_string()) + &num.to_string(),
-      "--date=raw".to_string(),
+    args: [
+      "log",
+      "--branches",
+      "--tags",
+      "--remotes",
+      "--decorate=full",
+      PRETTY_FORMATTED,
+      format!("-n{}", num).as_str(),
+      "--date=raw",
     ],
     repo_path,
   });

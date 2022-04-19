@@ -19,9 +19,9 @@ impl Input {
     self.set_position(self.position + 1);
   }
 
-  pub fn advance_by(&mut self, num: usize) {
-    self.set_position(self.position + num);
-  }
+  // pub fn advance_by(&mut self, num: usize) {
+  //   self.set_position(self.position + num);
+  // }
 
   pub fn next_char(&mut self) -> char {
     self.code[self.position]

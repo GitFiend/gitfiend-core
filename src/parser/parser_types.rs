@@ -140,25 +140,26 @@ macro_rules! until_str {
   };
 }
 
+// Parses until parser is found or the end of input. Always succeeds.
 #[macro_export]
 macro_rules! until_parser {
   ($parser:expr) => {
     |input: &mut Input| -> Option<String> {
       let start_pos = input.position;
+      let mut current_pos = 0;
 
       while !input.end() {
-        let p = input.position;
+        current_pos = input.position;
         let result = $parser(input);
 
         if result.is_some() {
-          return Some(String::from_iter(&input.code[start_pos..p]));
+          break;
         }
 
         input.advance();
       }
 
-      input.set_position(start_pos);
-      None
+      return Some(String::from_iter(&input.code[start_pos..current_pos]));
     }
   };
 }

@@ -62,7 +62,14 @@ mod tests {
     assert_eq!(result.unwrap(), "1234");
 
     // Should fail for non alpha-numeric.
-    let result = parse_all(ANY_WORD, "@@@@@");
+    let result = run_parser(
+      ANY_WORD,
+      "@@@@@",
+      ParseOptions {
+        must_parse_all: true,
+        print_error: false,
+      },
+    );
 
     assert_eq!(result, None);
 

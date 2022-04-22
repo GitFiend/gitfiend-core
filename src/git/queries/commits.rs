@@ -11,6 +11,21 @@ use std::cmp::Ordering;
 use std::thread;
 use std::time::Instant;
 
+pub fn load_head_commit(repo_path: &String) -> Option<Commit> {
+  let out = run_git(RunGitOptions {
+    args: [
+      "log",
+      "--decorate=full",
+      PRETTY_FORMATTED,
+      "-n1",
+      "--date=raw",
+    ],
+    repo_path,
+  });
+
+  parse_all(P_COMMIT_ROW, out?.as_str())
+}
+
 pub fn load_commits_and_stashes(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
   let now = Instant::now();
 

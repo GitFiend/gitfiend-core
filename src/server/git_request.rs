@@ -18,21 +18,55 @@ pub struct ReqCommitsOptions {
   num_commits: u32,
 }
 
+#[macro_export]
+macro_rules! parse_json {
+  ($request: expr) => {{
+    let mut content = String::new();
+    $request.as_reader().read_to_string(&mut content).unwrap();
+    let result = serde_json::from_str(&content);
+
+    if result.is_ok() {
+      Some(result.unwrap())
+    } else {
+      // println!("{}", result.err()) // TODO
+      None
+    }
+  }};
+}
+
+#[macro_export]
+macro_rules! send_response {
+  ($request: expr, $result: expr) => {{
+    let serialized = serde_json::to_string(&$result).unwrap();
+
+    match $request.respond(Response::from_string(serialized)) {
+      Ok(_) => {}
+      Err(e) => {
+        println!("{}", e);
+      }
+    };
+  }};
+}
+
 pub fn req_commits(mut request: Request) {
-  let mut content = String::new();
-  request.as_reader().read_to_string(&mut content).unwrap();
+  // let options = parse_json!(request);
+  //
+  // if options.is_some() {
+  //   let ReqCommitsOptions {
+  //     repo_path,
+  //     num_commits,
+  //   } = options.unwrap();
+  //
+  //   send_response!(request, load_commits_and_stashes(&repo_path, num_commits));
+  // }
 
-  let ReqCommitsOptions {
-    repo_path,
-    num_commits,
-  } = serde_json::from_str(&content).unwrap();
-
-  let result = load_commits_and_stashes(&repo_path, num_commits);
-
-  let serialized = serde_json::to_string(&result).unwrap();
-
-  // TODO: We shouldn't just exit if there's an error.
-  request
-    .respond(Response::from_string(serialized))
-    .expect("req_load_commits result to be sent");
+  match parse_json!(request) {
+    Some(ReqCommitsOptions {
+      repo_path,
+      num_commits,
+    }) => {
+      send_response!(request, load_commits_and_stashes(&repo_path, num_commits));
+    }
+    None => {}
+  };
 }

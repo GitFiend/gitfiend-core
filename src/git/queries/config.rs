@@ -2,24 +2,34 @@ use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::UNTIL_LINE_END;
 use crate::parser::{parse_all, Parser};
 use crate::server::git_request::ReqOptions;
-use crate::{and, many, until_str, word};
+use crate::{and, many, parse_json, send_response, until_str, word};
 use crate::{map, Input};
 use std::collections::HashMap;
 use tiny_http::{Request, Response};
 
+// pub fn req_config(mut request: Request) {
+//   let mut content = String::new();
+//   request.as_reader().read_to_string(&mut content).unwrap();
+//
+//   let ReqOptions { repo_path } = serde_json::from_str(&content).unwrap();
+//
+//   let result = load_full_config(&repo_path);
+//
+//   let serialized = serde_json::to_string(&result).unwrap();
+//
+//   request
+//     .respond(Response::from_string(serialized))
+//     .expect("result to be sent");
+// }
+
 pub fn req_config(mut request: Request) {
-  let mut content = String::new();
-  request.as_reader().read_to_string(&mut content).unwrap();
+  let options = parse_json!(request);
 
-  let ReqOptions { repo_path } = serde_json::from_str(&content).unwrap();
+  if options.is_some() {
+    let ReqOptions { repo_path } = options.unwrap();
 
-  let result = load_full_config(&repo_path);
-
-  let serialized = serde_json::to_string(&result).unwrap();
-
-  request
-    .respond(Response::from_string(serialized))
-    .expect("result to be sent");
+    send_response!(request, load_full_config(&repo_path));
+  }
 }
 
 const P_CONFIG: Parser<HashMap<String, String>> = map!(

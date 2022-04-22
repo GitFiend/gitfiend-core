@@ -5,14 +5,14 @@ use crate::git::queries::{RefInfo, RefInfoPart, P_OPTIONAL_REFS};
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, WS};
 use crate::parser::{parse_all, Parser};
-use crate::server::git_request::ReqCommitsOptions;
+use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
 use crate::Input;
 use crate::{and, character, many, map, or, rep_parser_sep, take_char_while, until_str};
 use std::cmp::Ordering;
 use std::thread;
 use std::time::Instant;
 
-pub fn load_head_commit(repo_path: &String) -> Option<Commit> {
+pub fn load_head_commit(options: &ReqOptions) -> Option<Commit> {
   let out = run_git(RunGitOptions {
     args: [
       "log",
@@ -21,7 +21,7 @@ pub fn load_head_commit(repo_path: &String) -> Option<Commit> {
       "-n1",
       "--date=raw",
     ],
-    repo_path,
+    repo_path: &options.repo_path,
   });
 
   parse_all(P_COMMIT_ROW, out?.as_str())

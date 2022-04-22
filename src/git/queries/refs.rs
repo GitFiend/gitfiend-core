@@ -29,10 +29,13 @@ const P_TAG_REF: Parser<RefInfoPart> = map!(and!(word!("tag: "), P_REF_NAME), |r
   RefInfoPart,
 )| { result.1 });
 
-const P_HEAD_REF: Parser<RefInfoPart> = map!(and!(word!("HEAD -> "), P_REF_NAME), |result: (
-  &str,
-  RefInfoPart,
-)| { result.1 });
+const P_HEAD_REF: Parser<RefInfoPart> = map!(
+  and!(word!("HEAD -> "), P_REF_NAME),
+  |mut result: (&str, RefInfoPart,)| {
+    result.1.head = true;
+    result.1
+  }
+);
 
 const P_COMMIT_REF: Parser<RefInfoPart> = or!(P_TAG_REF, P_HEAD_REF, P_REF_NAME);
 

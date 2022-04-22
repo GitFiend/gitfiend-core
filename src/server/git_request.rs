@@ -48,7 +48,7 @@ macro_rules! send_response {
 
 #[macro_export]
 macro_rules! handle_request {
-  ($request:expr, $handler: expr) => {{
+  ($request:expr, $handler: ident) => {{
     match parse_json!($request) {
       Some(options) => {
         send_response!($request, $handler(&options));

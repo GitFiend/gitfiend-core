@@ -1,2 +1,2 @@
 
-export interface DateResult { ms: bigint, adjustment: number, }
+export interface DateResult { ms: number, adjustment: number, }

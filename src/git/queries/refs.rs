@@ -82,7 +82,7 @@ fn get_remote_name(parts: &Vec<&str>) -> Option<String> {
   }
 }
 
-pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: i64) -> RefInfo {
+pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: f32) -> RefInfo {
   match info {
     RefInfoPart {
       id,

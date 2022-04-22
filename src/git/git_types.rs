@@ -4,7 +4,7 @@ use ts_rs::TS;
 #[derive(Debug, Serialize, TS)]
 #[ts(export)]
 pub struct DateResult {
-  pub ms: i64,
+  pub ms: f32,
   pub adjustment: i32,
 }
 
@@ -42,7 +42,7 @@ pub struct Commit {
   pub email: String,
   pub date: DateResult,
   pub id: String,
-  pub index: i32,
+  pub index: usize,
   pub parent_ids: Vec<String>,
   pub is_merge: bool,
   pub message: String,
@@ -54,6 +54,7 @@ pub struct Commit {
 }
 
 #[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct RefInfo {
   pub id: String,
@@ -65,5 +66,5 @@ pub struct RefInfo {
   pub ref_type: RefType,
   pub head: bool,
   pub commit_id: String,
-  pub time: i64,
+  pub time: f32,
 }

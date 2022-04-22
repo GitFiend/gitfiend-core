@@ -11,7 +11,8 @@ use tiny_http::{Response, Server};
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
 #[cfg(not(debug_assertions))]
-const PORT: u16 = 0;
+// const PORT: u16 = 0;
+const PORT: u16 = 29997;
 
 const ADDRESS: fn() -> String = || format!("127.0.0.1:{}", PORT);
 

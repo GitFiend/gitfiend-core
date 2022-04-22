@@ -13,7 +13,7 @@ pub fn req_config(mut request: Request) {
 
   let ReqOptions { repo_path } = serde_json::from_str(&content).unwrap();
 
-  let result = load_full_config(repo_path);
+  let result = load_full_config(&repo_path);
 
   let serialized = serde_json::to_string(&result).unwrap();
 
@@ -37,7 +37,7 @@ const P_REMOTE_NAME: Parser<String> = map!(
   |result: (&str, String, &str, String)| { result.1 }
 );
 
-pub fn load_full_config(repo_path: String) -> Option<HashMap<String, String>> {
+pub fn load_full_config(repo_path: &String) -> Option<HashMap<String, String>> {
   let result = run_git(RunGitOptions {
     repo_path,
     args: ["config", "--list"],
@@ -53,7 +53,7 @@ mod tests {
 
   #[test]
   fn load_config() {
-    let result = load_full_config(".".to_string());
+    let result = load_full_config(&".".to_string());
 
     assert!(result.is_some());
     assert!(result.unwrap().len() > 0);

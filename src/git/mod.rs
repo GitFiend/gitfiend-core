@@ -1,5 +1,5 @@
 use std::io::{BufRead, BufReader};
-use std::process::{Command, Stdio};
+use std::process::{Command, Output, Stdio};
 
 pub(crate) mod git_types;
 pub(crate) mod queries;
@@ -7,7 +7,7 @@ pub(crate) mod queries;
 #[derive(Clone, Debug)]
 pub struct RunGitOptions<'a, const COUNT: usize> {
   pub args: [&'a str; COUNT],
-  pub repo_path: String,
+  pub repo_path: &'a String,
 }
 
 pub fn run_git<const COUNT: usize>(options: RunGitOptions<COUNT>) -> Option<String> {
@@ -17,13 +17,22 @@ pub fn run_git<const COUNT: usize>(options: RunGitOptions<COUNT>) -> Option<Stri
     .output();
 
   if out.is_ok() {
-    Some(String::from_utf8_lossy(&out.unwrap().stdout).to_string())
+    let Output { stdout, stderr, .. } = &out.unwrap();
+
+    // TODO: Is stderr sometimes valid and useful git output?
+    if stdout.len() > 0 {
+      Some(String::from_utf8_lossy(stdout).to_string())
+    } else {
+      println!("{:?}", String::from_utf8_lossy(stderr).to_string());
+      None
+    }
   } else {
     None
   }
 }
 
-// We should probably use a different function if we want progress.
+// We should probably use a separate function to the above run_get if we want progress.
+// TODO: unused/untested.
 pub fn _run_git_with_progress<const COUNT: usize>(options: RunGitOptions<COUNT>) {
   let mut cmd = Command::new("git")
     .args(options.args)
@@ -53,7 +62,7 @@ mod tests {
   fn test_run_git() {
     let text = run_git(RunGitOptions {
       args: ["--help"],
-      repo_path: ".".to_string(),
+      repo_path: &".".to_string(),
     });
 
     assert!(text.is_some());

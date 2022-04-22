@@ -1,11 +1,11 @@
+use crate::git::queries::commits::load_commits_and_stashes;
+use crate::git::queries::config::load_full_config;
+use parser::input::Input;
+use tiny_http::{Response, Server};
+
 mod git;
 mod parser;
 mod server;
-
-use crate::git::queries::config::req_config;
-use crate::server::git_request::req_commits;
-use parser::input::Input;
-use tiny_http::{Response, Server};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -26,17 +26,12 @@ fn start_server() {
 
   println!("Address: {}:{}", server.server_addr().ip(), port);
 
-  for request in server.incoming_requests() {
-    println!(
-      "received request! method: {:?}, url: {:?}, headers: {:?}",
-      request.method(),
-      request.url(),
-      request.headers()
-    );
+  for mut request in server.incoming_requests() {
+    println!("received url: {:?}", request.url());
 
     match request.url() {
-      "/load-commits" => req_commits(request),
-      "/load-config" => req_config(request),
+      "/load-commits" => handle_request!(request, load_commits_and_stashes),
+      "/load-config" => handle_request!(request, load_full_config),
       unknown_request => {
         let response = Response::from_string(format!("Unknown request: '{}'", unknown_request));
         let send_result = request.respond(response);

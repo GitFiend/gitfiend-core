@@ -2,10 +2,9 @@ use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::UNTIL_LINE_END;
 use crate::parser::{parse_all, Parser};
 use crate::server::git_request::ReqOptions;
-use crate::{and, many, parse_json, send_response, until_str, word};
+use crate::{and, many, until_str, word};
 use crate::{map, Input};
 use std::collections::HashMap;
-use tiny_http::{Request, Response};
 
 // pub fn req_config(mut request: Request) {
 //   let mut content = String::new();
@@ -22,15 +21,13 @@ use tiny_http::{Request, Response};
 //     .expect("result to be sent");
 // }
 
-pub fn req_config(mut request: Request) {
-  let options = parse_json!(request);
-
-  if options.is_some() {
-    let ReqOptions { repo_path } = options.unwrap();
-
-    send_response!(request, load_full_config(&repo_path));
-  }
-}
+// pub fn req_config(mut request: Request) {
+//   let options = parse_json!(request);
+//
+//   if options.is_some() {
+//     send_response!(request, load_full_config(&options.unwrap()));
+//   }
+// }
 
 const P_CONFIG: Parser<HashMap<String, String>> = map!(
   many!(and!(until_str!("="), UNTIL_LINE_END)),
@@ -47,9 +44,9 @@ const P_REMOTE_NAME: Parser<String> = map!(
   |result: (&str, String, &str, String)| { result.1 }
 );
 
-pub fn load_full_config(repo_path: &String) -> Option<HashMap<String, String>> {
+pub fn load_full_config(options: &ReqOptions) -> Option<HashMap<String, String>> {
   let result = run_git(RunGitOptions {
-    repo_path,
+    repo_path: &options.repo_path,
     args: ["config", "--list"],
   });
 
@@ -60,10 +57,13 @@ pub fn load_full_config(repo_path: &String) -> Option<HashMap<String, String>> {
 mod tests {
   use crate::git::queries::config::{load_full_config, P_CONFIG, P_REMOTE_NAME};
   use crate::parser::parse_all;
+  use crate::server::git_request::ReqOptions;
 
   #[test]
   fn load_config() {
-    let result = load_full_config(&".".to_string());
+    let result = load_full_config(&ReqOptions {
+      repo_path: ".".to_string(),
+    });
 
     assert!(result.is_some());
     assert!(result.unwrap().len() > 0);

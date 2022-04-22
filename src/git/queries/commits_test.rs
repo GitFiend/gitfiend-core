@@ -4,6 +4,7 @@ mod tests {
     load_commits, load_commits_and_stashes, P_COMMIT_ROW, P_GROUP,
   };
   use crate::parser::{parse_all, parse_part};
+  use crate::server::git_request::ReqCommitsOptions;
   use std::env::current_dir;
 
   #[test]
@@ -38,10 +39,10 @@ mod tests {
 
   #[test]
   fn test_load_commits_and_stashes() {
-    let result = load_commits_and_stashes(
-      &"/home/toby/Repos/gitfiend-seed/git-fiend".to_string(),
-      1000,
-    );
+    let result = load_commits_and_stashes(&ReqCommitsOptions {
+      repo_path: "/home/toby/Repos/gitfiend-seed/git-fiend".to_string(),
+      num_commits: 1000,
+    });
 
     println!("{:?}", result);
     assert!(true);

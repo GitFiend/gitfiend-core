@@ -5,6 +5,7 @@ use crate::git::queries::{RefInfo, RefInfoPart, P_OPTIONAL_REFS};
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, WS};
 use crate::parser::{parse_all, Parser};
+use crate::server::git_request::ReqCommitsOptions;
 use crate::Input;
 use crate::{and, character, many, map, or, rep_parser_sep, take_char_while, until_str};
 use std::cmp::Ordering;
@@ -26,11 +27,17 @@ pub fn load_head_commit(repo_path: &String) -> Option<Commit> {
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
 
-pub fn load_commits_and_stashes(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
+pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commit>> {
+  let ReqCommitsOptions {
+    repo_path,
+    num_commits,
+  } = options;
+
   let now = Instant::now();
 
   let p1 = repo_path.clone();
   let p2 = repo_path.clone();
+  let num = num_commits.clone();
 
   let stashes_thread = thread::spawn(move || load_stashes(&p1));
   let commits_thread = thread::spawn(move || load_commits(&p2, num));

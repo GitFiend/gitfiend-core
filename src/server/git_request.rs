@@ -1,6 +1,4 @@
-use crate::git::queries::commits::load_commits_and_stashes;
 use serde::{Deserialize, Serialize};
-use tiny_http::{Request, Response};
 use ts_rs::TS;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
@@ -14,8 +12,8 @@ pub struct ReqOptions {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReqCommitsOptions {
-  repo_path: String,
-  num_commits: u32,
+  pub repo_path: String,
+  pub num_commits: u32,
 }
 
 #[macro_export]
@@ -23,13 +21,13 @@ macro_rules! parse_json {
   ($request: expr) => {{
     let mut content = String::new();
     $request.as_reader().read_to_string(&mut content).unwrap();
-    let result = serde_json::from_str(&content);
 
-    if result.is_ok() {
-      Some(result.unwrap())
-    } else {
-      // println!("{}", result.err()) // TODO
-      None
+    match serde_json::from_str(&content) {
+      Ok(options) => options,
+      Err(e) => {
+        println!("{}", e);
+        None
+      }
     }
   }};
 }
@@ -48,25 +46,34 @@ macro_rules! send_response {
   }};
 }
 
-pub fn req_commits(mut request: Request) {
-  // let options = parse_json!(request);
-  //
-  // if options.is_some() {
-  //   let ReqCommitsOptions {
-  //     repo_path,
-  //     num_commits,
-  //   } = options.unwrap();
-  //
-  //   send_response!(request, load_commits_and_stashes(&repo_path, num_commits));
-  // }
-
-  match parse_json!(request) {
-    Some(ReqCommitsOptions {
-      repo_path,
-      num_commits,
-    }) => {
-      send_response!(request, load_commits_and_stashes(&repo_path, num_commits));
-    }
-    None => {}
-  };
+#[macro_export]
+macro_rules! handle_request {
+  ($request:expr, $handler: expr) => {{
+    match parse_json!($request) {
+      Some(options) => {
+        send_response!($request, $handler(&options));
+      }
+      None => {}
+    };
+  }};
 }
+
+// pub fn req_commits(mut request: Request) {
+//   // let options = parse_json!(request);
+//   //
+//   // if options.is_some() {
+//   //   let ReqCommitsOptions {
+//   //     repo_path,
+//   //     num_commits,
+//   //   } = options.unwrap();
+//   //
+//   //   send_response!(request, load_commits_and_stashes(&repo_path, num_commits));
+//   // }
+//
+//   match parse_json!(request) {
+//     Some(options) => {
+//       send_response!(request, load_commits_and_stashes(&options));
+//     }
+//     None => {}
+//   };
+// }

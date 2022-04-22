@@ -1,5 +1,7 @@
-use crate::git::queries::commits::{load_commits_and_stashes, load_head_commit};
 use crate::git::queries::config::load_full_config;
+use git::queries::commits::{
+  load_commits_and_stashes, load_head_commit, load_top_commit_for_branch,
+};
 use parser::input::Input;
 use tiny_http::{Response, Server};
 
@@ -33,6 +35,7 @@ fn start_server() {
       "/load-commits" => handle_request!(request, load_commits_and_stashes),
       "/load-config" => handle_request!(request, load_full_config),
       "/head-commit" => handle_request!(request, load_head_commit),
+      "/top-commit" => handle_request!(request, load_top_commit_for_branch),
       unknown_request => {
         let response = Response::from_string(format!("Unknown request: '{}'", unknown_request));
         let send_result = request.respond(response);

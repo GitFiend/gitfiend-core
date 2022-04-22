@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use crate::git::git_types::Commit;
-use crate::git::queries::commits::{PRETTY_FORMATTED, P_COMMITS};
+use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS};
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 

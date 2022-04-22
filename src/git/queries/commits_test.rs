@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::commits::{
-    load_commits, load_commits_and_stashes, P_COMMIT_ROW, P_GROUP,
-  };
+  use crate::git::queries::commits::{load_commits, load_commits_and_stashes};
+  use crate::git::queries::commits_parsers::{P_COMMIT_ROW, P_GROUP};
   use crate::parser::{parse_all, parse_part};
   use crate::server::git_request::ReqCommitsOptions;
   use std::env::current_dir;

@@ -1,33 +1,11 @@
+use crate::git::git_types::GitConfig;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::UNTIL_LINE_END;
-use crate::parser::{parse_all, Parser};
+use crate::parser::{parse_all, parse_part, Parser};
 use crate::server::git_request::ReqOptions;
 use crate::{and, many, until_str, word};
 use crate::{map, Input};
 use std::collections::HashMap;
-
-// pub fn req_config(mut request: Request) {
-//   let mut content = String::new();
-//   request.as_reader().read_to_string(&mut content).unwrap();
-//
-//   let ReqOptions { repo_path } = serde_json::from_str(&content).unwrap();
-//
-//   let result = load_full_config(&repo_path);
-//
-//   let serialized = serde_json::to_string(&result).unwrap();
-//
-//   request
-//     .respond(Response::from_string(serialized))
-//     .expect("result to be sent");
-// }
-
-// pub fn req_config(mut request: Request) {
-//   let options = parse_json!(request);
-//
-//   if options.is_some() {
-//     send_response!(request, load_full_config(&options.unwrap()));
-//   }
-// }
 
 const P_CONFIG: Parser<HashMap<String, String>> = map!(
   many!(and!(until_str!("="), UNTIL_LINE_END)),
@@ -44,13 +22,27 @@ const P_REMOTE_NAME: Parser<String> = map!(
   |result: (&str, String, &str, String)| { result.1 }
 );
 
-pub fn load_full_config(options: &ReqOptions) -> Option<HashMap<String, String>> {
-  let result = run_git(RunGitOptions {
+pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
+  let result_text = run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["config", "--list"],
   });
 
-  parse_all(P_CONFIG, result?.as_str())
+  let config_result = parse_all(P_CONFIG, result_text?.as_str());
+  let entries = config_result?;
+  let mut remotes = HashMap::new();
+
+  for (key, value) in entries.iter() {
+    if key.starts_with("remote") {
+      let name = parse_all(P_REMOTE_NAME, key);
+
+      if name.is_some() {
+        remotes.insert(name.unwrap(), value.clone());
+      }
+    }
+  }
+
+  Some(GitConfig { entries, remotes })
 }
 
 #[cfg(test)]
@@ -66,7 +58,7 @@ mod tests {
     });
 
     assert!(result.is_some());
-    assert!(result.unwrap().len() > 0);
+    assert!(result.unwrap().entries.len() > 0);
   }
 
   #[test]

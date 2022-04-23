@@ -146,7 +146,7 @@ macro_rules! until_parser {
   ($parser:expr) => {
     |input: &mut Input| -> Option<String> {
       let start_pos = input.position;
-      let mut current_pos = 0;
+      let mut current_pos = start_pos;
 
       while !input.end() {
         current_pos = input.position;

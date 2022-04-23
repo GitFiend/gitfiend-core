@@ -1,4 +1,5 @@
 use serde::Serialize;
+use std::collections::HashMap;
 use ts_rs::TS;
 
 #[derive(Debug, Serialize, TS)]
@@ -67,4 +68,11 @@ pub struct RefInfo {
   pub head: bool,
   pub commit_id: String,
   pub time: f32,
+}
+
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
+pub struct GitConfig {
+  pub entries: HashMap<String, String>,
+  pub remotes: HashMap<String, String>,
 }

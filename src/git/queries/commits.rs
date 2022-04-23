@@ -1,9 +1,10 @@
 use crate::git::git_types::Commit;
-use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW};
+use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::stashes::load_stashes;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
+use cached::proc_macro::cached;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::thread;
@@ -132,4 +133,45 @@ pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
   );
 
   result
+}
+
+#[derive(Debug, Deserialize, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CommitDiffOpts {
+  pub repo_path: String,
+  pub commit_id1: String,
+  pub commit_id2: String,
+}
+
+pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String>> {
+  let CommitDiffOpts {
+    repo_path,
+    commit_id1,
+    commit_id2,
+  } = options;
+
+  commit_ids_between_commits_inner(repo_path.clone(), commit_id1.clone(), commit_id2.clone())
+}
+
+#[cached(option = true, time = 1000)]
+fn commit_ids_between_commits_inner(
+  repo_path: String,
+  commit_id1: String,
+  commit_id2: String,
+) -> Option<Vec<String>> {
+  let now = Instant::now();
+
+  let out = run_git(RunGitOptions {
+    args: [
+      "log",
+      &format!("{}..{}", commit_id1, commit_id2),
+      "--pretty=format:%H",
+    ],
+    repo_path: &repo_path,
+  })?;
+
+  println!("Took {}ms to request ids", now.elapsed().as_millis());
+
+  parse_all(P_ID_LIST, &out)
 }

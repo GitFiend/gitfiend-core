@@ -18,7 +18,7 @@ pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
 }
 
 // Beware: Doesn't complain.
-pub fn parse_part<T>(parser: Parser<T>, text: &str) -> Option<T> {
+fn _parse_part<T>(parser: Parser<T>, text: &str) -> Option<T> {
   run_parser(
     parser,
     text,
@@ -29,12 +29,12 @@ pub fn parse_part<T>(parser: Parser<T>, text: &str) -> Option<T> {
   )
 }
 
-struct ParseOptions {
+pub struct ParseOptions {
   pub must_parse_all: bool,
   pub print_error: bool,
 }
 
-fn run_parser<T>(parser: Parser<T>, text: &str, options: ParseOptions) -> Option<T> {
+pub fn run_parser<T>(parser: Parser<T>, text: &str, options: ParseOptions) -> Option<T> {
   let mut input = Input::new(text);
 
   let result = parser(&mut input);

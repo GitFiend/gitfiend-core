@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
   use crate::git::queries::commits::{load_commits, load_commits_and_stashes};
-  use crate::git::queries::commits_parsers::{P_COMMIT_ROW, P_GROUP};
+  use crate::git::queries::commits_parsers::{P_COMMIT_ROW, P_GROUP, P_ID_LIST};
   use crate::parser::{parse_all, parse_part};
   use crate::server::git_request::ReqCommitsOptions;
   use std::env::current_dir;
@@ -45,5 +45,20 @@ mod tests {
 
     println!("{:?}", result);
     assert!(true);
+  }
+
+  #[test]
+  fn test_p_id_list() {
+    let a = "febe3a062cc8c4c156a3d869310976173d64c04a";
+    let b = "2269bc6b714890412d0c983825cf9e9d340291ce";
+    let c = "1b7a69a328a61e9ad54dfb302cf3301448ab0cfe";
+    let d = "fd48376ff1e2cb213bd6d1919cf0f07f81a553a6";
+
+    let ids = format!("{a}\n{b}\n{c}\n{d}");
+
+    let out = parse_all(P_ID_LIST, &ids);
+
+    assert!(out.is_some());
+    assert_eq!(out.unwrap().len(), 4);
   }
 }

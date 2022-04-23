@@ -1,7 +1,7 @@
 use crate::git::git_types::GitConfig;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::UNTIL_LINE_END;
-use crate::parser::{parse_all, parse_part, Parser};
+use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
 use crate::{and, many, until_str, word};
 use crate::{map, Input};
@@ -34,7 +34,14 @@ pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
 
   for (key, value) in entries.iter() {
     if key.starts_with("remote") {
-      let name = parse_all(P_REMOTE_NAME, key);
+      let name = run_parser(
+        P_REMOTE_NAME,
+        key,
+        ParseOptions {
+          must_parse_all: true,
+          print_error: false,
+        },
+      );
 
       if name.is_some() {
         remotes.insert(name.unwrap(), value.clone());

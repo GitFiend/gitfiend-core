@@ -58,22 +58,12 @@ macro_rules! handle_request {
   }};
 }
 
-// pub fn req_commits(mut request: Request) {
-//   // let options = parse_json!(request);
-//   //
-//   // if options.is_some() {
-//   //   let ReqCommitsOptions {
-//   //     repo_path,
-//   //     num_commits,
-//   //   } = options.unwrap();
-//   //
-//   //   send_response!(request, load_commits_and_stashes(&repo_path, num_commits));
-//   // }
-//
-//   match parse_json!(request) {
-//     Some(options) => {
-//       send_response!(request, load_commits_and_stashes(&options));
-//     }
-//     None => {}
-//   };
-// }
+#[macro_export]
+macro_rules! print_request_error {
+  ($url:expr, $request:expr) => {{
+    let response = Response::from_string(format!("Unknown request: '{}'", $url));
+    let send_result = $request.respond(response);
+
+    println!("{:?}", send_result);
+  }};
+}

@@ -2,13 +2,13 @@
 mod tests {
   use crate::git::queries::commits::{load_commits, load_commits_and_stashes};
   use crate::git::queries::commits_parsers::{P_COMMIT_ROW, P_GROUP, P_ID_LIST};
-  use crate::parser::{parse_all, parse_part};
+  use crate::parser::{_parse_part, parse_all};
   use crate::server::git_request::ReqCommitsOptions;
   use std::env::current_dir;
 
   #[test]
   fn test_p_group() {
-    let result = parse_part(P_GROUP, "omg,");
+    let result = _parse_part(P_GROUP, "omg,");
 
     assert!(result.is_some());
   }

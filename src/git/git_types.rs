@@ -76,3 +76,29 @@ pub struct GitConfig {
   pub entries: HashMap<String, String>,
   pub remotes: HashMap<String, String>,
 }
+
+#[derive(PartialEq, Eq, Debug, Serialize, TS)]
+#[ts(export)]
+pub enum PatchType {
+  A,
+  C,
+  D,
+  M,
+  R,
+  T,
+  U,
+  X,
+  B,
+}
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct Patch {
+  pub commit_id: String,
+  pub old_file: String,
+  pub new_file: String,
+  pub patch_type: PatchType,
+  pub id: String,
+  pub is_image: bool,
+}

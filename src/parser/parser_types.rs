@@ -76,6 +76,26 @@ macro_rules! word {
 }
 
 #[macro_export]
+macro_rules! conditional_char {
+  ($function:expr) => {
+    |input: &mut Input| -> Option<char> {
+      let start_pos = input.position;
+
+      let c = input.next_char();
+
+      if $function(c) {
+        input.advance();
+
+        Some(c)
+      } else {
+        None
+      }
+    }
+  };
+}
+
+// Fails if no chars consumed. Successful conditional doesn't consume text.
+#[macro_export]
 macro_rules! take_char_while {
   ($function:expr) => {
     |input: &mut Input| -> Option<String> {
@@ -94,6 +114,8 @@ macro_rules! take_char_while {
   };
 }
 
+// Parses up to and excludes the char in the conditional.
+// Always succeeds.
 #[macro_export]
 macro_rules! optional_take_char_while {
   ($function:expr) => {
@@ -113,6 +135,7 @@ macro_rules! optional_take_char_while {
   };
 }
 
+// All is consumed, but $str is not included in the result.
 #[macro_export]
 macro_rules! until_str {
   ($str:expr) => {
@@ -141,6 +164,7 @@ macro_rules! until_str {
 }
 
 // Parses until parser is found or the end of input. Always succeeds.
+// All text is consumed, but end parser result is not included (TODO: Check this)
 #[macro_export]
 macro_rules! until_parser {
   ($parser:expr) => {

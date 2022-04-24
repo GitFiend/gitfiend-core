@@ -1,6 +1,8 @@
 use crate::parser::input::Input;
 use crate::parser::Parser;
-use crate::{and, map, optional_take_char_while, or, take_char_while, until_parser, word};
+use crate::{
+  and, conditional_char, map, optional_take_char_while, or, take_char_while, until_parser, word,
+};
 
 pub const ANY_WORD: Parser<String> = take_char_while!(|c: char| { c.is_alphanumeric() });
 pub const UNSIGNED_INT: Parser<String> = take_char_while!(|c: char| { c.is_numeric() });
@@ -15,10 +17,15 @@ pub const WS_STR: Parser<&str> = map!(WS, |_: String| { "" });
 pub const LINE_END: Parser<&str> = or!(word!("\n"), word!("\r\n"));
 pub const UNTIL_LINE_END: Parser<String> = until_parser!(LINE_END);
 
+pub const UNTIL_NUL: Parser<String> =
+  until_parser!(conditional_char!(|c: char| { c.is_control() }));
+
 #[cfg(test)]
 mod tests {
   use crate::parser::input::Input;
-  use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, WS};
+  use crate::parser::standard_parsers::{
+    ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, UNTIL_NUL, WS,
+  };
   use crate::parser::{_parse_part, parse_all, run_parser, ParseOptions};
   use crate::take_char_while;
 
@@ -109,5 +116,13 @@ mod tests {
 
     assert!(result.is_some());
     assert_eq!(result.unwrap(), "asdfsdf&^HF JC\tasd !@");
+  }
+
+  #[test]
+  fn test_until_nul() {
+    let result = parse_all(UNTIL_NUL, "omg\0");
+
+    assert!(result.is_some());
+    assert_eq!(result.unwrap(), "omg");
   }
 }

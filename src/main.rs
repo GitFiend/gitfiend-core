@@ -1,4 +1,5 @@
 use crate::git::queries::config::load_full_config;
+use crate::git::queries::patches::patches::load_all_commit_patches;
 use git::queries::commits::{
   commit_ids_between_commits, load_commits_and_stashes, load_head_commit,
   load_top_commit_for_branch,
@@ -38,6 +39,7 @@ fn start_server() {
       "/head-commit" => handle_request!(request, load_head_commit),
       "/top-commit" => handle_request!(request, load_top_commit_for_branch),
       "/ids-between-commits" => handle_request!(request, commit_ids_between_commits),
+      "/load-all-commit-patches" => handle_request!(request, load_all_commit_patches),
       unknown_url => print_request_error!(unknown_url, request),
     }
   }

@@ -1,5 +1,6 @@
 use serde::Serialize;
 use std::collections::HashMap;
+use std::fmt;
 use ts_rs::TS;
 
 #[derive(Debug, Serialize, TS)]
@@ -82,13 +83,29 @@ pub struct GitConfig {
 pub enum PatchType {
   A,
   C,
+  B,
   D,
   M,
   R,
   T,
   U,
   X,
-  B,
+}
+
+impl fmt::Display for PatchType {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match *self {
+      PatchType::A => write!(f, "A"),
+      PatchType::B => write!(f, "B"),
+      PatchType::C => write!(f, "C"),
+      PatchType::D => write!(f, "D"),
+      PatchType::M => write!(f, "M"),
+      PatchType::R => write!(f, "R"),
+      PatchType::T => write!(f, "T"),
+      PatchType::U => write!(f, "U"),
+      PatchType::X => write!(f, "X"),
+    }
+  }
 }
 
 #[derive(Debug, Serialize, TS)]

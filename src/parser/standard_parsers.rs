@@ -20,6 +20,8 @@ pub const UNTIL_LINE_END: Parser<String> = until_parser!(LINE_END);
 pub const UNTIL_NUL: Parser<String> =
   until_parser!(conditional_char!(|c: char| { c.is_control() }));
 
+pub const UNTIL_END: Parser<String> = optional_take_char_while!(|c: char| { c != char::from(0) });
+
 #[cfg(test)]
 mod tests {
   use crate::parser::input::Input;

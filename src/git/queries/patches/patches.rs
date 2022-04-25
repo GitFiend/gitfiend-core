@@ -30,3 +30,5 @@ pub fn load_all_commit_patches(options: &ReqCommitsOptions) -> Option<HashMap<St
 
   Some(map)
 }
+
+// pub fn load_missing_patches_for_commits

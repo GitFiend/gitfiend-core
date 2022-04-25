@@ -62,12 +62,10 @@ PARSE FAILURE AT POSITION {}:
   result
 }
 
-// type MapFunction<T, U> = fn(T) -> U;
-
 #[macro_export]
 macro_rules! map {
   ($parser:expr, $function:expr) => {
-    |input: &mut Input| {
+    |input: &mut $crate::Input| {
       let result = $parser(input);
 
       if result.is_some() {

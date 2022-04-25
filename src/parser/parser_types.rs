@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! and {
   ( $($parser:expr),* ) => {
-    |input: &mut Input| {
+    |input: &mut $crate::Input| {
       let start_pos = input.position;
 
       Some((
@@ -24,7 +24,7 @@ macro_rules! and {
 #[macro_export]
 macro_rules! or {
   ( $($p:expr),* ) => {
-    |input: &mut Input| {
+    |input: &mut $crate::Input| {
       $({
         let res = $p(input);
 
@@ -41,7 +41,7 @@ macro_rules! or {
 #[macro_export]
 macro_rules! character {
   ($c:expr) => {
-    |input: &mut Input| -> Option<char> {
+    |input: &mut $crate::Input| -> Option<char> {
       if !input.end() {
         let r = input.next_char();
 
@@ -58,7 +58,7 @@ macro_rules! character {
 #[macro_export]
 macro_rules! word {
   ($text:expr) => {
-    |input: &mut Input| {
+    |input: &mut $crate::Input| {
       let start_pos = input.position;
 
       for c in $text.chars() {
@@ -78,7 +78,7 @@ macro_rules! word {
 #[macro_export]
 macro_rules! conditional_char {
   ($function:expr) => {
-    |input: &mut Input| -> Option<char> {
+    |input: &mut $crate::Input| -> Option<char> {
       let start_pos = input.position;
 
       let c = input.next_char();
@@ -98,7 +98,7 @@ macro_rules! conditional_char {
 #[macro_export]
 macro_rules! take_char_while {
   ($function:expr) => {
-    |input: &mut Input| -> Option<String> {
+    |input: &mut $crate::Input| -> Option<String> {
       let start_pos = input.position;
 
       while !input.end() && $function(input.next_char()) {
@@ -119,7 +119,7 @@ macro_rules! take_char_while {
 #[macro_export]
 macro_rules! optional_take_char_while {
   ($function:expr) => {
-    |input: &mut Input| -> Option<String> {
+    |input: &mut $crate::Input| -> Option<String> {
       let start_pos = input.position;
 
       while !input.end() && $function(input.next_char()) {
@@ -139,7 +139,7 @@ macro_rules! optional_take_char_while {
 #[macro_export]
 macro_rules! until_str {
   ($str:expr) => {
-    |input: &mut Input| -> Option<String> {
+    |input: &mut $crate::Input| -> Option<String> {
       let char_vec: Vec<char> = $str.chars().collect();
       let str_len = $str.len();
       let start_pos = input.position;
@@ -168,7 +168,7 @@ macro_rules! until_str {
 #[macro_export]
 macro_rules! until_parser {
   ($parser:expr) => {
-    |input: &mut Input| -> Option<String> {
+    |input: &mut $crate::Input| -> Option<String> {
       let start_pos = input.position;
       let mut current_pos = start_pos;
 
@@ -191,7 +191,7 @@ macro_rules! until_parser {
 #[macro_export]
 macro_rules! many {
   ($parser:expr) => {
-    |input: &mut Input| {
+    |input: &mut $crate::Input| {
       let mut results = Vec::new();
 
       while !input.end() {
@@ -218,7 +218,7 @@ macro_rules! rep_sep {
 #[macro_export]
 macro_rules! rep_parser_sep {
   ($parser:expr, $sep_parser:expr) => {
-    |input: &mut Input| {
+    |input: &mut $crate::Input| {
       let mut results = Vec::new();
 
       while !input.end() {

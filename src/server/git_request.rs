@@ -67,3 +67,28 @@ macro_rules! print_request_error {
     println!("{:?}", send_result);
   }};
 }
+
+#[macro_export]
+macro_rules! handle_request2 {
+  ($request:expr, $stream:expr, $handler: ident) => {{
+    match serde_json::from_str($request.body.as_str()) {
+      Ok(options) => {
+        let commits = $handler(&options);
+
+        let serialized = serde_json::to_string(&commits).unwrap();
+
+        let response = format!(
+          "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+          serialized.len(),
+          serialized
+        );
+
+        $stream.write(response.as_bytes()).unwrap();
+        $stream.flush().unwrap();
+      }
+      Err(e) => {
+        println!("{}", e);
+      }
+    };
+  }};
+}

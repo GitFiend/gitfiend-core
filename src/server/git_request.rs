@@ -1,4 +1,7 @@
+use crate::server::http::HttpRequest;
 use serde::{Deserialize, Serialize};
+use std::io::prelude::*;
+use std::net::TcpStream;
 use ts_rs::TS;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
@@ -90,5 +93,52 @@ macro_rules! handle_request2 {
         println!("{}", e);
       }
     };
+  }};
+}
+
+// fn handle_request<'a, O: Deserialize<'a>, R: Serialize>(
+//   data: HttpRequest,
+//   mut stream: TcpStream,
+//   handler: fn(&O) -> &R,
+// ) {
+//   let body = data.body.clone();
+//   // let body_str = body.as_str();
+//
+//   let omg = match serde_json::from_str(&body) {
+//     Ok(options) => {
+//       let commits = handler(&options);
+//
+//       let serialized = serde_json::to_string(&commits).unwrap();
+//
+//       let response = format!(
+//         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+//         serialized.len(),
+//         serialized
+//       );
+//
+//       stream.write(response.as_bytes()).unwrap();
+//       stream.flush().unwrap();
+//     }
+//     Err(e) => {
+//       println!("{}", e);
+//     }
+//   };
+// }
+
+#[macro_export]
+macro_rules! requests {
+  ($request:expr, $stream:expr, $($handler:ident),*) => {{
+    let url = $request.url.as_str();
+
+    match url {
+      $(
+      concat!("/", stringify!($handler)) => {
+        handle_request2!($request, $stream, $handler)
+      },
+      )*
+      unknown_url => {
+        println!("Unknown url {}", unknown_url);
+      }
+    }
   }};
 }

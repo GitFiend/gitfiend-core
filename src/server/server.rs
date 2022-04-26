@@ -3,13 +3,11 @@ use crate::git::queries::patches::patches::load_all_commit_patches;
 use crate::server::http::parse_http_request;
 use crate::{
   commit_ids_between_commits, handle_request2, load_commits_and_stashes, load_head_commit,
-  load_top_commit_for_branch,
+  load_top_commit_for_branch, requests,
 };
-use std::fmt::format;
 use std::io::prelude::*;
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};
-use std::time::Instant;
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -48,35 +46,48 @@ fn handle_connection(mut stream: TcpStream) {
   if result.is_some() {
     let request = result.unwrap();
 
-    match request.url.as_str() {
-      "/load-commits" => handle_request2!(request, stream, load_commits_and_stashes),
-      "/load-config" => handle_request2!(request, stream, load_full_config),
-      "/head-commit" => handle_request2!(request, stream, load_head_commit),
-      "/top-commit" => handle_request2!(request, stream, load_top_commit_for_branch),
-      "/ids-between-commits" => handle_request2!(request, stream, commit_ids_between_commits),
-      "/load-all-commit-patches" => handle_request2!(request, stream, load_all_commit_patches),
-      // "/load-commits" => match serde_json::from_str(request.body.as_str()) {
-      //   Ok(options) => {
-      //     let commits = load_commits_and_stashes(&options);
-      //
-      //     let serialized = serde_json::to_string(&commits).unwrap();
-      //
-      //     let response = format!(
-      //       "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-      //       serialized.len(),
-      //       serialized
-      //     );
-      //
-      //     stream.write(response.as_bytes()).unwrap();
-      //     stream.flush().unwrap();
-      //     return;
-      //   }
-      //   Err(e) => {
-      //     println!("{}", e);
-      //   }
-      // },
-      unknown_url => {}
-    }
+    // println!("{}", requests!(load_full_config));
+
+    requests!(
+      request,
+      stream,
+      load_commits_and_stashes,
+      load_full_config,
+      load_head_commit,
+      load_top_commit_for_branch,
+      commit_ids_between_commits,
+      load_all_commit_patches
+    );
+
+    // match request.url.as_str() {
+    //   "/load-commits" => handle_request2!(request, stream, load_commits_and_stashes),
+    //   "/load-config" => handle_request2!(request, stream, load_full_config),
+    //   "/head-commit" => handle_request2!(request, stream, load_head_commit),
+    //   "/top-commit" => handle_request2!(request, stream, load_top_commit_for_branch),
+    //   "/ids-between-commits" => handle_request2!(request, stream, commit_ids_between_commits),
+    //   "/load-all-commit-patches" => handle_request2!(request, stream, load_all_commit_patches),
+    //   // "/load-commits" => match serde_json::from_str(request.body.as_str()) {
+    //   //   Ok(options) => {
+    //   //     let commits = load_commits_and_stashes(&options);
+    //   //
+    //   //     let serialized = serde_json::to_string(&commits).unwrap();
+    //   //
+    //   //     let response = format!(
+    //   //       "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+    //   //       serialized.len(),
+    //   //       serialized
+    //   //     );
+    //   //
+    //   //     stream.write(response.as_bytes()).unwrap();
+    //   //     stream.flush().unwrap();
+    //   //     return;
+    //   //   }
+    //   //   Err(e) => {
+    //   //     println!("{}", e);
+    //   //   }
+    //   // },
+    //   unknown_url => {}
+    // }
   }
 
   // let message = "hello";

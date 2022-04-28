@@ -60,13 +60,13 @@ fn handle_connection(mut stream: TcpStream) {
     );
 
     // match request.url.as_str() {
-    //   "/load-commits" => handle_request2!(request, stream, load_commits_and_stashes),
-    //   "/load-config" => handle_request2!(request, stream, load_full_config),
-    //   "/head-commit" => handle_request2!(request, stream, load_head_commit),
-    //   "/top-commit" => handle_request2!(request, stream, load_top_commit_for_branch),
-    //   "/ids-between-commits" => handle_request2!(request, stream, commit_ids_between_commits),
-    //   "/load-all-commit-patches" => handle_request2!(request, stream, load_all_commit_patches),
-    //   // "/load-commits" => match serde_json::from_str(request.body.as_str()) {
+    //   "/load_commits_and_stashes" => handle_request2!(request, stream, load_commits_and_stashes),
+    //   "/load_full_config" => handle_request2!(request, stream, load_full_config),
+    //   "/load_head_commit" => handle_request2!(request, stream, load_head_commit),
+    //   "/load_top_commit_for_branch" => handle_request2!(request, stream, load_top_commit_for_branch),
+    //   "/commit_ids_between_commits" => handle_request2!(request, stream, commit_ids_between_commits),
+    //   "/load_all_commit_patches" => handle_request2!(request, stream, load_all_commit_patches),
+    //   // "/load_commits_and_stashes" => match serde_json::from_str(request.body.as_str()) {
     //   //   Ok(options) => {
     //   //     let commits = load_commits_and_stashes(&options);
     //   //

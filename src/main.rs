@@ -36,12 +36,12 @@ fn start_server() {
     println!("received url: {:?}", request.url());
 
     match request.url() {
-      "/load-commits" => handle_request!(request, load_commits_and_stashes),
-      "/load-config" => handle_request!(request, load_full_config),
-      "/head-commit" => handle_request!(request, load_head_commit),
-      "/top-commit" => handle_request!(request, load_top_commit_for_branch),
-      "/ids-between-commits" => handle_request!(request, commit_ids_between_commits),
-      "/load-all-commit-patches" => handle_request!(request, load_all_commit_patches),
+      "/load_commits_and_stashes" => handle_request!(request, load_commits_and_stashes),
+      "/load_full_config" => handle_request!(request, load_full_config),
+      "/load_head_commit" => handle_request!(request, load_head_commit),
+      "/load_top_commit_for_branch" => handle_request!(request, load_top_commit_for_branch),
+      "/commit_ids_between_commits" => handle_request!(request, commit_ids_between_commits),
+      "/load_all_commit_patches" => handle_request!(request, load_all_commit_patches),
       unknown_url => print_request_error!(unknown_url, request),
     }
   }

@@ -1,5 +1,5 @@
-use crate::server::http::HttpRequest;
 use serde::{Deserialize, Serialize};
+use serde_json::from_str;
 use std::io::prelude::*;
 use std::net::TcpStream;
 use ts_rs::TS;
@@ -71,69 +71,67 @@ macro_rules! print_request_error {
   }};
 }
 
-#[macro_export]
-macro_rules! handle_request2 {
-  ($request:expr, $stream:expr, $handler: ident) => {{
-    match serde_json::from_str($request.body.as_str()) {
-      Ok(options) => {
-        let commits = $handler(&options);
-
-        let serialized = serde_json::to_string(&commits).unwrap();
-
-        let response = format!(
-          "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-          serialized.len(),
-          serialized
-        );
-
-        $stream.write(response.as_bytes()).unwrap();
-        $stream.flush().unwrap();
-      }
-      Err(e) => {
-        println!("{}", e);
-      }
-    };
-  }};
-}
-
-// fn handle_request<'a, O: Deserialize<'a>, R: Serialize>(
-//   data: HttpRequest,
-//   mut stream: TcpStream,
-//   handler: fn(&O) -> &R,
-// ) {
-//   let body = data.body.clone();
-//   // let body_str = body.as_str();
+// #[macro_export]
+// macro_rules! handle_sync_request {
+//   ($request:expr, $stream:expr, $handler: ident) => {{
+//     match serde_json::from_str($request.body.as_str()) {
+//       Ok(options) => {
+//         let commits = $handler(&options);
 //
-//   let omg = match serde_json::from_str(&body) {
-//     Ok(options) => {
-//       let commits = handler(&options);
+//         let serialized = serde_json::to_string(&commits).unwrap();
 //
-//       let serialized = serde_json::to_string(&commits).unwrap();
+//         let response = format!(
+//           "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+//           serialized.len(),
+//           serialized
+//         );
 //
-//       let response = format!(
-//         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-//         serialized.len(),
-//         serialized
-//       );
-//
-//       stream.write(response.as_bytes()).unwrap();
-//       stream.flush().unwrap();
-//     }
-//     Err(e) => {
-//       println!("{}", e);
-//     }
-//   };
+//         $stream.write(response.as_bytes()).unwrap();
+//         $stream.flush().unwrap();
+//       }
+//       Err(e) => {
+//         println!("{}", e);
+//       }
+//     };
+//   }};
 // }
+
+pub fn handle_sync_request<'a, O: Deserialize<'a>, R: Serialize>(
+  body: &'a str,
+  mut stream: TcpStream,
+  handler: fn(&O) -> Option<R>,
+) {
+  match from_str(body) {
+    Ok(options) => {
+      let commits = handler(&options);
+
+      let serialized = serde_json::to_string(&commits).unwrap();
+
+      let response = format!(
+        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+        serialized.len(),
+        serialized
+      );
+
+      stream.write(response.as_bytes()).unwrap();
+      stream.flush().unwrap();
+    }
+    Err(e) => {
+      println!("{}", e);
+    }
+  };
+}
 
 #[macro_export]
 macro_rules! requests {
   ($request:expr, $stream:expr, $($handler:ident),*) => {{
     let url = $request.url.as_str();
+    let body = $request.body.as_str();
 
     match url {
       $(
       concat!("/", stringify!($handler)) => {
-        handle_request2!($request, $stream, $handler)
+        crate::server::git_request::handle_sync_request(body, $stream, $handler)
       },
       )*
       unknown_url => {

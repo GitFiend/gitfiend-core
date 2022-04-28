@@ -1,6 +1,6 @@
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::patches::patches::load_all_commit_patches;
-use crate::server::server::start_server2;
+use crate::server::server::start_sync_server;
 use git::queries::commits::{
   commit_ids_between_commits, load_commits_and_stashes, load_head_commit,
   load_top_commit_for_branch,
@@ -22,7 +22,7 @@ const ADDRESS: fn() -> String = || format!("127.0.0.1:{}", PORT);
 
 fn main() {
   // start_server();
-  start_server2();
+  start_sync_server();
 }
 
 fn start_server() {

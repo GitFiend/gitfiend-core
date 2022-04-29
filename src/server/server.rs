@@ -1,12 +1,11 @@
 use crate::git::queries::config::load_full_config;
-use crate::git::queries::patches::patches::load_all_commit_patches;
+use crate::git::queries::patches::patches::load_patches;
 use crate::server::http::{parse_http_request, HttpRequest};
 use crate::{
   commit_ids_between_commits, load_commits_and_stashes, load_head_commit,
   load_top_commit_for_branch, requests,
 };
 
-use crate::git::queries::patches::cache::load_patches_cache;
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};
 
@@ -21,12 +20,9 @@ const ADDRESS: fn() -> String = || format!("127.0.0.1:{}", PORT);
 pub fn start_sync_server() {
   let listener = TcpListener::bind(ADDRESS()).unwrap();
 
-  match listener.local_addr() {
-    Ok(r) => {
-      println!("Port: {}", r.port())
-    }
-    Err(_) => {}
-  }
+  if let Ok(r) = listener.local_addr() {
+    println!("Port: {}", r.port())
+  };
 
   for stream in listener.incoming() {
     let stream = stream.unwrap();
@@ -49,7 +45,7 @@ fn handle_connection(stream: TcpStream) {
       load_head_commit,
       load_top_commit_for_branch,
       commit_ids_between_commits,
-      load_all_commit_patches
+      load_patches
     );
   }
 }
@@ -64,12 +60,12 @@ fn get_request_from_stream(mut stream: &TcpStream) -> Option<HttpRequest> {
   parse_http_request(request_text)
 }
 
-#[cfg(test)]
-mod tests {
-  use crate::server::server::start_sync_server;
-
-  #[test]
-  fn test_start_server() {
-    start_sync_server();
-  }
-}
+// #[cfg(test)]
+// mod tests {
+//   use crate::server::server::start_sync_server;
+//
+//   #[test]
+//   fn test_start_server() {
+//     start_sync_server();
+//   }
+// }

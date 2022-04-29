@@ -415,6 +415,7 @@ dependencies = [
  "cached",
  "directories",
  "futures",
+ "lazy_static",
  "serde",
  "serde_json",
  "tiny_http",

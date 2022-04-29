@@ -13,6 +13,7 @@ futures = "0.3"
 ts-rs = "6.1"
 cached = "0.34.0"
 directories = "4.0"
+lazy_static = "1.4.0"
 
 [profile.release]
 strip = true  # Automatically strip symbols from the binary.

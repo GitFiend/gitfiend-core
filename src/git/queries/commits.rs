@@ -1,6 +1,7 @@
 use crate::git::git_types::Commit;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::stashes::load_stashes;
+use crate::git::queries::store::store_commits;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
@@ -96,6 +97,8 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commi
     let mut c = &mut commits[i];
     c.index = i;
   }
+
+  store_commits(&repo_path, &commits);
 
   Some(commits)
 }

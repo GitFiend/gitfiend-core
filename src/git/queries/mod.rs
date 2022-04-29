@@ -10,3 +10,4 @@ pub(crate) mod patches;
 mod refs;
 pub(crate) mod stashes;
 mod stashes_test;
+mod store;

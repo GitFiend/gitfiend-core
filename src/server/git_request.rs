@@ -105,6 +105,7 @@ pub fn handle_sync_request<'a, O: Deserialize<'a>, R: Serialize>(
     Ok(options) => {
       let commits = handler(&options);
 
+      // TODO: Unchecked unwrap.
       let serialized = serde_json::to_string(&commits).unwrap();
 
       let response = format!(
@@ -113,6 +114,7 @@ pub fn handle_sync_request<'a, O: Deserialize<'a>, R: Serialize>(
         serialized
       );
 
+      // TODO: Unchecked unwrap.
       stream.write(response.as_bytes()).unwrap();
       stream.flush().unwrap();
     }

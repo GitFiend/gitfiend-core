@@ -44,6 +44,14 @@ fn read_patches_from_file<P: AsRef<Path>>(path: P) -> Result<Vec<Patch>, Box<dyn
   Ok(patches)
 }
 
-fn write_patches_to_file() {
+fn write_patches_to_file<P: AsRef<Path>>(
+  path: P,
+  patches: Vec<Patch>,
+) -> Result<(), Box<dyn Error>> {
   //
+
+  let mut file = File::create(path)?;
+
+  //
+  Ok(())
 }

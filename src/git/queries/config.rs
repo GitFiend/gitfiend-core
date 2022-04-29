@@ -1,10 +1,10 @@
 use crate::git::git_types::GitConfig;
 use crate::git::{run_git, RunGitOptions};
+use crate::map;
 use crate::parser::standard_parsers::UNTIL_LINE_END;
 use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
 use crate::{and, many, until_str, word};
-use crate::{map, Input};
 use std::collections::HashMap;
 
 const P_CONFIG: Parser<HashMap<String, String>> = map!(

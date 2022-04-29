@@ -7,9 +7,7 @@ use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
 use std::collections::HashMap;
 
-pub fn load_all_commit_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<Patch>>> {
-  load_patches_cache(&options.repo_path);
-
+fn load_patches_for_commits(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<Patch>>> {
   let out = run_git(RunGitOptions {
     args: [
       "log",
@@ -36,10 +34,28 @@ pub fn load_all_commit_patches(options: &ReqCommitsOptions) -> Option<HashMap<St
 }
 
 pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<Patch>>> {
-  let patches = load_all_commit_patches(&options)?;
-  let commits = load_commits_from_store(&options.repo_path);
+  let ReqCommitsOptions { repo_path, .. } = options;
 
-  write_patches_cache(&options.repo_path, &patches);
+  // What if we have no commits? Should always be ready at this point.
+  let commits = load_commits_from_store(&repo_path)?;
+
+  let mut commits_without_patches: Vec<&Commit> = Vec::new();
+
+  if let Some(patches) = load_patches_cache(&repo_path) {
+    for c in commits.iter() {
+      if !patches.contains_key(&c.id) {
+        commits_without_patches.push(c);
+      }
+    }
+  }
+
+  if commits_without_patches.len() > 0 {
+    //
+  }
+
+  let patches = load_patches_for_commits(&options)?;
+
+  write_patches_cache(&repo_path, &patches);
 
   Some(patches)
 }

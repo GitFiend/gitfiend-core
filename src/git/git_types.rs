@@ -1,9 +1,9 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use ts_rs::TS;
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct DateResult {
   pub ms: f32,
@@ -21,7 +21,7 @@ pub struct RefInfoPart {
   pub head: bool,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub enum RefType {
   Branch,
@@ -29,14 +29,14 @@ pub enum RefType {
   Stash,
 }
 
-#[derive(PartialEq, Eq, Debug, Serialize, TS)]
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub enum RefLocation {
   Local,
   Remote,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct Commit {
@@ -55,7 +55,7 @@ pub struct Commit {
   pub num_skipped: u32,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct RefInfo {
@@ -78,7 +78,7 @@ pub struct GitConfig {
   pub remotes: HashMap<String, String>,
 }
 
-#[derive(PartialEq, Eq, Debug, Serialize, TS)]
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub enum PatchType {
   A,
@@ -108,7 +108,7 @@ impl fmt::Display for PatchType {
   }
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct Patch {

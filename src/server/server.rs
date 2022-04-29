@@ -6,6 +6,7 @@ use crate::{
   load_top_commit_for_branch, requests,
 };
 
+use crate::git::queries::patches::cache::load_patches_cache;
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};
 

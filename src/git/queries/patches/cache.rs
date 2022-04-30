@@ -3,8 +3,9 @@ extern crate directories;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::{create_dir_all, File};
-use std::io::{BufReader, Write};
+use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 use directories::ProjectDirs;
 
@@ -58,10 +59,20 @@ fn get_file_name(repo_path: &String) -> String {
 fn read_patches_from_file<P: AsRef<Path>>(
   path: P,
 ) -> Result<HashMap<String, Vec<Patch>>, Box<dyn Error>> {
-  let file = File::open(path)?;
-  let reader = BufReader::new(file);
+  let now = Instant::now();
+  let file = File::open(&path)?;
 
-  let patches = serde_json::from_reader(reader)?;
+  let mut reader = BufReader::new(file);
+  let mut text = String::new();
+
+  reader.read_to_string(&mut text)?;
+
+  let patches = serde_json::from_str(&text)?;
+
+  println!(
+    "Took {}ms to read and parse patches",
+    now.elapsed().as_millis(),
+  );
 
   Ok(patches)
 }

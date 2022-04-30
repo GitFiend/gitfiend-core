@@ -1,9 +1,9 @@
 use crate::git::git_types::{Patch, PatchType};
+use crate::many;
 use crate::parser::standard_parsers::{UNSIGNED_INT, UNTIL_NUL, WS};
 use crate::parser::Parser;
 use crate::{and, map, until_parser};
 use crate::{character, or};
-use crate::{many, Input};
 
 #[derive(Debug, PartialEq)]
 pub struct PatchData {

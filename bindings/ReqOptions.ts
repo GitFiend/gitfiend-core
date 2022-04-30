@@ -1,2 +1,3 @@
-
-export interface ReqOptions { repoPath: string, }
+export interface ReqOptions {
+  repoPath: string;
+}

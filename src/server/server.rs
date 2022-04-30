@@ -1,11 +1,12 @@
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::patches::patches::load_patches;
 use crate::server::http::{parse_http_request, HttpRequest};
-use crate::{
-  commit_ids_between_commits, load_commits_and_stashes, load_head_commit,
-  load_top_commit_for_branch, requests,
-};
 
+use crate::git::queries::commits::{
+  commit_ids_between_commits, load_commits_and_stashes, load_head_commit,
+  load_top_commit_for_branch,
+};
+use crate::requests;
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};
 
@@ -59,13 +60,3 @@ fn get_request_from_stream(mut stream: &TcpStream) -> Option<HttpRequest> {
 
   parse_http_request(request_text)
 }
-
-// #[cfg(test)]
-// mod tests {
-//   use crate::server::server::start_sync_server;
-//
-//   #[test]
-//   fn test_start_server() {
-//     start_sync_server();
-//   }
-// }

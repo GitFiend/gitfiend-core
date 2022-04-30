@@ -1,2 +1,8 @@
-Generate typescript types with `cargo test`
-Release build: `cargo build --release`
+# GitFiend Server
+
+#### Generate typescript types
+`cargo test`
+
+#### Release build
+
+`cargo build --release`

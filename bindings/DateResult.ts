@@ -1,2 +1,4 @@
-
-export interface DateResult { ms: number, adjustment: number, }
+export interface DateResult {
+  ms: number;
+  adjustment: number;
+}

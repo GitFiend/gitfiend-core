@@ -1,2 +1,4 @@
-
-export interface TopCommitOptions { repoPath: string, branchName: string, }
+export interface TopCommitOptions {
+  repoPath: string;
+  branchName: string;
+}

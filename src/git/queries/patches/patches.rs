@@ -1,9 +1,9 @@
 use crate::git::git_types::{Commit, Patch};
+use crate::git::queries::commits::load_commits_and_stashes;
 use crate::git::queries::patches::cache::{load_patches_cache, write_patches_cache};
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::queries::store::load_commits_from_store;
 use crate::git::{run_git, RunGitOptions};
-use crate::load_commits_and_stashes;
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
 use std::collections::HashMap;

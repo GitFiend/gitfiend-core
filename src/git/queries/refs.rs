@@ -1,8 +1,8 @@
 use crate::git::git_types::{RefInfo, RefInfoPart, RefLocation, RefType};
+use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
-use crate::{or, Input};
 
 const REF_NAME_PARSER: Parser<String> =
   take_char_while!(|c: char| { !c.is_whitespace() && c != ',' && c != '(' && c != ')' });

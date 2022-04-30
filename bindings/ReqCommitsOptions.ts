@@ -1,2 +1,4 @@
-
-export interface ReqCommitsOptions { repoPath: string, numCommits: number, }
+export interface ReqCommitsOptions {
+  repoPath: string;
+  numCommits: number;
+}

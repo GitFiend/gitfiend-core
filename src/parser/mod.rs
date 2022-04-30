@@ -1,6 +1,6 @@
-use crate::Input;
+use crate::parser::input::Input;
 
-pub mod input;
+pub(crate) mod input;
 mod parser_types;
 pub(crate) mod standard_parsers;
 
@@ -65,7 +65,7 @@ PARSE FAILURE AT POSITION {}:
 #[macro_export]
 macro_rules! map {
   ($parser:expr, $function:expr) => {
-    |input: &mut $crate::Input| {
+    |input: &mut crate::parser::input::Input| {
       let result = $parser(input);
 
       if result.is_some() {

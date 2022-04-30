@@ -3,7 +3,6 @@ use crate::git::queries::refs::make_ref_info;
 use crate::git::queries::{RefInfo, RefInfoPart, P_OPTIONAL_REFS};
 use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, WS};
 use crate::parser::Parser;
-use crate::Input;
 use crate::{and, character, many, map, or, rep_parser_sep, take_char_while, until_str};
 
 const END: &str = "4a41380f-a4e8-4251-9ca2-bf55186ed32a";

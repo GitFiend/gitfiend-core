@@ -118,7 +118,7 @@ pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
       "--date=raw",
     ],
     repo_path,
-  });
+  })?;
 
   println!(
     "Took {}ms to request {} commits from Git",
@@ -127,12 +127,13 @@ pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
   );
 
   let now = Instant::now();
-  let result = parse_all(P_COMMITS, out?.as_str());
+  let result = parse_all(P_COMMITS, &out);
 
   println!(
-    "Took {}ms to parse {} commits",
+    "Took {}ms to parse {} commits. Length {}",
     now.elapsed().as_millis(),
-    num
+    num,
+    out.len()
   );
 
   result

@@ -70,8 +70,9 @@ fn read_patches_from_file<P: AsRef<Path>>(
   let patches = serde_json::from_str(&text)?;
 
   println!(
-    "Took {}ms to read and parse patches",
+    "Took {}ms to read and parse patches. Length {}.",
     now.elapsed().as_millis(),
+    text.len()
   );
 
   Ok(patches)

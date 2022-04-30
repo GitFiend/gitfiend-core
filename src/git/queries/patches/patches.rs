@@ -57,6 +57,10 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
   for c in stashes_or_merges_without_patches.into_iter() {
     if let Some((id, patches)) = load_patches_for_commit(repo_path, c) {
       new_patches.insert(id, patches);
+    } else {
+      // TODO: Some commits have no patches. We should probably save it anyway?
+      // Maybe not if we aren't sure our method is correct.
+      println!("Failed to get patches for commit {}", c.id);
     }
   }
 
@@ -122,30 +126,37 @@ fn load_patches_for_commit(repo_path: &String, commit: &Commit) -> Option<(Strin
   let name_status = String::from("--name-status");
   let z = String::from("-z");
 
-  let args = match commit {
+  let out = match commit {
     Commit {
       stash_id: None,
       is_merge: true,
       id,
       ..
-    } => [diff, name_status, z, format!("{}^1 {}", id, id)],
+    } => run_git(RunGitOptions {
+      repo_path,
+      args: [diff, name_status, z, format!("{}^1", id), id.to_string()],
+    }),
     Commit {
       stash_id: Some(_),
       parent_ids,
       id,
       ..
-    } => [diff, format!("{}..{}", parent_ids[0], id), name_status, z],
-    Commit { id, .. } => [
-      diff,
-      format!("4b825dc642cb6eb9a060e54bf8d69288fbee4904..{}", id),
-      name_status,
-      z,
-    ],
+    } => run_git(RunGitOptions {
+      repo_path,
+      args: [diff, format!("{}..{}", parent_ids[0], id), name_status, z],
+    }),
+    Commit { id, .. } => run_git(RunGitOptions {
+      repo_path,
+      args: [
+        diff,
+        format!("4b825dc642cb6eb9a060e54bf8d69288fbee4904..{}", id),
+        name_status,
+        z,
+      ],
+    }),
   };
 
-  let out = run_git(RunGitOptions { repo_path, args })?;
-
-  let patch_data = parse_all(P_PATCHES, &out)?;
+  let patch_data = parse_all(P_PATCHES, &out?)?;
 
   Some((
     commit.id.clone(),

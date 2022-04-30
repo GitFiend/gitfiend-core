@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Output, Stdio};
 
@@ -5,12 +6,20 @@ pub(crate) mod git_types;
 pub(crate) mod queries;
 
 #[derive(Clone, Debug)]
-pub struct RunGitOptions<'a, const COUNT: usize> {
-  pub args: [&'a str; COUNT],
+pub struct RunGitOptions<'a, I, S>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
+  pub args: I,
   pub repo_path: &'a String,
 }
 
-pub fn run_git<const COUNT: usize>(options: RunGitOptions<COUNT>) -> Option<String> {
+pub fn run_git<I, S>(options: RunGitOptions<I, S>) -> Option<String>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
   let out = Command::new("git")
     .args(options.args)
     .current_dir(options.repo_path)
@@ -33,7 +42,11 @@ pub fn run_git<const COUNT: usize>(options: RunGitOptions<COUNT>) -> Option<Stri
 
 // We should probably use a separate function to the above run_get if we want progress.
 // TODO: unused/untested.
-pub fn _run_git_with_progress<const COUNT: usize>(options: RunGitOptions<COUNT>) {
+pub fn _run_git_with_progress<I, S>(options: RunGitOptions<I, S>)
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
   let mut cmd = Command::new("git")
     .args(options.args)
     .current_dir(options.repo_path)

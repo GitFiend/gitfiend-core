@@ -78,7 +78,7 @@ pub struct GitConfig {
   pub remotes: HashMap<String, String>,
 }
 
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, TS)]
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub enum PatchType {
   A,
@@ -108,7 +108,7 @@ impl fmt::Display for PatchType {
   }
 }
 
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct Patch {

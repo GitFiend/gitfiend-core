@@ -35,7 +35,7 @@ pub const P_PATCHES_WITH_COMMIT_ID: Parser<(String, Vec<Patch>)> = map!(
 pub const P_MANY_PATCHES_WITH_COMMIT_IDS: Parser<Vec<(String, Vec<Patch>)>> =
   many!(P_PATCHES_WITH_COMMIT_ID);
 
-fn map_data_to_patch(data: PatchData, commit_id: String) -> Patch {
+pub fn map_data_to_patch(data: PatchData, commit_id: String) -> Patch {
   let PatchData {
     patch_type,
     old_file,
@@ -107,7 +107,7 @@ const P_OTHER_PATCH: Parser<PatchData> = map!(and!(P_STATUS, UNTIL_NUL, UNTIL_NU
   String,
   String
 )| {
-  let (t, o, n) = result;
+  let (t, _, n) = result;
   let type_str = t.to_string();
 
   PatchData {

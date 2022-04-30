@@ -1,7 +1,9 @@
 use crate::git::git_types::{Commit, Patch};
 use crate::git::queries::commits::load_commits_and_stashes;
 use crate::git::queries::patches::cache::{load_patches_cache, write_patches_cache};
-use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
+use crate::git::queries::patches::patch_parsers::{
+  map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
+};
 use crate::git::queries::store::load_commits_from_store;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
@@ -31,11 +33,30 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
         }
       }
     }
+  } else {
+    // No existing patch cache.
+    commits_without_patches.extend(
+      commits
+        .iter()
+        .filter(|c| !c.is_merge && c.stash_id.is_none()),
+    );
+
+    stashes_or_merges_without_patches.extend(
+      commits
+        .iter()
+        .filter(|c| c.is_merge || c.stash_id.is_some()),
+    );
   }
 
   if commits_without_patches.len() > 0 {
     if let Some(patches) = load_normal_patches(&commits_without_patches, &options) {
       new_patches.extend(patches);
+    }
+  }
+
+  for c in stashes_or_merges_without_patches.into_iter() {
+    if let Some((id, patches)) = load_patches_for_commit(repo_path, c) {
+      new_patches.insert(id, patches);
     }
   }
 
@@ -69,16 +90,6 @@ fn load_normal_patches(
 
     let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
 
-    // let mut map = HashMap::new();
-
-    // for (id, patches) in commit_patches.into_iter() {
-    //   map.insert(id, patches);
-    // }
-
-    // map.extend(commit_patches);
-    // commit_patches.into_iter().collect();
-
-    // I think we can do this to convert the vec to hashmap?
     Some(commit_patches.into_iter().collect())
   }
 }
@@ -103,14 +114,44 @@ fn load_all_patches_for_normal_commits(
 
   let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
 
-  // let mut map = HashMap::new();
-  //
-  // for (id, patches) in commit_patches.into_iter() {
-  //   map.insert(id, patches);
-  // }
-  //
-  // Some(map)
-
-  // I think we can do this to convert the vec to hashmap?
   Some(commit_patches.into_iter().collect())
+}
+
+fn load_patches_for_commit(repo_path: &String, commit: &Commit) -> Option<(String, Vec<Patch>)> {
+  let diff = String::from("diff");
+  let name_status = String::from("--name-status");
+  let z = String::from("-z");
+
+  let args = match commit {
+    Commit {
+      stash_id: None,
+      is_merge: true,
+      id,
+      ..
+    } => [diff, name_status, z, format!("{}^1 {}", id, id)],
+    Commit {
+      stash_id: Some(_),
+      parent_ids,
+      id,
+      ..
+    } => [diff, format!("{}..{}", parent_ids[0], id), name_status, z],
+    Commit { id, .. } => [
+      diff,
+      format!("4b825dc642cb6eb9a060e54bf8d69288fbee4904..{}", id),
+      name_status,
+      z,
+    ],
+  };
+
+  let out = run_git(RunGitOptions { repo_path, args })?;
+
+  let patch_data = parse_all(P_PATCHES, &out)?;
+
+  Some((
+    commit.id.clone(),
+    patch_data
+      .into_iter()
+      .map(|data| map_data_to_patch(data, commit.id.clone()))
+      .collect(),
+  ))
 }

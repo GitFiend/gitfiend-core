@@ -17,7 +17,9 @@ pub fn write_patches_cache(
   let cache_dir = get_cache_dir()?;
   let file_name = get_file_name(repo_path);
 
-  write_patches_to_file(cache_dir.join(file_name), patches).ok()
+  let full_path = cache_dir.join(file_name);
+
+  write_patches_to_file(full_path, patches).ok()
 }
 
 pub fn load_patches_cache(repo_path: &String) -> Option<HashMap<String, Vec<Patch>>> {
@@ -46,7 +48,9 @@ fn get_file_name(repo_path: &String) -> String {
     .iter()
     .map(|p| p.to_str().unwrap_or(""))
     .collect::<Vec<&str>>()
-    .join("");
+    .join("")
+    .replace("\\", "")
+    .replace("/", "");
 
   format!("{}.json", id)
 }

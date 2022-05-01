@@ -1,4 +1,3 @@
-use crate::parser::input::Input;
 use crate::parser::Parser;
 use crate::{
   and, conditional_char, map, optional_take_char_while, or, take_char_while, until_parser, word,

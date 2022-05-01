@@ -1,6 +1,7 @@
 use crate::parser::Parser;
 use crate::{
-  and, conditional_char, map, optional_take_char_while, or, take_char_while, until_parser, word,
+  and, conditional_char, map, optional_take_char_while, or, take_char_while, until_parser,
+  until_parser_keep, word,
 };
 
 pub const ANY_WORD: Parser<String> = take_char_while!(|c: char| { c.is_alphanumeric() });
@@ -15,6 +16,8 @@ pub const WS_STR: Parser<&str> = map!(WS, |_: String| { "" });
 
 pub const LINE_END: Parser<&str> = or!(word!("\n"), word!("\r\n"));
 pub const UNTIL_LINE_END: Parser<String> = until_parser!(LINE_END);
+pub const UNTIL_LINE_END_KEEP: Parser<(String, &str)> =
+  and!(until_parser_keep!(LINE_END), LINE_END);
 
 pub const UNTIL_NUL: Parser<String> =
   until_parser!(conditional_char!(|c: char| { c.is_control() }));

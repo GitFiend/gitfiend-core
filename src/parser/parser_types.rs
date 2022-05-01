@@ -188,6 +188,32 @@ macro_rules! until_parser {
   };
 }
 
+// Parses until parser is found. Fails is parser is not found.
+// Only text before parser is consumed, end parser result is not included
+#[macro_export]
+macro_rules! until_parser_keep {
+  ($parser:expr) => {
+    |input: &mut crate::parser::input::Input| -> Option<String> {
+      let start_pos = input.position;
+
+      while !input.end() {
+        let current_pos = input.position;
+        let result = $parser(input);
+
+        if result.is_some() {
+          input.set_position(current_pos);
+
+          return Some(String::from_iter(&input.code[start_pos..current_pos]));
+        }
+
+        input.advance();
+      }
+
+      return None;
+    }
+  };
+}
+
 #[macro_export]
 macro_rules! many {
   ($parser:expr) => {
@@ -246,7 +272,7 @@ macro_rules! rep_parser_sep {
 mod tests {
   use crate::parser::input::Input;
   use crate::parser::standard_parsers::WS;
-  use crate::parser::{parse_all, Parser, _parse_part};
+  use crate::parser::{parse_all, Parser, _parse_part, run_parser, ParseOptions};
 
   pub const P_3: Parser<char> = character!('3');
   const ALL: Parser<(char, char, char)> = and!(P_3, P_3, P_3);
@@ -372,5 +398,28 @@ mod tests {
 
     assert_eq!(result.is_some(), true);
     assert_eq!(result.unwrap(), "aaaaaaa");
+  }
+
+  #[test]
+  fn test_until_parser_keep() {
+    let parser = and!(until_parser_keep!(word!("omg")), word!("omg"));
+
+    let result = parse_all(parser, "aaaaaaaomg");
+
+    assert_eq!(result.is_some(), true);
+    assert_eq!(result.unwrap(), ("aaaaaaa".to_string(), "omg"));
+
+    let parser = until_parser_keep!(word!("omg"));
+
+    let result = run_parser(
+      parser,
+      "aaaaaaaa",
+      ParseOptions {
+        must_parse_all: true,
+        print_error: false,
+      },
+    );
+
+    assert!(result.is_none());
   }
 }

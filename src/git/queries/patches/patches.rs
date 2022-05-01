@@ -5,6 +5,7 @@ use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
 use crate::git::queries::store::load_commits_from_store;
+use crate::git::queries::COMMIT_0_ID;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
@@ -69,7 +70,6 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
   Some(new_patches)
 }
 
-// TODO: This isn't tested.
 fn load_normal_patches(
   commits_without_patches: &Vec<&Commit>,
   options: &ReqCommitsOptions,
@@ -147,12 +147,7 @@ fn load_patches_for_commit(repo_path: &String, commit: &Commit) -> Option<(Strin
     }),
     Commit { id, .. } => run_git(RunGitOptions {
       repo_path,
-      args: [
-        diff,
-        format!("4b825dc642cb6eb9a060e54bf8d69288fbee4904..{}", id),
-        name_status,
-        z,
-      ],
+      args: [diff, format!("{}..{}", COMMIT_0_ID, id), name_status, z],
     }),
   };
 

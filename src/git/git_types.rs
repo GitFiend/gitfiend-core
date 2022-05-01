@@ -10,17 +10,6 @@ pub struct DateResult {
   pub adjustment: i32,
 }
 
-pub struct RefInfoPart {
-  pub id: String,
-  pub location: RefLocation,
-  pub full_name: String,
-  pub short_name: String,
-  pub remote_name: Option<String>,
-  pub sibling_id: Option<String>,
-  pub ref_type: RefType,
-  pub head: bool,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub enum RefType {
@@ -118,4 +107,50 @@ pub struct Patch {
   pub patch_type: PatchType,
   pub id: String,
   pub is_image: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct Hunk {
+  pub old_line_range: HunkRange,
+  pub new_line_range: HunkRange,
+  pub context_line: String,
+  pub lines: Vec<HunkLine>,
+  pub index: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct HunkLine {
+  pub status: HunkLineStatus,
+  pub old_num: Option<u32>,
+  pub new_num: Option<u32>,
+  pub hunk_index: u32,
+  pub text: String,
+  pub index: u32,
+  pub line_ending: String,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub enum HunkLineStatus {
+  #[serde(rename = "+")]
+  Added,
+  #[serde(rename = "-")]
+  Removed,
+  #[serde(rename = " ")]
+  Unchanged,
+  HeaderStart,
+  HeaderEnd,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct HunkRange {
+  pub start: u32,
+  pub length: u32,
 }

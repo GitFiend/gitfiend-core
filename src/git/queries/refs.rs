@@ -1,4 +1,4 @@
-use crate::git::git_types::{RefInfo, RefInfoPart, RefLocation, RefType};
+use crate::git::git_types::{RefInfo, RefLocation, RefType};
 use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
@@ -109,6 +109,17 @@ pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: f32) -> RefInfo
       time,
     },
   }
+}
+
+pub struct RefInfoPart {
+  pub id: String,
+  pub location: RefLocation,
+  pub full_name: String,
+  pub short_name: String,
+  pub remote_name: Option<String>,
+  pub sibling_id: Option<String>,
+  pub ref_type: RefType,
+  pub head: bool,
 }
 
 #[cfg(test)]

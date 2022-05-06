@@ -14,7 +14,7 @@ pub struct ReqHunkOptions {
 }
 
 pub fn load_hunk_lines(options: ReqHunkOptions) {
-  let out = run_git(RunGitOptions {
+  let _out = run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options),
   });

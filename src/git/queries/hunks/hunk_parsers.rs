@@ -1,9 +1,6 @@
-use std::fmt::format;
-
-use crate::git::git_types::HunkRange;
-use crate::parser::standard_parsers::{SIGNED_INT, UNTIL_LINE_END, WS};
+use crate::parser::standard_parsers::{UNTIL_LINE_END, WS};
 use crate::parser::Parser;
-use crate::{and, character, map, or, word};
+use crate::{and, map, or, word};
 
 const P_DIFF_LINE: Parser<(&str, String)> = and!(word!("diff"), UNTIL_LINE_END);
 
@@ -47,10 +44,6 @@ const P_DIFF_HEADER: Parser<((&str, String), String, (&str, String), FileInfo)> 
 
 #[cfg(test)]
 mod tests {
-  use crate::git::git_types::HunkRange;
-  use crate::git::queries::hunks::hunk_line_parsers::{
-    generate_line_ranges_text, P_HUNK_LINE_RANGE, P_HUNK_LINE_RANGES,
-  };
   use crate::git::queries::hunks::hunk_parsers::P_DIFF_HEADER;
   use crate::parser::parse_all;
 

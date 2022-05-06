@@ -26,7 +26,7 @@ pub const UNTIL_END: Parser<String> = optional_take_char_while!(|c: char| { c !=
 
 #[cfg(test)]
 mod tests {
-  use crate::parser::input::Input;
+  
   use crate::parser::standard_parsers::{
     ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, UNTIL_NUL, WS,
   };

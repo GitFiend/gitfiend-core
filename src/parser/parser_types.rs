@@ -79,8 +79,6 @@ macro_rules! word {
 macro_rules! conditional_char {
   ($function:expr) => {
     |input: &mut crate::parser::input::Input| -> Option<char> {
-      let start_pos = input.position;
-
       let c = input.next_char();
 
       if $function(c) {
@@ -188,7 +186,7 @@ macro_rules! until_parser {
   };
 }
 
-// Parses until parser is found. Fails is parser is not found.
+// Parses until parser is found. Fails if parser is not found.
 // Only text before parser is consumed, end parser result is not included
 #[macro_export]
 macro_rules! until_parser_keep {
@@ -210,6 +208,33 @@ macro_rules! until_parser_keep {
       }
 
       return None;
+    }
+  };
+}
+
+// Parses until parser is found.
+// Only text before parser is consumed, end parser result is not included
+// Always succeeds
+#[macro_export]
+macro_rules! until_parser_keep_happy {
+  ($parser:expr) => {
+    |input: &mut crate::parser::input::Input| -> Option<String> {
+      let start_pos = input.position;
+
+      while !input.end() {
+        let current_pos = input.position;
+        let result = $parser(input);
+
+        if result.is_some() {
+          input.set_position(current_pos);
+
+          break;
+        }
+
+        input.advance();
+      }
+
+      return Some(String::from_iter(&input.code[start_pos..input.position]));
     }
   };
 }

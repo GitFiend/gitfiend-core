@@ -127,7 +127,7 @@ pub struct HunkLine {
   pub status: HunkLineStatus,
   pub old_num: Option<u32>,
   pub new_num: Option<u32>,
-  pub hunk_index: u32,
+  pub hunk_index: i32,
   pub text: String,
   pub index: u32,
   pub line_ending: String,

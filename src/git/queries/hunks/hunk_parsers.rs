@@ -2,7 +2,7 @@ use crate::git::git_types::{Hunk, HunkLine, HunkLineStatus, HunkRange};
 use crate::git::queries::hunks::hunk_line_parsers::{Line, P_HUNK_LINES, P_HUNK_LINE_RANGES};
 use crate::parser::standard_parsers::{UNTIL_LINE_END, WS};
 use crate::parser::Parser;
-use crate::{and, map, or, word};
+use crate::{and, many, map, or, word};
 
 const P_DIFF_LINE: Parser<(&str, String)> = and!(word!("diff"), UNTIL_LINE_END);
 
@@ -41,8 +41,10 @@ const P_FILE_INFO: Parser<FileInfo> = or!(
   map!(P_BINARY_INFO, |_: _| FileInfo { is_binary: true })
 );
 
-const P_DIFF_HEADER: Parser<((&str, String), String, (&str, String), FileInfo)> =
-  and!(P_DIFF_LINE, P_OPTIONAL_HEADER, P_INDEX_LINE, P_FILE_INFO);
+const P_DIFF_HEADER: Parser<FileInfo> = map!(
+  and!(P_DIFF_LINE, P_OPTIONAL_HEADER, P_INDEX_LINE, P_FILE_INFO),
+  |res: ((&str, String), String, (&str, String), FileInfo)| { res.3 }
+);
 
 const P_HUNK: Parser<Hunk> = map!(
   and!(P_HUNK_LINE_RANGES, UNTIL_LINE_END, P_HUNK_LINES),
@@ -58,12 +60,55 @@ const P_HUNK: Parser<Hunk> = map!(
       new_line_range,
       context_line: String::from(""),
       lines: get_hunk_lines(old_num, new_num, res.2),
-      index: 0,
+      index: -1,
     };
 
     hunk
   }
 );
+
+pub const P_HUNKS: Parser<Vec<Hunk>> = map!(and!(P_DIFF_HEADER, many!(P_HUNK)), |res: (
+  FileInfo,
+  Vec<Hunk>
+)| {
+  if res.0.is_binary {
+    return vec![Hunk {
+      old_line_range: HunkRange {
+        start: 0,
+        length: 0,
+      },
+      new_line_range: HunkRange {
+        start: 0,
+        length: 0,
+      },
+      context_line: String::from(""),
+      lines: Vec::new(),
+      index: 0,
+    }];
+  }
+
+  res
+    .1
+    .into_iter()
+    .enumerate()
+    .map(|(i, mut hunk)| {
+      let index = i as i32;
+
+      hunk.index = index;
+
+      hunk.lines = hunk
+        .lines
+        .into_iter()
+        .map(|mut line| {
+          line.hunk_index = index;
+          line
+        })
+        .collect();
+
+      hunk
+    })
+    .collect()
+});
 
 fn get_hunk_lines(old_num: u32, new_num: u32, lines: Vec<Line>) -> Vec<HunkLine> {
   let mut old_num = old_num;
@@ -101,7 +146,7 @@ fn get_hunk_lines(old_num: u32, new_num: u32, lines: Vec<Line>) -> Vec<HunkLine>
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::hunks::hunk_parsers::P_DIFF_HEADER;
+  use crate::git::queries::hunks::hunk_parsers::{P_DIFF_HEADER, P_HUNK};
   use crate::parser::parse_all;
 
   #[test]
@@ -114,5 +159,21 @@ index 4296fe4..5b0d387 100644
     let result = parse_all(P_DIFF_HEADER, diff_header);
 
     assert!(result.is_some());
+  }
+
+  #[test]
+  fn test_p_hunk() {
+    let line_range = "@@ -1,19 +1,17 @@";
+    let hunk_line1 = " describe('test commits state', () => {\r\n";
+    let hunk_line2 = "\n";
+    let hunk_line3 = "-  it(`can load ${pathToThisRepo}`, async () => {\r\n";
+    let hunk_line4 = "+  it('todo', () => {";
+    let hunk_lines = format!("{hunk_line1}{hunk_line2}{hunk_line3}{hunk_line4}");
+
+    let hunk_text = format!("{}\n{}", line_range, hunk_lines);
+
+    let out = parse_all(P_HUNK, &hunk_text);
+
+    assert!(out.is_some());
   }
 }

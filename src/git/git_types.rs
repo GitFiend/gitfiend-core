@@ -117,7 +117,7 @@ pub struct Hunk {
   pub new_line_range: HunkRange,
   pub context_line: String,
   pub lines: Vec<HunkLine>,
-  pub index: u32,
+  pub index: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

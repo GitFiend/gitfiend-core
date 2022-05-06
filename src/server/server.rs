@@ -6,6 +6,7 @@ use crate::git::queries::commits::{
   commit_ids_between_commits, load_commits_and_stashes, load_head_commit,
   load_top_commit_for_branch,
 };
+use crate::git::queries::hunks::hunks::load_hunks;
 use crate::requests;
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};
@@ -46,7 +47,8 @@ fn handle_connection(stream: TcpStream) {
       load_head_commit,
       load_top_commit_for_branch,
       commit_ids_between_commits,
-      load_patches
+      load_patches,
+      load_hunks
     );
   }
 }

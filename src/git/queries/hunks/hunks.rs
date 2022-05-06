@@ -15,7 +15,7 @@ pub struct ReqHunkOptions {
   pub patch: Patch,
 }
 
-pub fn load_commit_hunks(options: ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
+pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
   let out = run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options),

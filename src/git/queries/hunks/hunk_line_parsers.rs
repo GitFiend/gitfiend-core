@@ -1,7 +1,5 @@
 use crate::git::git_types::{HunkLine, HunkLineStatus, HunkRange};
-use crate::parser::standard_parsers::{
-  LINE_END, SIGNED_INT, UNTIL_LINE_END, UNTIL_LINE_END_KEEP, WS, WS_STR,
-};
+use crate::parser::standard_parsers::{LINE_END, SIGNED_INT, UNTIL_LINE_END, WS, WS_STR};
 use crate::parser::Parser;
 use crate::{and, character, many, map, or, until_parser_keep_happy, word};
 
@@ -46,10 +44,10 @@ pub fn generate_line_ranges_text(range: &(HunkRange, HunkRange)) -> String {
   )
 }
 
-struct Line {
-  status: HunkLineStatus,
-  text: String,
-  line_ending: String,
+pub struct Line {
+  pub status: HunkLineStatus,
+  pub text: String,
+  pub line_ending: String,
 }
 
 pub const P_LINE_AND_END: Parser<(String, &str)> =
@@ -107,28 +105,56 @@ const P_LINE_BREAK: Parser<Line> = map!(LINE_END, |res: &str| {
   }
 });
 
-const P_HUNK_LINE: Parser<HunkLine> = map!(
-  or!(
-    P_LINE_BREAK,
-    P_UNCHANGED_LINE,
-    P_ADDED_LINE,
-    P_REMOVED_LINE,
-    P_NO_NEW_LINE
-  ),
-  |line: Line| {
+const P_HUNK_LINE: Parser<Line> = or!(
+  P_LINE_BREAK,
+  P_UNCHANGED_LINE,
+  P_ADDED_LINE,
+  P_REMOVED_LINE,
+  P_NO_NEW_LINE
+);
+
+impl HunkLine {
+  pub fn from_line(
+    line: Line,
+    index: u32,
+    hunk_index: i32,
+    old_num: Option<u32>,
+    new_num: Option<u32>,
+  ) -> HunkLine {
     HunkLine {
       status: line.status,
-      old_num: None,
-      new_num: None,
-      hunk_index: -1,
+      old_num,
+      new_num,
+      hunk_index,
       text: line.text,
-      index: 0,
+      index,
       line_ending: line.line_ending,
     }
   }
-);
+}
 
-const P_HUNK_LINES: Parser<Vec<HunkLine>> = many!(P_HUNK_LINE);
+// const P_HUNK_LINE2: Parser<HunkLine> = map!(
+//   or!(
+//     P_LINE_BREAK,
+//     P_UNCHANGED_LINE,
+//     P_ADDED_LINE,
+//     P_REMOVED_LINE,
+//     P_NO_NEW_LINE
+//   ),
+//   |line: Line| {
+//     HunkLine {
+//       status: line.status,
+//       old_num: None,
+//       new_num: None,
+//       hunk_index: -1,
+//       text: line.text,
+//       index: 0,
+//       line_ending: line.line_ending,
+//     }
+//   }
+// );
+
+pub const P_HUNK_LINES: Parser<Vec<Line>> = many!(P_HUNK_LINE);
 
 #[cfg(test)]
 mod tests {

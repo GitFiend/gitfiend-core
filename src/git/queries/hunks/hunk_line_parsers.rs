@@ -131,6 +131,18 @@ impl HunkLine {
       line_ending: line.line_ending,
     }
   }
+
+  pub fn header_from_type(status: HunkLineStatus, hunk_index: i32) -> HunkLine {
+    HunkLine {
+      status,
+      old_num: None,
+      new_num: None,
+      hunk_index,
+      text: String::from(""),
+      index: 0,
+      line_ending: String::from("\n"),
+    }
+  }
 }
 
 // const P_HUNK_LINE2: Parser<HunkLine> = map!(

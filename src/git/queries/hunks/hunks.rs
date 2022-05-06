@@ -1,6 +1,8 @@
-use crate::git::git_types::{Commit, Patch};
+use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
+use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::COMMIT_0_ID;
 use crate::git::{run_git, RunGitOptions};
+use crate::parser::parse_all;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -13,13 +15,16 @@ pub struct ReqHunkOptions {
   pub patch: Patch,
 }
 
-pub fn load_hunk_lines(options: ReqHunkOptions) {
-  let _out = run_git(RunGitOptions {
+pub fn load_commit_hunks(options: ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
+  let out = run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options),
-  });
+  })?;
 
-  //
+  let hunks = parse_all(P_HUNKS, &out)?;
+  let hunk_lines = flatten_hunks(&hunks);
+
+  Some((hunks, hunk_lines))
 }
 
 pub fn load_hunks_args(options: &ReqHunkOptions) -> [String; 4] {
@@ -43,4 +48,31 @@ pub fn load_hunks_args(options: &ReqHunkOptions) -> [String; 4] {
   } else {
     [diff, format!("{}..{}", COMMIT_0_ID, id), dashes, old_file]
   }
+}
+
+fn flatten_hunks(hunks: &Vec<Hunk>) -> Vec<HunkLine> {
+  let mut lines: Vec<HunkLine> = Vec::new();
+
+  if hunks.len() == 0 {
+    return lines;
+  }
+
+  for hunk in hunks.iter() {
+    lines.push(HunkLine::header_from_type(
+      HunkLineStatus::HeaderStart,
+      hunk.index,
+    ));
+    lines.push(HunkLine::header_from_type(
+      HunkLineStatus::HeaderEnd,
+      hunk.index,
+    ));
+
+    for line in hunk.lines.iter() {
+      lines.push(line.clone());
+    }
+  }
+
+  lines.push(HunkLine::header_from_type(HunkLineStatus::HeaderStart, -1));
+
+  lines
 }

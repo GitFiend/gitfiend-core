@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
+use std::error::Error;
 use std::io::prelude::*;
 use std::net::TcpStream;
 use ts_rs::TS;
@@ -22,29 +23,23 @@ pub struct ReqCommitsOptions {
 pub fn handle_sync_request<'a, O: Deserialize<'a>, R: Serialize>(
   body: &'a str,
   mut stream: TcpStream,
-  handler: fn(&O) -> Option<R>,
-) {
-  match from_str(body) {
-    Ok(options) => {
-      let commits = handler(&options);
+  handler: fn(&O) -> R,
+) -> Result<(), Box<dyn Error>> {
+  let options = from_str(body)?;
 
-      // TODO: Unchecked unwrap.
-      let serialized = serde_json::to_string(&commits).unwrap();
+  let handler_result = handler(&options);
+  let serialized = serde_json::to_string(&handler_result)?;
 
-      let response = format!(
-        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-        serialized.len(),
-        serialized
-      );
+  let response = format!(
+    "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+    serialized.len(),
+    serialized
+  );
 
-      // TODO: Unchecked unwrap.
-      stream.write(response.as_bytes()).unwrap();
-      stream.flush().unwrap();
-    }
-    Err(e) => {
-      println!("{}", e);
-    }
-  };
+  stream.write(response.as_bytes())?;
+  stream.flush()?;
+
+  Ok(())
 }
 
 #[macro_export]
@@ -56,7 +51,9 @@ macro_rules! requests {
     match url {
       $(
       concat!("/", stringify!($handler)) => {
-        crate::server::git_request::handle_sync_request(body, $stream, $handler)
+        if let Err(e) = crate::server::git_request::handle_sync_request(body, $stream, $handler) {
+           println!("{}", e);
+        }
       },
       )*
       unknown_url => {

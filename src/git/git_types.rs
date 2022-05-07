@@ -158,7 +158,9 @@ pub struct HunkRange {
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub enum WipPatchType {
+  #[serde(rename = "?")]
   Question,
+  #[serde(rename = " ")]
   Empty,
   A,
   C,

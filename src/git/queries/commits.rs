@@ -179,3 +179,17 @@ fn commit_ids_between_commits_inner(
 
   parse_all(P_ID_LIST, &out)
 }
+
+// Use this as a fallback when calculation fails.
+pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
+  if let Some(out) = run_git(RunGitOptions {
+    repo_path: &options.repo_path,
+    args: ["log", "HEAD", "--not", "--remotes", "--pretty=format:%H"],
+  }) {
+    if let Some(ids) = parse_all(P_ID_LIST, &out) {
+      return ids;
+    }
+  }
+
+  Vec::new()
+}

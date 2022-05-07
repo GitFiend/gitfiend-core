@@ -1,5 +1,5 @@
 use crate::git::queries::commits::{
-  commit_ids_between_commits, load_commits_and_stashes, load_head_commit,
+  commit_ids_between_commits, get_un_pushed_commits, load_commits_and_stashes, load_head_commit,
   load_top_commit_for_branch,
 };
 use crate::git::queries::config::load_full_config;
@@ -103,7 +103,8 @@ pub fn start_async_server() {
       load_patches,
       load_hunks,
       is_merge_in_progress,
-      load_wip_patches
+      load_wip_patches,
+      get_un_pushed_commits
     );
   }
 }

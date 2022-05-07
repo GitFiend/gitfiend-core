@@ -154,3 +154,31 @@ pub struct HunkRange {
   pub start: u32,
   pub length: u32,
 }
+
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub enum WipPatchType {
+  Question,
+  Empty,
+  A,
+  C,
+  D,
+  M,
+  R,
+  U,
+}
+
+impl fmt::Display for WipPatchType {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match *self {
+      WipPatchType::Question => write!(f, "?"),
+      WipPatchType::Empty => write!(f, " "),
+      WipPatchType::A => write!(f, "A"),
+      WipPatchType::C => write!(f, "C"),
+      WipPatchType::D => write!(f, "D"),
+      WipPatchType::M => write!(f, "M"),
+      WipPatchType::R => write!(f, "R"),
+      WipPatchType::U => write!(f, "U"),
+    }
+  }
+}

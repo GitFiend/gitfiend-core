@@ -40,6 +40,8 @@ fn handle_connection(stream: TcpStream) {
 
   if result.is_some() {
     let request = result.unwrap();
+    println!("Body: {}", &request.body);
+
     requests!(
       request,
       stream,
@@ -57,11 +59,21 @@ fn handle_connection(stream: TcpStream) {
 }
 
 fn get_request_from_stream(mut stream: &TcpStream) -> Option<HttpRequest> {
-  let mut buffer = [0; 2048];
+  let mut buffer = [0; 20048];
 
-  stream.read(&mut buffer).unwrap();
+  if let Err(e) = stream.read(&mut buffer) {
+    println!("Failed to read tcp stream: {}", e);
+
+    return None;
+  }
 
   let request_text = String::from_utf8_lossy(&buffer[..]).to_string();
+
+  println!(
+    "request_text: {}, length: {}",
+    request_text,
+    request_text.len()
+  );
 
   parse_http_request(request_text)
 }

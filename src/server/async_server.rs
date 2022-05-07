@@ -3,6 +3,10 @@ use crate::git::queries::commits::{
   load_top_commit_for_branch,
 };
 use crate::git::queries::config::load_full_config;
+use crate::git::queries::hunks::hunks::load_hunks;
+use crate::git::queries::patches::patches::load_patches;
+use crate::git::queries::wip::is_merge_in_progress;
+use crate::git::queries::wip::wip_patches::load_wip_patches;
 use tiny_http::{Response, Server};
 
 #[cfg(debug_assertions)]
@@ -65,7 +69,23 @@ macro_rules! print_request_error {
   }};
 }
 
-pub fn start_server() {
+#[macro_export]
+macro_rules! async_requests {
+  ($request:expr, $($handler:ident),*) => {{
+    match $request.url() {
+      $(
+      concat!("/", stringify!($handler)) => {
+        handle_request!($request, $handler);
+      },
+      )*
+      unknown_url => {
+        println!("Unknown url {}", unknown_url);
+      }
+    }
+  }};
+}
+
+pub fn start_async_server() {
   let server = Server::http(ADDRESS()).unwrap();
 
   let port = server.server_addr().port();
@@ -73,15 +93,17 @@ pub fn start_server() {
   println!("Address: {}:{}", server.server_addr().ip(), port);
 
   for mut request in server.incoming_requests() {
-    println!("received url: {:?}", request.url());
-
-    match request.url() {
-      "/load_commits_and_stashes" => handle_request!(request, load_commits_and_stashes),
-      "/load_full_config" => handle_request!(request, load_full_config),
-      "/load_head_commit" => handle_request!(request, load_head_commit),
-      "/load_top_commit_for_branch" => handle_request!(request, load_top_commit_for_branch),
-      "/commit_ids_between_commits" => handle_request!(request, commit_ids_between_commits),
-      unknown_url => print_request_error!(unknown_url, request),
-    }
+    async_requests!(
+      request,
+      load_commits_and_stashes,
+      load_full_config,
+      load_head_commit,
+      load_top_commit_for_branch,
+      commit_ids_between_commits,
+      load_patches,
+      load_hunks,
+      is_merge_in_progress,
+      load_wip_patches
+    );
   }
 }

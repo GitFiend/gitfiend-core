@@ -1,5 +1,5 @@
 mod wip_patch_parsers;
-mod wip_patches;
+pub(crate) mod wip_patches;
 
 use crate::git::{run_git, RunGitOptions};
 use crate::server::git_request::ReqOptions;

@@ -8,6 +8,7 @@ use crate::git::queries::commits::{
 };
 use crate::git::queries::hunks::hunks::load_hunks;
 use crate::git::queries::wip::is_merge_in_progress;
+use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::requests;
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};
@@ -39,7 +40,6 @@ fn handle_connection(stream: TcpStream) {
 
   if result.is_some() {
     let request = result.unwrap();
-
     requests!(
       request,
       stream,
@@ -50,7 +50,8 @@ fn handle_connection(stream: TcpStream) {
       commit_ids_between_commits,
       load_patches,
       load_hunks,
-      is_merge_in_progress
+      is_merge_in_progress,
+      load_wip_patches
     );
   }
 }

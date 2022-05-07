@@ -83,7 +83,7 @@ const P_WIP_COPY_PATCH: Parser<WipPatchInfo> = map!(
   }
 );
 
-const P_WIP_PATCHES: Parser<Vec<WipPatchInfo>> =
+pub const P_WIP_PATCHES: Parser<Vec<WipPatchInfo>> =
   many!(or!(P_WIP_RENAME_PATCH, P_WIP_COPY_PATCH, P_WIP_OTHER_PATCH));
 
 #[cfg(test)]

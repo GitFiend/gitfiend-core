@@ -182,3 +182,17 @@ impl fmt::Display for WipPatchType {
     }
   }
 }
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct WipPatch {
+  pub old_file: String,
+  pub new_file: String,
+  pub patch_type: WipPatchType,
+  pub staged_type: WipPatchType,
+  pub un_staged_type: WipPatchType,
+  pub conflicted: bool,
+  pub id: String,
+  pub is_image: bool,
+}

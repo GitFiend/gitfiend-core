@@ -1,4 +1,5 @@
 use crate::git::git_types::{Patch, PatchType};
+use crate::git::queries::patches;
 use crate::many;
 use crate::parser::standard_parsers::{UNSIGNED_INT, UNTIL_NUL, WS};
 use crate::parser::Parser;
@@ -43,7 +44,7 @@ pub fn map_data_to_patch(data: PatchData, commit_id: String) -> Patch {
     id,
   } = data;
 
-  let is_image = file_is_image(&new_file);
+  let is_image = patches::file_is_image(&new_file);
 
   Patch {
     patch_type,
@@ -53,16 +54,6 @@ pub fn map_data_to_patch(data: PatchData, commit_id: String) -> Patch {
     commit_id,
     is_image,
   }
-}
-
-const IMAGE_EXTENSIONS: [&str; 10] = [
-  ".apng", ".bmp", ".gif", ".ico", ".cur", ".jpg", ".jpeg", ".png", ".svg", ".webp",
-];
-
-fn file_is_image(file_name: &String) -> bool {
-  let name = file_name.to_lowercase();
-
-  IMAGE_EXTENSIONS.iter().any(|ext| name.ends_with(ext))
 }
 
 pub const P_PATCHES: Parser<Vec<PatchData>> =

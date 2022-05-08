@@ -6,7 +6,8 @@ use cached::proc_macro::cached;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::git::git_types::Commit;
+use crate::git::git_types::{Commit, RefInfo};
+use crate::git::queries::commit_calcs::get_commit_ids_between_commits2;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
@@ -194,7 +195,13 @@ fn commit_ids_between_commits_inner(
 
 // Use this as a fallback when calculation fails.
 pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
-  get_un_pushed_commits_computed(&options);
+  if let Some(ids) = get_un_pushed_commits_computed(&options) {
+    println!("Computed ids: {:?}", ids);
+    return ids;
+  } else {
+    #[cfg(debug_assertions)]
+    println!("get_un_pushed_commits: Refs not found in commits, fall back to git request.")
+  }
 
   if let Some(out) = run_git(RunGitOptions {
     repo_path: &options.repo_path,
@@ -208,12 +215,52 @@ pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
   Vec::new()
 }
 
+// This will return none if head ref or remote ref can't be found in provided commits.
 fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
+  let now = Instant::now();
+
   let commits = load_commits_from_store(&options.repo_path)?;
 
   let commit = commits.iter().find(|c| c.refs.iter().any(|r| r.head));
 
   println!("{:?}", commit.unwrap());
 
+  let head_ref = get_head_ref(&commits)?;
+  let remote = find_sibling_ref(&head_ref, &commits)?;
+
+  let result = get_commit_ids_between_commits2(&head_ref.commit_id, &remote.commit_id, &commits);
+
+  println!(
+    "get_un_pushed_commits_computed Took {}ms",
+    now.elapsed().as_millis(),
+  );
+
+  result
+}
+
+fn get_head_ref(commits: &Vec<Commit>) -> Option<RefInfo> {
+  Some(
+    commits
+      .iter()
+      .find(|c| c.refs.iter().any(|r| r.head))?
+      .refs
+      .iter()
+      .find(|r| r.head)?
+      .clone(),
+  )
+}
+
+fn find_sibling_ref(ri: &RefInfo, commits: &Vec<Commit>) -> Option<RefInfo> {
+  if let Some(sibling_id) = &ri.sibling_id {
+    return Some(
+      commits
+        .iter()
+        .find(|c| c.refs.iter().any(|r| &r.id == sibling_id))?
+        .refs
+        .iter()
+        .find(|r| &r.id == sibling_id)?
+        .clone(),
+    );
+  }
   None
 }

@@ -1,4 +1,5 @@
 use crate::git::git_types::GitConfig;
+use crate::git::queries::store::store_config;
 use crate::git::{run_git, RunGitOptions};
 use crate::map;
 use crate::parser::standard_parsers::UNTIL_LINE_END;
@@ -6,6 +7,34 @@ use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
 use crate::{and, many, until_str, word};
 use std::collections::HashMap;
+
+impl GitConfig {
+  pub fn new() -> GitConfig {
+    GitConfig {
+      entries: HashMap::new(),
+      remotes: HashMap::new(),
+    }
+  }
+
+  // We take short_name because this is the same between remote and local refs.
+  pub fn get_remote_for_branch(&self, short_name: &String) -> String {
+    let GitConfig { entries, .. } = self;
+
+    if let Some(push_remote) = entries.get(&format!("branch.{}.pushremote", short_name)) {
+      return push_remote.clone();
+    }
+
+    if let Some(push_default) = entries.get("remote.pushdefault") {
+      return push_default.clone();
+    }
+
+    if let Some(remote) = entries.get(&format!("branch.${}.remote", short_name)) {
+      return remote.clone();
+    }
+
+    String::from("origin")
+  }
+}
 
 const P_CONFIG: Parser<HashMap<String, String>> = map!(
   many!(and!(until_str!("="), UNTIL_LINE_END)),
@@ -22,6 +51,7 @@ const P_REMOTE_NAME: Parser<String> = map!(
   |result: (&str, String, &str, String)| { result.1 }
 );
 
+/// Use this version on focus of GitFiend only. Get it from the store otherwise.
 pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
   let result_text = run_git(RunGitOptions {
     repo_path: &options.repo_path,
@@ -49,14 +79,20 @@ pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
     }
   }
 
-  Some(GitConfig { entries, remotes })
+  let config = GitConfig { entries, remotes };
+
+  store_config(&config);
+
+  Some(config)
 }
 
 #[cfg(test)]
 mod tests {
+  use crate::git::git_types::GitConfig;
   use crate::git::queries::config::{load_full_config, P_CONFIG, P_REMOTE_NAME};
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
+  use std::collections::HashMap;
 
   #[test]
   fn load_config() {
@@ -122,5 +158,18 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
 
     assert!(result.is_some());
     assert_eq!(result.unwrap(), "origin2");
+  }
+
+  #[test]
+  fn test_get_remote_for_branch() {
+    let config = GitConfig {
+      entries: HashMap::from([
+        ("remote.pushdefault".to_string(), "origin2".to_string()),
+        ("branch.a.remote".to_string(), "origin3".to_string()),
+      ]),
+      remotes: HashMap::new(),
+    };
+
+    assert_eq!(config.get_remote_for_branch(&String::from("a")), "origin2");
   }
 }

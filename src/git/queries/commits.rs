@@ -1,7 +1,7 @@
 use crate::git::git_types::Commit;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::stashes::load_stashes;
-use crate::git::queries::store::store_commits;
+use crate::git::queries::store::{load_commits_from_store, store_commits};
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
@@ -182,6 +182,8 @@ fn commit_ids_between_commits_inner(
 
 // Use this as a fallback when calculation fails.
 pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
+  get_un_pushed_commits_computed(&options);
+
   if let Some(out) = run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["log", "HEAD", "--not", "--remotes", "--pretty=format:%H"],
@@ -192,4 +194,14 @@ pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
   }
 
   Vec::new()
+}
+
+fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
+  let commits = load_commits_from_store(&options.repo_path)?;
+
+  let commit = commits.iter().find(|c| c.refs.iter().any(|r| r.head));
+
+  println!("{:?}", commit.unwrap());
+
+  None
 }

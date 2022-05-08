@@ -60,7 +60,7 @@ pub struct RefInfo {
   pub time: f32,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS)]
 #[ts(export)]
 pub struct GitConfig {
   pub entries: HashMap<String, String>,

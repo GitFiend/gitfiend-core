@@ -1,5 +1,6 @@
-use crate::git::git_types::Commit;
+use crate::git::git_types::{Commit, RefInfo};
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
+use crate::git::queries::refs::get_ref_info_from_commits;
 use crate::git::queries::stashes::load_stashes;
 use crate::git::queries::store::{load_commits_from_store, store_commits};
 use crate::git::{run_git, RunGitOptions};
@@ -58,7 +59,9 @@ pub fn load_head_commit(options: &ReqOptions) -> Option<Commit> {
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
 
-pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commit>> {
+pub fn load_commits_and_stashes(
+  options: &ReqCommitsOptions,
+) -> Option<(Vec<Commit>, Vec<RefInfo>)> {
   let ReqCommitsOptions {
     repo_path,
     num_commits,
@@ -98,9 +101,18 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commi
     c.index = i;
   }
 
+  let now = Instant::now();
+
+  let refs = get_ref_info_from_commits(&commits);
+
+  println!(
+    "Took {}ms to get refs from commits *****",
+    now.elapsed().as_millis(),
+  );
+
   store_commits(&repo_path, &commits);
 
-  Some(commits)
+  Some((commits, refs))
 }
 
 pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {

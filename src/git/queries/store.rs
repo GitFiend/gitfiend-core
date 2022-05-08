@@ -2,18 +2,14 @@ use crate::git::git_types::{Commit, GitConfig};
 use lazy_static::lazy_static; // 1.4.0
 use once_cell::sync::OnceCell;
 use std::collections::HashMap;
-use std::sync::{LockResult, Mutex, MutexGuard};
+use std::sync::Mutex;
 
 lazy_static! {
   // TODO: Clear out repos that aren't currently open.
   static ref COMMITS_CACHE: Mutex<HashMap<String, Vec<Commit>>> = Mutex::new(HashMap::new());
-
-  // static ref CONFIG_CACHE: Mutex<GitConfig> = Mutex::new(GitConfig::new());
 }
 
 static CONFIG_CACHE: OnceCell<GitConfig> = OnceCell::new();
-
-// static COMMITS_CACHE2: OnceCell<HashMap<String, Vec<Commit>>> = OnceCell::new();
 
 pub fn store_commits(repo_path: &String, commits: &Vec<Commit>) -> () {
   let run = || {
@@ -29,11 +25,6 @@ pub fn store_commits(repo_path: &String, commits: &Vec<Commit>) -> () {
 
   #[cfg(debug_assertions)]
   assert!(load_commits_from_store(&repo_path).is_some());
-
-  // COMMITS_CACHE
-  //   .lock()
-  //   .unwrap()
-  //   .insert(repo_path.clone(), commits.clone());
 }
 
 pub fn load_commits_from_store(repo_path: &String) -> Option<Vec<Commit>> {

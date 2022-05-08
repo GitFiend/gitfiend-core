@@ -1,17 +1,19 @@
-use crate::git::git_types::{Commit, RefInfo};
+use std::cmp::Ordering;
+use std::thread;
+use std::time::Instant;
+
+use cached::proc_macro::cached;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
+use crate::git::git_types::Commit;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
-use crate::git::queries::refs::get_ref_info_from_commits;
+use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
 use crate::git::queries::store::{load_commits_from_store, store_commits};
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
-use cached::proc_macro::cached;
-use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
-use std::thread;
-use std::time::Instant;
-use ts_rs::TS;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -59,9 +61,7 @@ pub fn load_head_commit(options: &ReqOptions) -> Option<Commit> {
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
 
-pub fn load_commits_and_stashes(
-  options: &ReqCommitsOptions,
-) -> Option<(Vec<Commit>, Vec<RefInfo>)> {
+pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commit>> {
   let ReqCommitsOptions {
     repo_path,
     num_commits,
@@ -103,7 +103,7 @@ pub fn load_commits_and_stashes(
 
   let now = Instant::now();
 
-  let refs = get_ref_info_from_commits(&commits);
+  let commits = finish_initialising_refs_on_commits(commits);
 
   println!(
     "Took {}ms to get refs from commits *****",
@@ -112,7 +112,7 @@ pub fn load_commits_and_stashes(
 
   store_commits(&repo_path, &commits);
 
-  Some((commits, refs))
+  Some(commits)
 }
 
 pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {

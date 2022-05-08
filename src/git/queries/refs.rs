@@ -112,7 +112,21 @@ pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: f32) -> RefInfo
   }
 }
 
-pub fn get_ref_info_from_commits(commits: &Vec<Commit>) -> Vec<RefInfo> {
+// pub fn get_ref_info_from_commits(commits: &Vec<Commit>) -> Vec<RefInfo> {
+//   let mut refs: Vec<RefInfo> = Vec::new();
+//
+//   for c in commits.iter() {
+//     for r in c.refs.iter() {
+//       if !r.full_name.contains("HEAD") {
+//         refs.push(r.clone())
+//       }
+//     }
+//   }
+//
+//   set_sibling_and_remote(refs)
+// }
+
+pub fn finish_initialising_refs_on_commits(commits: Vec<Commit>) -> Vec<Commit> {
   let mut refs: Vec<RefInfo> = Vec::new();
 
   for c in commits.iter() {
@@ -123,23 +137,43 @@ pub fn get_ref_info_from_commits(commits: &Vec<Commit>) -> Vec<RefInfo> {
     }
   }
 
-  set_sibling_and_remote(refs)
+  set_sibling_and_remotes_for_commits(commits, &refs)
 }
 
-pub fn set_sibling_and_remote(refs: Vec<RefInfo>) -> Vec<RefInfo> {
+fn set_sibling_and_remotes_for_commits(commits: Vec<Commit>, refs: &Vec<RefInfo>) -> Vec<Commit> {
   let config = load_config_from_store().unwrap_or(GitConfig::new());
 
-  refs
-    .clone() // TODO: Is this too slow?
+  commits
     .into_iter()
-    .map(|mut r| {
-      r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
-      r.sibling_id = get_sibling_id_for_ref(&r, &refs);
-
-      r
+    .map(|mut c| {
+      c.refs = c
+        .refs
+        .into_iter()
+        .map(|mut r| {
+          r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
+          r.sibling_id = get_sibling_id_for_ref(&r, &refs);
+          r
+        })
+        .collect();
+      c
     })
     .collect()
 }
+
+// pub fn set_sibling_and_remote(refs: Vec<RefInfo>) -> Vec<RefInfo> {
+//   let config = load_config_from_store().unwrap_or(GitConfig::new());
+//
+//   refs
+//     .clone() // TODO: Is this too slow?
+//     .into_iter()
+//     .map(|mut r| {
+//       r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
+//       r.sibling_id = get_sibling_id_for_ref(&r, &refs);
+//
+//       r
+//     })
+//     .collect()
+// }
 
 fn get_sibling_id_for_ref(ri: &RefInfo, refs: &Vec<RefInfo>) -> Option<String> {
   if ri.location == RefLocation::Remote {

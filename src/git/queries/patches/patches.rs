@@ -15,7 +15,7 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
   let ReqCommitsOptions { repo_path, .. } = options;
 
   let commits =
-    load_commits_from_store(&repo_path).or_else(|| Some(load_commits_and_stashes(options)?.0))?;
+    load_commits_from_store(&repo_path).or_else(|| load_commits_and_stashes(options))?;
 
   let mut commits_without_patches: Vec<&Commit> = Vec::new();
   let mut stashes_or_merges_without_patches: Vec<&Commit> = Vec::new();

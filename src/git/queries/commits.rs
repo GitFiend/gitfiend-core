@@ -168,6 +168,13 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String
     commit_id2,
   } = options;
 
+  if let Some(commits) = load_commits_from_store(&repo_path) {
+    if let Some(result) = get_commit_ids_between_commits2(&commit_id2, &commit_id1, &commits) {
+      println!("{:?}", result.len());
+      // return Some(result);
+    }
+  }
+
   commit_ids_between_commits_inner(repo_path.clone(), commit_id1.clone(), commit_id2.clone())
 }
 

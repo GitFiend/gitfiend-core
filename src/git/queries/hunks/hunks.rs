@@ -1,9 +1,11 @@
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::COMMIT_0_ID;
+use crate::git::store_2::Store;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, RwLock};
 use ts_rs::TS;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
@@ -15,7 +17,10 @@ pub struct ReqHunkOptions {
   pub patch: Patch,
 }
 
-pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
+pub fn load_hunks(
+  options: &ReqHunkOptions,
+  store: Arc<RwLock<Store>>,
+) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
   let out = run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options),

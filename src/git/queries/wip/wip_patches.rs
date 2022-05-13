@@ -1,9 +1,11 @@
 use crate::git::git_types::{WipPatch, WipPatchType};
 use crate::git::queries::patches::file_is_image;
 use crate::git::queries::wip::wip_patch_parsers::P_WIP_PATCHES;
+use crate::git::store_2::Store;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
+use std::sync::{Arc, RwLock};
 
 #[derive(Debug, PartialEq)]
 pub struct WipPatchInfo {
@@ -13,7 +15,7 @@ pub struct WipPatchInfo {
   pub un_staged: WipPatchType,
 }
 
-pub fn load_wip_patches(options: &ReqOptions) -> Option<Vec<WipPatch>> {
+pub fn load_wip_patches(options: &ReqOptions, store: Arc<RwLock<Store>>) -> Option<Vec<WipPatch>> {
   let out = run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["status", "--porcelain", "-uall", "-z"],

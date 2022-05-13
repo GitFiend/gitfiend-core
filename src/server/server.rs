@@ -42,19 +42,19 @@ fn handle_connection(stream: TcpStream) {
     let request = result.unwrap();
     println!("Body: {}", &request.body);
 
-    requests!(
-      request,
-      stream,
-      load_commits_and_stashes,
-      load_full_config,
-      load_head_commit,
-      load_top_commit_for_branch,
-      commit_ids_between_commits,
-      load_patches,
-      load_hunks,
-      is_merge_in_progress,
-      load_wip_patches
-    );
+    // requests!(
+    //   request,
+    //   stream,
+    //   load_commits_and_stashes,
+    //   load_full_config,
+    //   load_head_commit,
+    //   load_top_commit_for_branch,
+    //   commit_ids_between_commits,
+    //   load_patches,
+    //   load_hunks,
+    //   is_merge_in_progress,
+    //   load_wip_patches
+    // );
   }
 }
 

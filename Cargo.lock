@@ -760,8 +760,6 @@ dependencies = [
  "cached",
  "directories",
  "futures",
- "lazy_static",
- "once_cell",
  "serde",
  "serde_json",
  "tiny_http",

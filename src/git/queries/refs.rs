@@ -1,9 +1,10 @@
 use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation, RefType};
-use crate::git::queries::store::load_config_from_store;
+use crate::git::store_2::{load_config_from_store2, Store};
 use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
+use std::sync::{Arc, RwLock};
 
 const REF_NAME_PARSER: Parser<String> =
   take_char_while!(|c: char| { !c.is_whitespace() && c != ',' && c != '(' && c != ')' });
@@ -126,7 +127,10 @@ pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: f32) -> RefInfo
 //   set_sibling_and_remote(refs)
 // }
 
-pub fn finish_initialising_refs_on_commits(commits: Vec<Commit>) -> Vec<Commit> {
+pub fn finish_initialising_refs_on_commits(
+  commits: Vec<Commit>,
+  store_lock: &Arc<RwLock<Store>>,
+) -> Vec<Commit> {
   let mut refs: Vec<RefInfo> = Vec::new();
 
   for c in commits.iter() {
@@ -137,11 +141,15 @@ pub fn finish_initialising_refs_on_commits(commits: Vec<Commit>) -> Vec<Commit> 
     }
   }
 
-  set_sibling_and_remotes_for_commits(commits, &refs)
+  set_sibling_and_remotes_for_commits(commits, &refs, store_lock)
 }
 
-fn set_sibling_and_remotes_for_commits(commits: Vec<Commit>, refs: &Vec<RefInfo>) -> Vec<Commit> {
-  let config = load_config_from_store().unwrap_or(GitConfig::new());
+fn set_sibling_and_remotes_for_commits(
+  commits: Vec<Commit>,
+  refs: &Vec<RefInfo>,
+  store_lock: &Arc<RwLock<Store>>,
+) -> Vec<Commit> {
+  let config = load_config_from_store2(store_lock).unwrap_or(GitConfig::new());
 
   commits
     .into_iter()

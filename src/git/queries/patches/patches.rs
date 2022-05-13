@@ -4,18 +4,22 @@ use crate::git::queries::patches::cache::{load_patches_cache, write_patches_cach
 use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
-use crate::git::queries::store::load_commits_from_store;
 use crate::git::queries::COMMIT_0_ID;
+use crate::git::store_2::{load_commits_from_store2, Store};
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
-pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<Patch>>> {
+pub fn load_patches(
+  options: &ReqCommitsOptions,
+  store: Arc<RwLock<Store>>,
+) -> Option<HashMap<String, Vec<Patch>>> {
   let ReqCommitsOptions { repo_path, .. } = options;
 
-  let commits =
-    load_commits_from_store(&repo_path).or_else(|| load_commits_and_stashes(options))?;
+  let commits = load_commits_from_store2(&repo_path, &store)
+    .or_else(|| load_commits_and_stashes(options, store))?;
 
   let mut commits_without_patches: Vec<&Commit> = Vec::new();
   let mut stashes_or_merges_without_patches: Vec<&Commit> = Vec::new();

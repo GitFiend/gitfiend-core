@@ -2,9 +2,11 @@
 mod tests {
   use crate::git::queries::commits::{load_commits, load_commits_and_stashes};
   use crate::git::queries::commits_parsers::{P_COMMIT_ROW, P_GROUP, P_ID_LIST};
+  use crate::git::store_2::Store;
   use crate::parser::{_parse_part, parse_all};
   use crate::server::git_request::ReqCommitsOptions;
   use std::env::current_dir;
+  use std::sync::{Arc, RwLock};
 
   #[test]
   fn test_p_group() {
@@ -38,10 +40,13 @@ mod tests {
 
   #[test]
   fn test_load_commits_and_stashes() {
-    let result = load_commits_and_stashes(&ReqCommitsOptions {
-      repo_path: "/home/toby/Repos/gitfiend-seed/git-fiend".to_string(),
-      num_commits: 1000,
-    });
+    let result = load_commits_and_stashes(
+      &ReqCommitsOptions {
+        repo_path: "/home/toby/Repos/gitfiend-seed/git-fiend".to_string(),
+        num_commits: 1000,
+      },
+      Arc::new(RwLock::new(Store::new())),
+    );
 
     println!("{:?}", result);
     assert!(true);

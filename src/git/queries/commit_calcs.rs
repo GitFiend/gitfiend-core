@@ -1,24 +1,19 @@
 use crate::git::git_types::Commit;
 use std::collections::{HashMap, HashSet};
 
-pub fn find_commit_ancestors(
-  commit: &Commit,
-  commits: &HashMap<String, Commit>,
-) -> HashSet<String> {
-  find_commit_ancestors_inner(&commit, &commits, HashSet::new())
-}
+fn find_commit_ancestors(commit: &Commit, commits: &HashMap<String, Commit>) -> HashSet<String> {
+  let mut ancestors = HashSet::<String>::new();
+  let mut ancestor_commits = vec![commit.clone()];
 
-fn find_commit_ancestors_inner(
-  commit: &Commit,
-  commits: &HashMap<String, Commit>,
-  mut ancestors: HashSet<String>,
-) -> HashSet<String> {
-  for id in commit.parent_ids.iter() {
-    if !ancestors.contains(id) {
-      ancestors.insert(id.clone());
-
-      if let Some(parent) = commits.get(id) {
-        return find_commit_ancestors_inner(&parent, &commits, ancestors);
+  while ancestor_commits.len() > 0 {
+    if let Some(c) = ancestor_commits.pop() {
+      for id in c.parent_ids {
+        if !ancestors.contains(&id) {
+          ancestors.insert(id.clone());
+          if let Some(parent) = commits.get(&id) {
+            ancestor_commits.push(parent.clone());
+          }
+        }
       }
     }
   }

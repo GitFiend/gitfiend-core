@@ -185,18 +185,10 @@ pub fn commit_ids_between_commits(
   if let Ok(store) = store_lock.read() {
     if let Some(commits) = (*store).commits.get(repo_path) {
       if let Some(result) = get_commit_ids_between_commits2(&commit_id2, &commit_id1, &commits) {
-        println!("{:?}", result.len());
-        // return Some(result);
+        return Some(result);
       }
     }
   }
-
-  // if let Some(commits) = load_commits_from_store(&repo_path) {
-  //   if let Some(result) = get_commit_ids_between_commits2(&commit_id2, &commit_id1, &commits) {
-  //     println!("{:?}", result.len());
-  //     // return Some(result);
-  //   }
-  // }
 
   commit_ids_between_commits_inner(repo_path.clone(), commit_id1.clone(), commit_id2.clone())
 }
@@ -210,11 +202,7 @@ fn commit_ids_between_commits_inner(
   let now = Instant::now();
 
   let out = run_git(RunGitOptions {
-    args: [
-      "log",
-      &format!("{}..{}", commit_id1, commit_id2),
-      "--pretty=format:%H",
-    ],
+    args: ["rev-list", &format!("{}..{}", commit_id1, commit_id2)],
     repo_path: &repo_path,
   })?;
 

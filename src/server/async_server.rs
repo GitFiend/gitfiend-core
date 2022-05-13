@@ -8,7 +8,7 @@ use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::store_2::Store;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::from_str;
 use std::error::Error;
 use std::sync::{Arc, RwLock};

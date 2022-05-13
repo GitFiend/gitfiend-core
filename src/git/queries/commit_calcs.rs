@@ -3,15 +3,15 @@ use std::collections::{HashMap, HashSet};
 
 fn find_commit_ancestors(commit: &Commit, commits: &HashMap<String, Commit>) -> HashSet<String> {
   let mut ancestors = HashSet::<String>::new();
-  let mut ancestor_commits = vec![commit.clone()];
+  let mut ancestor_commits: Vec<&Commit> = vec![&commit];
 
   while ancestor_commits.len() > 0 {
     if let Some(c) = ancestor_commits.pop() {
-      for id in c.parent_ids {
-        if !ancestors.contains(&id) {
+      for id in c.parent_ids.iter() {
+        if !ancestors.contains(id) {
           ancestors.insert(id.clone());
-          if let Some(parent) = commits.get(&id) {
-            ancestor_commits.push(parent.clone());
+          if let Some(parent) = commits.get(id) {
+            ancestor_commits.push(parent);
           }
         }
       }

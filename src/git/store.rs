@@ -1,4 +1,5 @@
 use crate::git::git_types::{Commit, GitConfig};
+use crate::server::git_request::ReqOptions;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -32,4 +33,12 @@ pub fn load_commits_from_store(repo_path: &String, store_lock: &RwStore) -> Opti
 
 pub fn load_config_from_store(store_lock: &RwStore) -> Option<GitConfig> {
   Some((*store_lock).read().ok()?.config.clone())
+}
+
+pub fn clear_cache(_: &ReqOptions, store_lock: RwStore) {
+  if let Ok(mut store) = store_lock.write() {
+    (*store).commits = HashMap::new();
+
+    println!("Cleared commits cache.");
+  }
 }

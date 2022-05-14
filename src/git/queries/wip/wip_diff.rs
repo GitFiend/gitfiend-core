@@ -1,4 +1,5 @@
-use crate::git::git_types::{Commit, HunkLine, PatchType, WipPatch, WipPatchType};
+use crate::git::git_types::{Commit, HunkLine, WipPatch, WipPatchType};
+use crate::git::store::RwStore;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
@@ -14,25 +15,30 @@ pub struct ReqWipHunksOptions {
   pub head_commit: Option<Commit>,
 }
 
-pub fn load_wip_hunks(options: &ReqWipHunksOptions) {
+pub fn load_wip_hunks(options: &ReqWipHunksOptions, _: RwStore) {
   let _lines = load_wip_hunk_lines(options);
 }
 
 pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> Option<Vec<HunkLine>> {
+  let ReqWipHunksOptions {
+    patch,
+    repo_path,
+    head_commit,
+  } = &options;
   let WipPatch {
     new_file,
     is_image,
     patch_type,
     ..
-  } = &options.patch;
+  } = patch;
 
   if *is_image {
     return None;
   }
 
-  let new_file_info = load_file(&options.repo_path, new_file);
+  let new_file_info = load_file(repo_path, new_file);
 
-  if *patch_type == WipPatchType::A || options.head_commit.is_none() {
+  if *patch_type == WipPatchType::A || head_commit.is_none() {
     //
   }
 

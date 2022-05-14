@@ -6,8 +6,9 @@ use crate::git::queries::config::load_full_config;
 use crate::git::queries::hunks::hunks::load_hunks;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::wip::is_merge_in_progress;
+use crate::git::queries::wip::wip_diff::load_wip_hunks;
 use crate::git::queries::wip::wip_patches::load_wip_patches;
-use crate::git::store::Store;
+use crate::git::store::{clear_cache, Store};
 use serde::Deserialize;
 use serde_json::from_str;
 use std::error::Error;
@@ -175,7 +176,9 @@ pub fn start_async_server() {
       load_hunks,
       is_merge_in_progress,
       load_wip_patches,
-      get_un_pushed_commits
+      get_un_pushed_commits,
+      clear_cache,
+      load_wip_hunks
     );
   }
 }

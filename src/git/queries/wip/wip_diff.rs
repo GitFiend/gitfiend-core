@@ -1,10 +1,9 @@
 use crate::git::git_types::{Commit, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
 use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
-use crate::many;
-use crate::parser::standard_parsers::UNTIL_LINE_END_KEEP;
+use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
-use regex::Regex;
+use crate::{and, many, or, until_parser_keep};
 use serde::{Deserialize, Serialize};
 use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;
@@ -86,28 +85,32 @@ fn load_file(repo_path: &String, file_path: &String) -> Option<FileInfo> {
   None
 }
 
+// TODO: This isn't very smart. Probably doesn't need to count all lines.
+// This could be 100ms for 100,000 lines.
 fn detect_new_line(text: &String) -> String {
-  let re = Regex::new(r"\r?\n").unwrap();
-
   let mut crlf = 0;
   let mut lf = 0;
 
-  for nl in re.find_iter(text) {
-    if nl.as_str() == "\r\n" {
-      crlf += 1;
-    } else {
-      lf += 1;
+  if let Some(result) = parse_all(MANY_LINE_PARSER, &text) {
+    for (_, le) in result {
+      if le == "\r\n" {
+        crlf += 1;
+      } else {
+        lf += 1;
+      }
     }
   }
 
   String::from(if crlf > lf { "\r\n" } else { "\n" })
 }
 
-// TODO: This fails if it doesn't find a line ending.
-const LINE_PARSER: Parser<Vec<(String, &str)>> = many!(UNTIL_LINE_END_KEEP);
+const LINE_PARSER: Parser<(String, &str)> =
+  and!(until_parser_keep!(LINE_END), or!(LINE_END, WS_STR));
+
+const MANY_LINE_PARSER: Parser<Vec<(String, &str)>> = many!(LINE_PARSER);
 
 fn switch_to_line_ending(text: String, line_ending: &str) -> String {
-  if let Some(result) = parse_all(LINE_PARSER, &text) {
+  if let Some(result) = parse_all(MANY_LINE_PARSER, &text) {
     let lines: Vec<String> = result.into_iter().map(|line| line.0).collect();
 
     return lines.join(line_ending);
@@ -117,8 +120,6 @@ fn switch_to_line_ending(text: String, line_ending: &str) -> String {
 }
 
 fn calc_hunk_line_from_text(a: &str, b: &str) -> Vec<HunkLine> {
-  let line_ending_re = Regex::new(r"\r?\n").unwrap();
-
   let diff = TextDiff::from_lines(a, b);
 
   let mut lines = Vec::<HunkLine>::new();
@@ -148,14 +149,11 @@ fn calc_hunk_line_from_text(a: &str, b: &str) -> Vec<HunkLine> {
     }
 
     let line_text = change.to_string();
-    // TODO: This doesn't keep the line ending.
-    let parts: Vec<&str> = line_ending_re.split(&line_text).collect();
-
-    let parts2 = parse_all(UNTIL_LINE_END_KEEP, &line_text);
+    let parts = parse_all(LINE_PARSER, &line_text).unwrap_or((String::from(""), ""));
 
     lines.push(HunkLine {
-      text: parts[0].to_string(),
-      line_ending: parts.get(1).unwrap_or(&"").to_string(),
+      text: parts.0,
+      line_ending: parts.1.to_string(),
       status: get_status_from_change_tag(&change.tag()),
       hunk_index: -1,
       index: lines.len() as u32,

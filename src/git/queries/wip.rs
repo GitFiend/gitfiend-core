@@ -2,7 +2,7 @@ mod wip_diff;
 mod wip_patch_parsers;
 pub(crate) mod wip_patches;
 
-use crate::git::store_2::Store;
+use crate::git::store::Store;
 use crate::git::{run_git, RunGitOptions};
 use crate::server::git_request::ReqOptions;
 use std::sync::{Arc, RwLock};

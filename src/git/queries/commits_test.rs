@@ -2,7 +2,7 @@
 mod tests {
   use crate::git::queries::commits::{load_commits, load_commits_and_stashes};
   use crate::git::queries::commits_parsers::{P_COMMIT_ROW, P_GROUP, P_ID_LIST};
-  use crate::git::store_2::Store;
+  use crate::git::store::Store;
   use crate::parser::{_parse_part, parse_all};
   use crate::server::git_request::ReqCommitsOptions;
   use std::env::current_dir;
@@ -45,7 +45,7 @@ mod tests {
         repo_path: "/home/toby/Repos/gitfiend-seed/git-fiend".to_string(),
         num_commits: 1000,
       },
-      Arc::new(RwLock::new(Store::new())),
+      Store::new_lock(),
     );
 
     println!("{:?}", result);

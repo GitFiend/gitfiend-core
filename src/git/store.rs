@@ -14,9 +14,13 @@ impl Store {
       config: GitConfig::new(),
     }
   }
+
+  pub fn new_lock() -> Arc<RwLock<Store>> {
+    Arc::new(RwLock::new(Store::new()))
+  }
 }
 
-pub fn load_commits_from_store2(
+pub fn load_commits_from_store(
   repo_path: &String,
   store_lock: &Arc<RwLock<Store>>,
 ) -> Option<Vec<Commit>> {
@@ -27,6 +31,6 @@ pub fn load_commits_from_store2(
   None
 }
 
-pub fn load_config_from_store2(store_lock: &Arc<RwLock<Store>>) -> Option<GitConfig> {
+pub fn load_config_from_store(store_lock: &Arc<RwLock<Store>>) -> Option<GitConfig> {
   Some((*store_lock).read().ok()?.config.clone())
 }

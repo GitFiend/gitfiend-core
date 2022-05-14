@@ -4,7 +4,7 @@ use std::process::{Command, Output, Stdio};
 
 pub(crate) mod git_types;
 pub(crate) mod queries;
-pub(crate) mod store_2;
+pub(crate) mod store;
 
 #[derive(Clone, Debug)]
 pub struct RunGitOptions<'a, I, S>

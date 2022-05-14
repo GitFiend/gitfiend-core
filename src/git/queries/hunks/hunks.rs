@@ -1,7 +1,7 @@
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::COMMIT_0_ID;
-use crate::git::store_2::Store;
+use crate::git::store::Store;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use serde::{Deserialize, Serialize};

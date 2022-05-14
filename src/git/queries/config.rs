@@ -1,5 +1,5 @@
 use crate::git::git_types::GitConfig;
-use crate::git::store_2::Store;
+use crate::git::store::Store;
 use crate::git::{run_git, RunGitOptions};
 use crate::map;
 use crate::parser::standard_parsers::UNTIL_LINE_END;
@@ -94,7 +94,7 @@ pub fn load_full_config(options: &ReqOptions, store_lock: Arc<RwLock<Store>>) ->
 mod tests {
   use crate::git::git_types::GitConfig;
   use crate::git::queries::config::{load_full_config, P_CONFIG, P_REMOTE_NAME};
-  use crate::git::store_2::Store;
+  use crate::git::store::Store;
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
   use std::collections::HashMap;
@@ -106,7 +106,7 @@ mod tests {
       &ReqOptions {
         repo_path: ".".to_string(),
       },
-      Arc::new(RwLock::new(Store::new())),
+      Store::new_lock(),
     );
 
     assert!(result.is_some());

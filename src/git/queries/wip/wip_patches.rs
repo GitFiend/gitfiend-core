@@ -1,7 +1,7 @@
 use crate::git::git_types::{WipPatch, WipPatchType};
 use crate::git::queries::patches::file_is_image;
 use crate::git::queries::wip::wip_patch_parsers::P_WIP_PATCHES;
-use crate::git::store_2::Store;
+use crate::git::store::Store;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;

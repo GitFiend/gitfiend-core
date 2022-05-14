@@ -7,7 +7,7 @@ use crate::git::queries::hunks::hunks::load_hunks;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_patches::load_wip_patches;
-use crate::git::store_2::Store;
+use crate::git::store::Store;
 use serde::Deserialize;
 use serde_json::from_str;
 use std::error::Error;
@@ -159,7 +159,7 @@ pub fn start_async_server() {
 
   let port = server.server_addr().port();
 
-  let store = Arc::new(RwLock::new(Store::new()));
+  let store = Store::new_lock();
 
   println!("Address: {}:{}", server.server_addr().ip(), port);
 

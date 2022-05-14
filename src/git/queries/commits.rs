@@ -12,7 +12,7 @@ use crate::git::queries::commit_calcs::get_commit_ids_between_commits2;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
-use crate::git::store_2::{load_commits_from_store2, Store};
+use crate::git::store::{load_commits_from_store, Store};
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
@@ -240,7 +240,7 @@ fn get_un_pushed_commits_computed(
 ) -> Option<Vec<String>> {
   let now = Instant::now();
 
-  let commits = load_commits_from_store2(&options.repo_path, &store)?;
+  let commits = load_commits_from_store(&options.repo_path, &store)?;
 
   let commit = commits.iter().find(|c| c.refs.iter().any(|r| r.head));
 

@@ -67,10 +67,10 @@ fn get_patches_from_info(info: Vec<WipPatchInfo>) -> Vec<WipPatch> {
 }
 
 fn is_conflicted(left: &WipPatchType, right: &WipPatchType) -> bool {
-  left == &WipPatchType::U
-    || right == &WipPatchType::U
-    || (left == &WipPatchType::A && right == &WipPatchType::A)
-    || (left == &WipPatchType::D && right == &WipPatchType::D)
+  *left == WipPatchType::U
+    || *right == WipPatchType::U
+    || (*left == WipPatchType::A && *right == WipPatchType::A)
+    || (*left == WipPatchType::D && *right == WipPatchType::D)
 }
 
 fn pick_type_from_patch(un_staged: &WipPatchType, staged: &WipPatchType) -> WipPatchType {

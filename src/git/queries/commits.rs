@@ -235,9 +235,9 @@ fn get_un_pushed_commits_computed(options: &ReqOptions, store: RwStore) -> Optio
 
   let commits = load_commits_from_store(&options.repo_path, &store)?;
 
-  let commit = commits.iter().find(|c| c.refs.iter().any(|r| r.head));
+  // let commit = commits.iter().find(|c| c.refs.iter().any(|r| r.head));
 
-  println!("{:?}", commit.unwrap());
+  // println!("{:?}", commit.unwrap());
 
   let head_ref = get_head_ref(&commits)?;
   let remote = find_sibling_ref(&head_ref, &commits)?;

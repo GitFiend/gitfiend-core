@@ -2,6 +2,7 @@ use crate::git::git_types::{Commit, HunkLine, WipPatch, WipPatchType};
 use crate::git::store::RwStore;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use similar::TextDiff;
 use std::fs::read_to_string;
 use std::path::Path;
 use ts_rs::TS;
@@ -38,9 +39,11 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> Option<Vec<HunkLine>
 
   let new_file_info = load_file(repo_path, new_file);
 
-  if *patch_type == WipPatchType::A || head_commit.is_none() {
-    //
+  // if *patch_type == WipPatchType::A || head_commit.is_none() {
+  if new_file_info.is_some() {
+    convert_diff_to_hunk_lines(String::from(""), new_file_info.unwrap().text);
   }
+  // }
 
   None
 }
@@ -80,4 +83,24 @@ fn detect_new_line(text: &String) -> String {
   }
 
   String::from(if crlf > lf { "\r\n" } else { "\n" })
+}
+
+fn convert_diff_to_hunk_lines(a: String, b: String) {
+  let diff = TextDiff::from_lines(&a, &b);
+
+  let mut lines = Vec::<HunkLine>::new();
+
+  let mut running_old_num = 0;
+  let mut running_new_num = 0;
+
+  for change in diff.iter_all_changes() {
+    println!(
+      "change: {}",
+      change.to_string().trim_end_matches(|c| c == '\n')
+    );
+
+    change.to_string().trim_end_matches(|c| c == '\n');
+
+    // change.n
+  }
 }

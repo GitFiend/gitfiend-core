@@ -6,7 +6,6 @@ mod tests {
   use crate::parser::{_parse_part, parse_all};
   use crate::server::git_request::ReqCommitsOptions;
   use std::env::current_dir;
-  use std::sync::{Arc, RwLock};
 
   #[test]
   fn test_p_group() {

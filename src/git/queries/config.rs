@@ -1,5 +1,5 @@
 use crate::git::git_types::GitConfig;
-use crate::git::store::Store;
+use crate::git::store::{RwStore, Store};
 use crate::git::{run_git, RunGitOptions};
 use crate::map;
 use crate::parser::standard_parsers::UNTIL_LINE_END;
@@ -7,7 +7,6 @@ use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
 use crate::{and, many, until_str, word};
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
 
 impl GitConfig {
   pub fn new() -> GitConfig {
@@ -53,7 +52,7 @@ const P_REMOTE_NAME: Parser<String> = map!(
 );
 
 /// Use this version on focus of GitFiend only. Get it from the store otherwise.
-pub fn load_full_config(options: &ReqOptions, store_lock: Arc<RwLock<Store>>) -> Option<GitConfig> {
+pub fn load_full_config(options: &ReqOptions, store_lock: RwStore) -> Option<GitConfig> {
   let result_text = run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["config", "--list"],
@@ -98,7 +97,6 @@ mod tests {
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
   use std::collections::HashMap;
-  use std::sync::{Arc, RwLock};
 
   #[test]
   fn load_config() {

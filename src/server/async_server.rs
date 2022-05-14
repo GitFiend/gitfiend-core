@@ -11,7 +11,6 @@ use crate::git::store::Store;
 use serde::Deserialize;
 use serde_json::from_str;
 use std::error::Error;
-use std::sync::{Arc, RwLock};
 use tiny_http::{Request, Response, Server};
 
 #[cfg(debug_assertions)]

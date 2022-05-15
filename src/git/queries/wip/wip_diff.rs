@@ -1,16 +1,17 @@
-use crate::git::git_types::{Commit, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
+use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
+use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
 use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
 use crate::{and, many, or, until_parser_keep};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;
 use std::path::Path;
 use ts_rs::TS;
 
-#[derive(Debug, Deserialize, Serialize, TS)]
+#[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReqWipHunksOptions {
@@ -19,10 +20,10 @@ pub struct ReqWipHunksOptions {
   pub head_commit: Option<Commit>,
 }
 
-pub fn load_wip_hunks(options: &ReqWipHunksOptions, _: RwStore) -> Option<Vec<HunkLine>> {
-  let _lines = load_wip_hunk_lines(options);
+pub fn load_wip_hunks(options: &ReqWipHunksOptions, _: RwStore) -> Option<(Vec<Hunk>, u32)> {
+  let lines = load_wip_hunk_lines(options)?;
 
-  _lines
+  Some(convert_lines_to_hunks(lines))
 }
 
 pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> Option<Vec<HunkLine>> {
@@ -128,8 +129,8 @@ fn calc_hunk_line_from_text(a: &str, b: &str) -> Vec<HunkLine> {
   let mut running_new_num = 0;
 
   for change in diff.iter_all_changes() {
-    let mut old_num: Option<u32> = None;
-    let mut new_num: Option<u32> = None;
+    let mut old_num: Option<i32> = None;
+    let mut new_num: Option<i32> = None;
 
     match change.tag() {
       ChangeTag::Insert => {

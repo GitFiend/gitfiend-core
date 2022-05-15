@@ -110,7 +110,7 @@ pub const P_HUNKS: Parser<Vec<Hunk>> = map!(and!(P_DIFF_HEADER, many!(P_HUNK)), 
     .collect()
 });
 
-fn get_hunk_lines(old_num: u32, new_num: u32, lines: Vec<Line>) -> Vec<HunkLine> {
+fn get_hunk_lines(old_num: i32, new_num: i32, lines: Vec<Line>) -> Vec<HunkLine> {
   let mut old_num = old_num;
   let mut new_num = new_num;
 

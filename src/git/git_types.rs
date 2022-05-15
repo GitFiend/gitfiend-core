@@ -125,8 +125,8 @@ pub struct Hunk {
 #[ts(export)]
 pub struct HunkLine {
   pub status: HunkLineStatus,
-  pub old_num: Option<u32>,
-  pub new_num: Option<u32>,
+  pub old_num: Option<i32>,
+  pub new_num: Option<i32>,
   pub hunk_index: i32,
   pub text: String,
   pub index: u32,
@@ -151,8 +151,8 @@ pub enum HunkLineStatus {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct HunkRange {
-  pub start: u32,
-  pub length: u32,
+  pub start: i32,
+  pub length: i32,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]

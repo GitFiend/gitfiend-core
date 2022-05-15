@@ -1,3 +1,4 @@
+mod create_hunks;
 pub(crate) mod wip_diff;
 mod wip_patch_parsers;
 pub(crate) mod wip_patches;

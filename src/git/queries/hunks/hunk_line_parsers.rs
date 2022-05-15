@@ -10,13 +10,13 @@ pub const P_HUNK_LINE_RANGE: Parser<HunkRange> = or!(
     String
   )| {
     HunkRange {
-      start: res.0.parse::<i64>().unwrap_or(0).abs() as u32,
+      start: res.0.parse::<i64>().unwrap_or(0).abs() as i32,
       length: res.2.parse().unwrap_or(0),
     }
   }),
   map!(SIGNED_INT, |res: String| {
     HunkRange {
-      start: res.parse::<i64>().unwrap_or(0).abs() as u32,
+      start: res.parse::<i64>().unwrap_or(0).abs() as i32,
       length: 1,
     }
   })
@@ -118,8 +118,8 @@ impl HunkLine {
     line: Line,
     index: u32,
     hunk_index: i32,
-    old_num: Option<u32>,
-    new_num: Option<u32>,
+    old_num: Option<i32>,
+    new_num: Option<i32>,
   ) -> HunkLine {
     HunkLine {
       status: line.status,

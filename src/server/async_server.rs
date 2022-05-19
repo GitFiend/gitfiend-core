@@ -1,3 +1,4 @@
+use crate::git::git_version;
 use crate::git::queries::commits::{
   commit_ids_between_commits, get_un_pushed_commits, load_commits_and_stashes, load_head_commit,
   load_top_commit_for_branch,
@@ -178,7 +179,8 @@ pub fn start_async_server() {
       load_wip_patches,
       get_un_pushed_commits,
       clear_cache,
-      load_wip_hunks
+      load_wip_hunks,
+      git_version
     );
   }
 }

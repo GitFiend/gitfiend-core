@@ -1,3 +1,5 @@
+use crate::git::store::RwStore;
+use crate::server::git_request::ReqOptions;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Output, Stdio};
@@ -13,7 +15,7 @@ where
   S: AsRef<OsStr>,
 {
   pub args: I,
-  pub repo_path: &'a String,
+  pub repo_path: &'a str,
 }
 
 pub fn run_git<I, S>(options: RunGitOptions<I, S>) -> Option<String>
@@ -65,6 +67,14 @@ where
   }
 
   cmd.wait().unwrap();
+}
+
+// Expect this to return none if Git is not installed.
+pub fn git_version(_: &ReqOptions, _: RwStore) -> Option<String> {
+  run_git(RunGitOptions {
+    repo_path: ".",
+    args: ["--version"],
+  })
 }
 
 #[cfg(test)]

@@ -21,24 +21,23 @@ where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
 {
-  let out = Command::new("git")
+  let result = Command::new("git")
     .args(options.args)
     .current_dir(options.repo_path)
     .output();
 
-  if out.is_ok() {
-    let Output { stdout, stderr, .. } = &out.unwrap();
+  if let Ok(out) = result {
+    let Output { stdout, stderr, .. } = &out;
 
     // TODO: Is stderr sometimes valid and useful git output?
     if stdout.len() > 0 {
-      Some(String::from_utf8_lossy(stdout).to_string())
+      return Some(String::from_utf8_lossy(stdout).to_string());
     } else {
       println!("{:?}", String::from_utf8_lossy(stderr).to_string());
-      None
     }
-  } else {
-    None
   }
+
+  None
 }
 
 // We should probably use a separate function to the above run_get if we want progress.

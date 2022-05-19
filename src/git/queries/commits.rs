@@ -24,7 +24,7 @@ pub struct TopCommitOptions {
   pub branch_name: String,
 }
 
-pub fn load_top_commit_for_branch(options: &TopCommitOptions, store: RwStore) -> Option<Commit> {
+pub fn load_top_commit_for_branch(options: &TopCommitOptions, _: RwStore) -> Option<Commit> {
   let now = Instant::now();
 
   let out = run_git(RunGitOptions {
@@ -47,7 +47,7 @@ pub fn load_top_commit_for_branch(options: &TopCommitOptions, store: RwStore) ->
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
 
-pub fn load_head_commit(options: &ReqOptions, store: RwStore) -> Option<Commit> {
+pub fn load_head_commit(options: &ReqOptions, _: RwStore) -> Option<Commit> {
   let out = run_git(RunGitOptions {
     args: [
       "log",

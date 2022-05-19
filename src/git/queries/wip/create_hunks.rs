@@ -1,5 +1,6 @@
 use crate::git::git_types::{Hunk, HunkLine, HunkLineStatus, HunkRange};
 use std::cmp::{max, min};
+use HunkLineStatus::{Added, Removed};
 
 pub fn convert_lines_to_hunks(lines: Vec<HunkLine>) -> (Vec<Hunk>, u32) {
   let mut hunks = Vec::<Hunk>::new();
@@ -13,7 +14,7 @@ pub fn convert_lines_to_hunks(lines: Vec<HunkLine>) -> (Vec<Hunk>, u32) {
   for (i, line) in lines.iter().enumerate() {
     let HunkLine { status, .. } = line;
 
-    if *status == HunkLineStatus::Added || *status == HunkLineStatus::Removed {
+    if *status == Added || *status == Removed {
       patch_size += 1;
       gap_count = 0;
 
@@ -43,6 +44,7 @@ pub fn convert_lines_to_hunks(lines: Vec<HunkLine>) -> (Vec<Hunk>, u32) {
 
         set_line_ranges(&mut current_hunk);
         hunks.push(current_hunk.clone());
+        current_hunk = Hunk::new();
         started_making_hunk = false;
         gap_count = 0;
       }
@@ -97,7 +99,55 @@ fn set_indices(hunks: &mut Vec<Hunk>) -> () {
 
 #[cfg(test)]
 mod tests {
+  use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
+  use crate::git::queries::wip::wip_diff::calc_hunk_line_from_text;
   use std::cmp::max;
+
+  #[test]
+  fn test_create_hunks() {
+    let text = "import {ThemeName} from '../views/theme/theming'
+
+export const maxNumberOfCommits = 1000
+export const maxNumberOfCommits = 100
+
+export const bgSize = 500
+
+export const font = `13px -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji`
+
+export const monoFont = `13px 'Menlo', 'Ubuntu Mono', 'Consolas', monospace`
+
+export const defaultTheme: ThemeName = 'dark'
+
+export const defaultAnimationTime: AnimationTime = {
+  short: 150,
+  medium: 300,
+  long: 400,
+}
+
+export const animationTimeDisabled: AnimationTime = {
+  short: 0,
+  medium: 0,
+  long: 0,
+}
+
+export interface AnimationTime {
+  short: number
+  medium: number
+  long: number
+}
+";
+
+    let lines = calc_hunk_line_from_text("", text);
+
+    assert_eq!(lines.len(), 30);
+
+    let hunks = convert_lines_to_hunks(lines);
+
+    assert_eq!(hunks.0.len(), 1);
+
+    // This is a bit dumb. All lines are added
+    assert_eq!(hunks.0[0].lines.len(), 30);
+  }
 
   #[test]
   fn test_max_behaviour() {

@@ -120,7 +120,7 @@ fn switch_to_line_ending(text: String, line_ending: &str) -> String {
   text
 }
 
-fn calc_hunk_line_from_text(a: &str, b: &str) -> Vec<HunkLine> {
+pub fn calc_hunk_line_from_text(a: &str, b: &str) -> Vec<HunkLine> {
   let diff = TextDiff::from_lines(a, b);
 
   let mut lines = Vec::<HunkLine>::new();

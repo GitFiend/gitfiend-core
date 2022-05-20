@@ -36,7 +36,7 @@ where
     if stdout.len() > 0 {
       return Some(String::from_utf8_lossy(stdout).to_string());
     } else {
-      println!("{:?}", String::from_utf8_lossy(stderr).to_string());
+      println!("StdErr: {:?}", String::from_utf8_lossy(stderr).to_string());
     }
   }
 

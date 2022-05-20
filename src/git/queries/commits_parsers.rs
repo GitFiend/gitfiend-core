@@ -7,15 +7,17 @@ use crate::{and, character, many, map, or, rep_parser_sep, take_char_while, unti
 
 const END: &str = "4a41380f-a4e8-4251-9ca2-bf55186ed32a";
 pub const PRETTY_FORMATTED: &str =
-  "--pretty=format:%an, %ae, %ad, %H, %P, %B4a41380f-a4e8-4251-9ca2-bf55186ed32a, %d";
+  "--pretty=format:%an; %ae; %ad; %H; %P; %B4a41380f-a4e8-4251-9ca2-bf55186ed32a; %d";
 
-pub const P_GROUP: Parser<String> = take_char_while!(|c: char| { c != ',' });
+pub const SEP_CHAR: char = ';';
 
-const P_SEP: Parser<char> = map!(and!(WS, character!(','), WS), |_res: (
+pub const P_GROUP: Parser<String> = take_char_while!(|c: char| { c != SEP_CHAR });
+
+const P_SEP: Parser<char> = map!(and!(WS, character!(SEP_CHAR), WS), |_res: (
   String,
   char,
   String
-)| { ',' });
+)| { SEP_CHAR });
 
 const P_EMAIL: Parser<String> = or!(P_GROUP, WS);
 

@@ -8,6 +8,7 @@ use crate::{and, many, or, until_parser_keep};
 use serde::Deserialize;
 use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;
+use std::ops::Add;
 use std::path::Path;
 use ts_rs::TS;
 
@@ -110,11 +111,14 @@ const LINE_PARSER: Parser<(String, &str)> =
 
 const MANY_LINE_PARSER: Parser<Vec<(String, &str)>> = many!(LINE_PARSER);
 
+/// Unifies line ending in text to be the provided. Also appends line ending to end.
 fn switch_to_line_ending(text: String, line_ending: &str) -> String {
   if let Some(result) = parse_all(MANY_LINE_PARSER, &text) {
     let lines: Vec<String> = result.into_iter().map(|line| line.0).collect();
 
-    return lines.join(line_ending);
+    let joined_text = lines.join(line_ending);
+
+    return joined_text.add(line_ending);
   }
 
   text

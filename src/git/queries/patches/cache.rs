@@ -16,7 +16,7 @@ pub fn write_patches_cache(
   patches: &HashMap<String, Vec<Patch>>,
 ) -> Option<()> {
   let cache_dir = get_cache_dir()?;
-  let file_name = get_file_name(repo_path);
+  let file_name = generate_file_name(repo_path);
 
   let full_path = cache_dir.join(file_name);
 
@@ -25,7 +25,7 @@ pub fn write_patches_cache(
 
 pub fn load_patches_cache(repo_path: &String) -> Option<HashMap<String, Vec<Patch>>> {
   let cache_dir = get_cache_dir()?;
-  let file_name = get_file_name(repo_path);
+  let file_name = generate_file_name(repo_path);
 
   create_dir_all(&cache_dir).ok()?;
 
@@ -44,13 +44,16 @@ fn get_cache_dir() -> Option<PathBuf> {
   }
 }
 
-fn get_file_name(repo_path: &String) -> String {
+/// This generates a file name from the repo path e.g.
+/// c:\user\something\thing -> cusersomethingthing.json
+fn generate_file_name(repo_path: &String) -> String {
   let id = Path::new(&repo_path)
     .iter()
     .map(|p| p.to_str().unwrap_or(""))
     .collect::<Vec<&str>>()
     .join("")
     .replace("\\", "")
+    .replace(":", "")
     .replace("/", "");
 
   format!("{}.json", id)

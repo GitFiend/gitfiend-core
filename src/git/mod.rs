@@ -1,5 +1,6 @@
 use crate::git::store::RwStore;
 use crate::server::git_request::ReqOptions;
+use std::env;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Output, Stdio};
@@ -42,15 +43,16 @@ where
   None
 }
 
-// We should probably use a separate function to the above run_get if we want progress.
-// TODO: unused/untested.
+///
+/// We should probably use a separate function to the above run_get if we want progress.
+/// TODO: unused/untested.
 pub fn _run_git_with_progress<I, S>(options: RunGitOptions<I, S>)
 where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
 {
   let mut cmd = Command::new("git")
-    .args(options.args)
+    .args(args_with_config(options.args))
     .current_dir(options.repo_path)
     .stdout(Stdio::piped())
     .spawn()
@@ -67,6 +69,37 @@ where
   }
 
   cmd.wait().unwrap();
+}
+
+pub fn args_with_config<I, S>(args: I) -> Vec<String>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
+  let mut new_args = Vec::<String>::new();
+
+  if let Some(config_args) = config_override_arg() {
+    new_args.extend(config_args);
+  }
+
+  for a in args {
+    if let Some(arg) = a.as_ref().to_str() {
+      new_args.push(arg.to_string());
+    }
+  }
+
+  new_args
+}
+
+fn config_override_arg() -> Option<[String; 2]> {
+  match env::consts::OS {
+    "windows" => Some([
+      String::from("-c"),
+      String::from("credential.helper=manager"),
+    ]),
+    "linux" => Some([String::from("-c"), String::from("credential.helper=store")]),
+    _ => None,
+  }
 }
 
 // Expect this to return none if Git is not installed.

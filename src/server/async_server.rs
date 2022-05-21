@@ -18,8 +18,7 @@ use tiny_http::{Request, Response, Server};
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
 #[cfg(not(debug_assertions))]
-// const PORT: u16 = 0;
-const PORT: u16 = 29997;
+const PORT: u16 = 0;
 
 const ADDRESS: fn() -> String = || format!("127.0.0.1:{}", PORT);
 
@@ -39,7 +38,7 @@ macro_rules! parse_json {
   }};
 }
 
-fn get_body(mut request: Request) -> Result<String, Box<dyn Error>> {
+fn _get_body(mut request: Request) -> Result<String, Box<dyn Error>> {
   let mut content = String::new();
 
   if let Err(e) = request.as_reader().read_to_string(&mut content) {
@@ -49,7 +48,7 @@ fn get_body(mut request: Request) -> Result<String, Box<dyn Error>> {
   Ok(content)
 }
 
-fn parse_json<'a, O: Deserialize<'a>>(body: &'a String) -> Option<O> {
+fn _parse_json<'a, O: Deserialize<'a>>(body: &'a String) -> Option<O> {
   match from_str::<O>(&body) {
     Ok(options) => Some(options),
     Err(e) => {
@@ -162,7 +161,9 @@ pub fn start_async_server() {
 
   let store = Store::new_lock();
 
-  println!("Address: {}:{}", server.server_addr().ip(), port);
+  // This is parsed by the renderer. Expected to be formatted like:
+  // PORT:12345
+  println!("PORT:{}", port);
 
   for mut request in server.incoming_requests() {
     async_requests!(

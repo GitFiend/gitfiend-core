@@ -20,7 +20,7 @@ pub struct ReqCommitsOptions {
   pub num_commits: u32,
 }
 
-pub fn handle_sync_request<'a, O: Deserialize<'a>, R: Serialize>(
+pub fn _handle_sync_request<'a, O: Deserialize<'a>, R: Serialize>(
   body: &'a str,
   mut stream: TcpStream,
   handler: fn(&O) -> R,

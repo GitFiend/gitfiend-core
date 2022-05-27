@@ -6,6 +6,7 @@ use std::io::{BufRead, BufReader};
 use std::process::{Command, Output, Stdio};
 
 pub(crate) mod git_types;
+pub(crate) mod git_types_extra_impl;
 pub(crate) mod queries;
 pub(crate) mod store;
 

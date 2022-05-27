@@ -21,8 +21,38 @@ fn find_commit_ancestors(commit: &Commit, commits: &HashMap<String, Commit>) -> 
   ancestors
 }
 
+pub fn count_commits_between_commit_ids(
+  a_id: &String,
+  b_id: &String,
+  commits: &Vec<Commit>,
+) -> usize {
+  if let Some(ids) = get_commit_ids_between_commits2(a_id, b_id, commits) {
+    ids.len()
+  } else {
+    0
+  }
+}
+
 // How many commits ahead is a. The order matters.
-pub fn get_commit_ids_between_commits(
+pub fn get_commit_ids_between_commits2(
+  a_id: &String,
+  b_id: &String,
+  commits: &Vec<Commit>,
+) -> Option<Vec<String>> {
+  let commit_map: HashMap<String, Commit> = commits
+    .clone()
+    .into_iter()
+    .map(|c| (c.id.clone(), c))
+    .collect();
+
+  let a = commit_map.get(a_id)?;
+  let b = commit_map.get(b_id)?;
+
+  Some(get_commit_ids_between_commits(a, b, &commit_map))
+}
+
+// How many commits ahead is a. The order matters.
+fn get_commit_ids_between_commits(
   a: &Commit,
   b: &Commit,
   commits: &HashMap<String, Commit>,
@@ -46,22 +76,4 @@ pub fn get_commit_ids_between_commits(
   }
 
   ids
-}
-
-// How many commits ahead is a. The order matters.
-pub fn get_commit_ids_between_commits2(
-  a_id: &String,
-  b_id: &String,
-  commits: &Vec<Commit>,
-) -> Option<Vec<String>> {
-  let commit_map: HashMap<String, Commit> = commits
-    .clone()
-    .into_iter()
-    .map(|c| (c.id.clone(), c))
-    .collect();
-
-  let a = commit_map.get(a_id)?;
-  let b = commit_map.get(b_id)?;
-
-  Some(get_commit_ids_between_commits(a, b, &commit_map))
 }

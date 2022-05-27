@@ -11,10 +11,7 @@ use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::load_wip_hunks;
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::store::{clear_cache, Store};
-use serde::Deserialize;
-use serde_json::from_str;
-use std::error::Error;
-use tiny_http::{Request, Response, Server};
+use tiny_http::{Response, Server};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -38,80 +35,6 @@ macro_rules! parse_json {
     }
   }};
 }
-
-fn _get_body(mut request: Request) -> Result<String, Box<dyn Error>> {
-  let mut content = String::new();
-
-  if let Err(e) = request.as_reader().read_to_string(&mut content) {
-    println!("{}", e);
-  }
-
-  Ok(content)
-}
-
-fn _parse_json<'a, O: Deserialize<'a>>(body: &'a String) -> Option<O> {
-  match from_str::<O>(&body) {
-    Ok(options) => Some(options),
-    Err(e) => {
-      println!("{}", e);
-
-      None
-    }
-  }
-}
-//
-// fn handle_request<'a, O: Deserialize<'a>, R: Serialize>(
-//   mut request: Request,
-//   handler: fn(&O) -> R,
-// ) -> Option<()> {
-//   let body = get_body(request)?;
-//
-//   // handle_request_inner(&body, handler);
-//
-//   None
-// }
-
-// fn handle_request<'a, O: Deserialize<'a>, R: Serialize>(
-//   mut request: Request,
-//   handler: fn(&O) -> R,
-// ) -> Option<()> {
-//   let body = get_body(request).ok()?.as_str();
-//
-//   handle_request_inner(body, handler);
-//
-//   None
-// }
-//
-// fn handle_request_inner<'a, O: Deserialize<'a>, R: Serialize>(
-//   body: &'a str,
-//   handler: fn(&O) -> R,
-// ) -> Result<(), Box<dyn Error>> {
-//   // let body = get_body(request)?;
-//   let options = from_str(body)?;
-//
-//   let handler_result = handler(&options);
-//   let serialized = serde_json::to_string(&handler_result)?;
-//
-//   let response = format!(
-//     "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-//     serialized.len(),
-//     serialized
-//   );
-//
-//   // stream.write(response.as_bytes())?;
-//   // stream.flush()?;
-//
-//   Ok(())
-// }
-//
-// fn handle_request_inner<'a, O: Deserialize<'a>, R: Serialize>(
-//   body: &'a String,
-//   handler: fn(&O) -> R,
-// ) -> Option<()> {
-//   let options = parse_json::<O>(&body);
-//
-//   None
-// }
 
 #[macro_export]
 macro_rules! send_response {
@@ -158,18 +81,15 @@ macro_rules! async_requests {
 pub fn start_async_server() {
   let server = Server::http(ADDRESS()).unwrap();
 
-  let port = server.server_addr().port();
+  print_port(server.server_addr().port());
 
   let store = Store::new_lock();
 
-  // This is parsed by the renderer. Expected to be formatted like:
-  // PORT:12345
-  println!("PORT:{}", port);
-
   for mut request in server.incoming_requests() {
-    async_requests!(
+    async_requests! {
       request,
       store.clone(),
+
       load_commits_and_stashes,
       load_full_config,
       load_head_commit,
@@ -184,6 +104,12 @@ pub fn start_async_server() {
       load_wip_hunks,
       git_version,
       scan_workspace
-    );
+    };
   }
+}
+
+fn print_port(port: u16) {
+  // This is parsed by the renderer. Expected to be formatted like:
+  // PORT:12345
+  println!("PORT:{}", port);
 }

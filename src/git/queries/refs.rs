@@ -1,3 +1,5 @@
+mod ref_diffs;
+
 use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation, RefType};
 use crate::git::store::{load_config_from_store, RwStore};
 use crate::or;
@@ -112,19 +114,19 @@ pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: f32) -> RefInfo
   }
 }
 
-// pub fn get_ref_info_from_commits(commits: &Vec<Commit>) -> Vec<RefInfo> {
-//   let mut refs: Vec<RefInfo> = Vec::new();
-//
-//   for c in commits.iter() {
-//     for r in c.refs.iter() {
-//       if !r.full_name.contains("HEAD") {
-//         refs.push(r.clone())
-//       }
-//     }
-//   }
-//
-//   set_sibling_and_remote(refs)
-// }
+pub fn get_ref_info_from_commits(commits: &Vec<Commit>) -> Vec<RefInfo> {
+  let mut refs: Vec<RefInfo> = Vec::new();
+
+  for c in commits.iter() {
+    for r in c.refs.iter() {
+      if !r.full_name.contains("HEAD") {
+        refs.push(r.clone())
+      }
+    }
+  }
+
+  refs
+}
 
 pub fn finish_initialising_refs_on_commits(
   commits: Vec<Commit>,
@@ -166,21 +168,6 @@ fn set_sibling_and_remotes_for_commits(
     })
     .collect()
 }
-
-// pub fn set_sibling_and_remote(refs: Vec<RefInfo>) -> Vec<RefInfo> {
-//   let config = load_config_from_store().unwrap_or(GitConfig::new());
-//
-//   refs
-//     .clone() // TODO: Is this too slow?
-//     .into_iter()
-//     .map(|mut r| {
-//       r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
-//       r.sibling_id = get_sibling_id_for_ref(&r, &refs);
-//
-//       r
-//     })
-//     .collect()
-// }
 
 fn get_sibling_id_for_ref(ri: &RefInfo, refs: &Vec<RefInfo>) -> Option<String> {
   if ri.location == RefLocation::Remote {

@@ -63,10 +63,10 @@ pub struct RefInfo {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct LocalRefCommitDiff {
-  ahead_of_remote: u32,
-  behind_remote: u32,
-  ahead_of_head: u32,
-  behind_head: u32,
+  pub ahead_of_remote: u32,
+  pub behind_remote: u32,
+  pub ahead_of_head: u32,
+  pub behind_head: u32,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

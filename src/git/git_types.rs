@@ -69,6 +69,14 @@ pub struct LocalRefCommitDiff {
   pub behind_head: u32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct RefCommitDiff {
+  pub ahead_of_head: u32,
+  pub behind_head: u32,
+}
+
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export)]
 pub struct GitConfig {

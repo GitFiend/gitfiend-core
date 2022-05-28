@@ -25,9 +25,9 @@ pub fn count_commits_between_commit_ids(
   a_id: &String,
   b_id: &String,
   commits: &Vec<Commit>,
-) -> usize {
+) -> u32 {
   if let Some(ids) = get_commit_ids_between_commits2(a_id, b_id, commits) {
-    ids.len()
+    ids.len() as u32
   } else {
     0
   }

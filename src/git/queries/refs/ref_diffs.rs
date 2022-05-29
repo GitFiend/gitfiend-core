@@ -59,9 +59,20 @@ pub fn calc_ref_diffs_inner(
     .map(|c| (c.id.clone(), c))
     .collect();
 
-  let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, &commit_map);
-  let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, &commit_map);
+  let now = Instant::now();
 
+  let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, &commit_map);
+  println!(
+    "Took {}ms to calc_local_ref_diffs",
+    now.elapsed().as_millis(),
+  );
+
+  let now = Instant::now();
+  let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, &commit_map);
+  println!(
+    "Took {}ms to calc_remote_ref_diffs",
+    now.elapsed().as_millis(),
+  );
   (local_ref_diffs, remote_ref_diffs)
 }
 

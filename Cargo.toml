@@ -16,4 +16,5 @@ directories = "4.0"
 similar = "2.1.0"
 
 [profile.release]
-strip = true  # Automatically strip symbols from the binary.
+#debug = true
+strip = true

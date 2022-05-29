@@ -1,15 +1,18 @@
 use crate::git::git_types::Commit;
 use std::collections::{HashMap, HashSet};
 
-fn find_commit_ancestors(commit: &Commit, commits: &HashMap<String, Commit>) -> HashSet<String> {
-  let mut ancestors = HashSet::<String>::new();
+fn find_commit_ancestors<'a>(
+  commit: &'a Commit,
+  commits: &'a HashMap<String, Commit>,
+) -> HashSet<&'a str> {
+  let mut ancestors = HashSet::<&'a str>::new();
   let mut ancestor_commits: Vec<&Commit> = vec![&commit];
 
   while ancestor_commits.len() > 0 {
     if let Some(c) = ancestor_commits.pop() {
       for id in c.parent_ids.iter() {
-        if !ancestors.contains(id) {
-          ancestors.insert(id.clone());
+        if !ancestors.contains(id as &str) {
+          ancestors.insert(id);
           if let Some(parent) = commits.get(id) {
             ancestor_commits.push(parent);
           }
@@ -21,7 +24,7 @@ fn find_commit_ancestors(commit: &Commit, commits: &HashMap<String, Commit>) -> 
   ancestors
 }
 
-pub fn count_commits_between_commit_ids(
+pub fn count_commits_between_commit_ids2(
   a_id: &String,
   b_id: &String,
   commits: &HashMap<String, Commit>,
@@ -31,6 +34,45 @@ pub fn count_commits_between_commit_ids(
   } else {
     0
   }
+}
+
+// How many commits ahead is a. The order matters.
+pub fn count_commits_between_commit_ids(
+  a_id: &String,
+  b_id: &String,
+  commits: &HashMap<String, Commit>,
+) -> u32 {
+  if let Some(a) = commits.get(a_id) {
+    if let Some(b) = commits.get(b_id) {
+      if a.id == b.id {
+        return 0;
+      }
+
+      let mut num = 0;
+
+      // let now = Instant::now();
+      let mut a_ancestors = find_commit_ancestors(&a, &commits);
+      a_ancestors.insert(&a.id);
+
+      let mut b_ancestors = find_commit_ancestors(&b, &commits);
+      b_ancestors.insert(&b.id);
+
+      // println!(
+      //   "Took {}ms to find_commit_ancestors",
+      //   now.elapsed().as_millis(),
+      // );
+
+      for id in a_ancestors.into_iter() {
+        if !b_ancestors.contains(&id) {
+          num += 1;
+        }
+      }
+
+      return num;
+    }
+  }
+
+  0
 }
 
 // How many commits ahead is a. The order matters.
@@ -64,14 +106,14 @@ fn get_commit_ids_between_commits(
   }
 
   let mut a_ancestors = find_commit_ancestors(&a, &commits);
-  a_ancestors.insert(a.id.clone());
+  a_ancestors.insert(&a.id);
 
   let mut b_ancestors = find_commit_ancestors(&b, &commits);
-  b_ancestors.insert(b.id.clone());
+  b_ancestors.insert(&b.id);
 
   for id in a_ancestors.into_iter() {
     if !b_ancestors.contains(&id) {
-      ids.push(id);
+      ids.push(id.to_string());
     }
   }
 

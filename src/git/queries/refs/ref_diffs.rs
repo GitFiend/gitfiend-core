@@ -53,8 +53,14 @@ pub fn calc_ref_diffs_inner(
   let refs = get_ref_info_map_from_commits(commits);
   let pairs = get_ref_pairs(&refs, config);
 
-  let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, commits);
-  let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, commits);
+  let commit_map: HashMap<String, Commit> = commits
+    .clone()
+    .into_iter()
+    .map(|c| (c.id.clone(), c))
+    .collect();
+
+  let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, &commit_map);
+  let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, &commit_map);
 
   (local_ref_diffs, remote_ref_diffs)
 }
@@ -62,7 +68,7 @@ pub fn calc_ref_diffs_inner(
 fn calc_remote_ref_diffs(
   head_commit_id: &String,
   refs: &HashMap<String, RefInfo>,
-  commits: &Vec<Commit>,
+  commits: &HashMap<String, Commit>,
 ) -> HashMap<String, RefCommitDiff> {
   let mut diffs = HashMap::<String, RefCommitDiff>::new();
 
@@ -79,7 +85,7 @@ fn calc_remote_ref_diffs(
 fn calc_remote_ref_diff(
   head_commit_id: &String,
   info: &RefInfo,
-  commits: &Vec<Commit>,
+  commits: &HashMap<String, Commit>,
 ) -> RefCommitDiff {
   let ref ref_commit_id = info.commit_id;
 
@@ -95,7 +101,7 @@ fn calc_remote_ref_diff(
 fn calc_local_ref_diffs(
   head_commit_id: &String,
   pairs: Vec<(RefInfo, Option<RefInfo>)>,
-  commits: &Vec<Commit>,
+  commits: &HashMap<String, Commit>,
 ) -> HashMap<String, LocalRefCommitDiff> {
   let mut diffs = HashMap::<String, LocalRefCommitDiff>::new();
 
@@ -113,7 +119,7 @@ fn calc_local_ref_diff(
   head_commit_id: &String,
   local: RefInfo,
   remote: Option<RefInfo>,
-  commits: &Vec<Commit>,
+  commits: &HashMap<String, Commit>,
 ) -> LocalRefCommitDiff {
   let ref local_id = local.commit_id;
 

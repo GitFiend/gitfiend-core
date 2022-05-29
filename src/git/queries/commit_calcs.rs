@@ -1,5 +1,4 @@
 use crate::git::git_types::Commit;
-use cached::proc_macro::cached;
 use std::collections::{HashMap, HashSet};
 
 fn find_commit_ancestors(commit: &Commit, commits: &HashMap<String, Commit>) -> HashSet<String> {
@@ -25,7 +24,7 @@ fn find_commit_ancestors(commit: &Commit, commits: &HashMap<String, Commit>) -> 
 pub fn count_commits_between_commit_ids(
   a_id: &String,
   b_id: &String,
-  commits: &Vec<Commit>,
+  commits: &HashMap<String, Commit>,
 ) -> u32 {
   if let Some(ids) = get_commit_ids_between_commits2(a_id, b_id, commits) {
     ids.len() as u32
@@ -38,18 +37,18 @@ pub fn count_commits_between_commit_ids(
 pub fn get_commit_ids_between_commits2(
   a_id: &String,
   b_id: &String,
-  commits: &Vec<Commit>,
+  commits: &HashMap<String, Commit>,
 ) -> Option<Vec<String>> {
-  let commit_map: HashMap<String, Commit> = commits
-    .clone()
-    .into_iter()
-    .map(|c| (c.id.clone(), c))
-    .collect();
+  // let commit_map: HashMap<String, Commit> = commits
+  //   .clone()
+  //   .into_iter()
+  //   .map(|c| (c.id.clone(), c))
+  //   .collect();
 
-  let a = commit_map.get(a_id)?;
-  let b = commit_map.get(b_id)?;
+  let a = commits.get(a_id)?;
+  let b = commits.get(b_id)?;
 
-  Some(get_commit_ids_between_commits(a, b, &commit_map))
+  Some(get_commit_ids_between_commits(a, b, commits))
 }
 
 // How many commits ahead is a. The order matters.

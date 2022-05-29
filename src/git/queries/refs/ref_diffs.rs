@@ -3,6 +3,7 @@ use crate::git::git_types::{
 };
 use crate::git::queries::commit_calcs::count_commits_between_commit_ids;
 use crate::git::store::{load_commits_from_store, load_config_from_store, RwStore};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Instant;
@@ -81,16 +82,26 @@ fn calc_remote_ref_diffs(
   refs: &HashMap<String, RefInfo>,
   commits: &HashMap<String, Commit>,
 ) -> HashMap<String, RefCommitDiff> {
-  let mut diffs = HashMap::<String, RefCommitDiff>::new();
+  // let mut diffs = HashMap::<String, RefCommitDiff>::new();
+  //
+  // for (_, info) in refs {
+  //   diffs.insert(
+  //     info.id.clone(),
+  //     calc_remote_ref_diff(head_commit_id, info, commits),
+  //   );
+  // }
 
-  for (_, info) in refs {
-    diffs.insert(
-      info.id.clone(),
-      calc_remote_ref_diff(head_commit_id, info, commits),
-    );
-  }
+  refs
+    .into_par_iter()
+    .map(|(_, info)| {
+      (
+        info.id.clone(),
+        calc_remote_ref_diff(head_commit_id, info, commits),
+      )
+    })
+    .collect()
 
-  diffs
+  // diffs
 }
 
 fn calc_remote_ref_diff(
@@ -114,14 +125,24 @@ fn calc_local_ref_diffs(
   pairs: Vec<(RefInfo, Option<RefInfo>)>,
   commits: &HashMap<String, Commit>,
 ) -> HashMap<String, LocalRefCommitDiff> {
-  let mut diffs = HashMap::<String, LocalRefCommitDiff>::new();
+  // let mut diffs = HashMap::<String, LocalRefCommitDiff>::new();
 
-  for (local, remote) in pairs {
-    diffs.insert(
-      local.id.clone(),
-      calc_local_ref_diff(head_commit_id, local, remote, commits),
-    );
-  }
+  // for (local, remote) in pairs {
+  //   diffs.insert(
+  //     local.id.clone(),
+  //     calc_local_ref_diff(head_commit_id, local, remote, commits),
+  //   );
+  // }
+
+  let diffs = pairs
+    .into_par_iter()
+    .map(|(local, remote)| {
+      (
+        local.id.clone(),
+        calc_local_ref_diff(head_commit_id, local, remote, commits),
+      )
+    })
+    .collect();
 
   diffs
 }

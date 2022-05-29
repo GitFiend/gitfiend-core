@@ -1,4 +1,4 @@
-mod ref_diffs;
+pub(crate) mod ref_diffs;
 
 use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation, RefType};
 use crate::git::store::{load_config_from_store, RwStore};

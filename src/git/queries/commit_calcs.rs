@@ -1,4 +1,5 @@
 use crate::git::git_types::Commit;
+use cached::proc_macro::cached;
 use std::collections::{HashMap, HashSet};
 
 fn find_commit_ancestors(commit: &Commit, commits: &HashMap<String, Commit>) -> HashSet<String> {

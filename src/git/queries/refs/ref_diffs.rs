@@ -2,15 +2,61 @@ use crate::git::git_types::{
   Commit, GitConfig, LocalRefCommitDiff, RefCommitDiff, RefInfo, RefLocation,
 };
 use crate::git::queries::commit_calcs::count_commits_between_commit_ids;
+use crate::git::store::{load_commits_from_store, load_config_from_store, RwStore};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::time::Instant;
+use ts_rs::TS;
+
+#[derive(Debug, Deserialize, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct RefDiffOptions {
+  pub repo_path: String,
+  pub head_commit_id: String,
+}
+
+pub fn calc_ref_diffs(
+  options: &RefDiffOptions,
+  store: RwStore,
+) -> Option<(
+  HashMap<String, LocalRefCommitDiff>,
+  HashMap<String, RefCommitDiff>,
+)> {
+  let RefDiffOptions {
+    repo_path,
+    head_commit_id,
+    ..
+  } = options;
+
+  let commits = load_commits_from_store(&repo_path, &store)?;
+  let config = load_config_from_store(&store)?;
+
+  let now = Instant::now();
+
+  let res = Some(calc_ref_diffs_inner(&commits, &config, head_commit_id));
+
+  println!("Took {}ms for calc_ref_diffs", now.elapsed().as_millis(),);
+
+  res
+}
 
 // We need to pass in head as it may not be found in provided commits in some cases.
-pub fn calc_ref_diffs(commits: &Vec<Commit>, config: &GitConfig, head_commit_id: &String) {
+pub fn calc_ref_diffs_inner(
+  commits: &Vec<Commit>,
+  config: &GitConfig,
+  head_commit_id: &String,
+) -> (
+  HashMap<String, LocalRefCommitDiff>,
+  HashMap<String, RefCommitDiff>,
+) {
   let refs = get_ref_info_map_from_commits(commits);
   let pairs = get_ref_pairs(&refs, config);
 
   let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, commits);
   let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, commits);
+
+  (local_ref_diffs, remote_ref_diffs)
 }
 
 fn calc_remote_ref_diffs(

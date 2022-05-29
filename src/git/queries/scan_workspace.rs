@@ -1,6 +1,6 @@
 use crate::git::store::RwStore;
 use serde::{Deserialize, Serialize};
-use std::fs::{read_dir, DirEntry};
+use std::fs::read_dir;
 use std::path::PathBuf;
 use std::time::Instant;
 use ts_rs::TS;

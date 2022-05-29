@@ -10,7 +10,7 @@ pub(crate) mod config;
 pub(crate) mod git_types_impl;
 pub(crate) mod hunks;
 pub(crate) mod patches;
-mod refs;
+pub(crate) mod refs;
 pub(crate) mod scan_workspace;
 pub(crate) mod stashes;
 mod stashes_test;

@@ -6,6 +6,7 @@ use crate::git::queries::commits::{
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::hunks::hunks::load_hunks;
 use crate::git::queries::patches::patches::load_patches;
+use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
 use crate::git::queries::scan_workspace::scan_workspace;
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::load_wip_hunks;
@@ -103,7 +104,8 @@ pub fn start_async_server() {
       clear_cache,
       load_wip_hunks,
       git_version,
-      scan_workspace
+      scan_workspace,
+      calc_ref_diffs
     };
   }
 }

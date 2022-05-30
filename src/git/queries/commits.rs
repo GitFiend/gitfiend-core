@@ -1,5 +1,5 @@
+use ahash::AHashMap;
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use std::thread;
 use std::time::Instant;
 
@@ -181,7 +181,7 @@ pub fn commit_ids_between_commits(
 
   if let Ok(store) = store_lock.read() {
     if let Some(commits) = (*store).commits.get(repo_path) {
-      let commit_map: HashMap<String, Commit> = commits
+      let commit_map: AHashMap<String, Commit> = commits
         .clone()
         .into_iter()
         .map(|c| (c.id.clone(), c))
@@ -242,7 +242,7 @@ fn get_un_pushed_commits_computed(options: &ReqOptions, store: RwStore) -> Optio
 
   let commits = load_commits_from_store(&options.repo_path, &store)?;
 
-  let commit_map: HashMap<String, Commit> = commits
+  let commit_map: AHashMap<String, Commit> = commits
     .clone()
     .into_iter()
     .map(|c| (c.id.clone(), c))

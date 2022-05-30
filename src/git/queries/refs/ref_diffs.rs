@@ -1,13 +1,16 @@
+use std::collections::HashMap;
+use std::time::Instant;
+
+use ahash::AHashMap;
+use rayon::prelude::*;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
 use crate::git::git_types::{
   Commit, GitConfig, LocalRefCommitDiff, RefCommitDiff, RefInfo, RefLocation,
 };
 use crate::git::queries::commit_calcs::count_commits_between_commit_ids;
 use crate::git::store::{load_commits_from_store, load_config_from_store, RwStore};
-use rayon::prelude::*;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::time::Instant;
-use ts_rs::TS;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -37,7 +40,7 @@ pub fn calc_ref_diffs(
 
   let res = Some(calc_ref_diffs_inner(&commits, &config, head_commit_id));
 
-  println!("Took {}ms for calc_ref_diffs", now.elapsed().as_millis(),);
+  println!("Took {}ms for calc_ref_diffs", now.elapsed().as_millis());
 
   res
 }
@@ -51,14 +54,20 @@ pub fn calc_ref_diffs_inner(
   HashMap<String, LocalRefCommitDiff>,
   HashMap<String, RefCommitDiff>,
 ) {
+  let now = Instant::now();
   let refs = get_ref_info_map_from_commits(commits);
   let pairs = get_ref_pairs(&refs, config);
 
-  let commit_map: HashMap<String, Commit> = commits
+  let commit_map: AHashMap<String, Commit> = commits
     .clone()
     .into_iter()
     .map(|c| (c.id.clone(), c))
     .collect();
+
+  println!(
+    "Took {}ms get data for ref diff calcs",
+    now.elapsed().as_millis(),
+  );
 
   let now = Instant::now();
 
@@ -79,15 +88,15 @@ pub fn calc_ref_diffs_inner(
 
 fn calc_remote_ref_diffs(
   head_commit_id: &String,
-  refs: &HashMap<String, RefInfo>,
-  commits: &HashMap<String, Commit>,
+  refs: &AHashMap<String, RefInfo>,
+  commits: &AHashMap<String, Commit>,
 ) -> HashMap<String, RefCommitDiff> {
   refs
-    .into_par_iter()
+    .par_iter()
     .map(|(_, info)| {
       (
         info.id.clone(),
-        calc_remote_ref_diff(head_commit_id, info, commits),
+        calc_remote_ref_diff(head_commit_id, &info, commits),
       )
     })
     .collect()
@@ -96,7 +105,7 @@ fn calc_remote_ref_diffs(
 fn calc_remote_ref_diff(
   head_commit_id: &String,
   info: &RefInfo,
-  commits: &HashMap<String, Commit>,
+  commits: &AHashMap<String, Commit>,
 ) -> RefCommitDiff {
   let ref ref_commit_id = info.commit_id;
 
@@ -112,7 +121,7 @@ fn calc_remote_ref_diff(
 fn calc_local_ref_diffs(
   head_commit_id: &String,
   pairs: Vec<(RefInfo, Option<RefInfo>)>,
-  commits: &HashMap<String, Commit>,
+  commits: &AHashMap<String, Commit>,
 ) -> HashMap<String, LocalRefCommitDiff> {
   pairs
     .into_par_iter()
@@ -129,7 +138,7 @@ fn calc_local_ref_diff(
   head_commit_id: &String,
   local: RefInfo,
   remote: Option<RefInfo>,
-  commits: &HashMap<String, Commit>,
+  commits: &AHashMap<String, Commit>,
 ) -> LocalRefCommitDiff {
   let ref local_id = local.commit_id;
 
@@ -159,7 +168,7 @@ fn calc_local_ref_diff(
 }
 
 fn get_ref_pairs(
-  refs: &HashMap<String, RefInfo>,
+  refs: &AHashMap<String, RefInfo>,
   config: &GitConfig,
 ) -> Vec<(RefInfo, Option<RefInfo>)> {
   refs
@@ -173,7 +182,7 @@ fn get_ref_pairs(
 fn get_sibling(
   ref_info: &RefInfo,
   config: &GitConfig,
-  refs: &HashMap<String, RefInfo>,
+  refs: &AHashMap<String, RefInfo>,
 ) -> Option<RefInfo> {
   let RefInfo {
     sibling_id,
@@ -196,8 +205,8 @@ fn get_sibling(
   None
 }
 
-pub fn get_ref_info_map_from_commits(commits: &Vec<Commit>) -> HashMap<String, RefInfo> {
-  let mut refs: HashMap<String, RefInfo> = HashMap::new();
+pub fn get_ref_info_map_from_commits(commits: &Vec<Commit>) -> AHashMap<String, RefInfo> {
+  let mut refs: AHashMap<String, RefInfo> = AHashMap::new();
 
   for c in commits.iter() {
     for r in c.refs.iter() {

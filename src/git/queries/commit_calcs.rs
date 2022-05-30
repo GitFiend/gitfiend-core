@@ -1,11 +1,12 @@
+use ahash::{AHashMap, AHashSet};
+
 use crate::git::git_types::Commit;
-use std::collections::{HashMap, HashSet};
 
 fn find_commit_ancestors<'a>(
   commit: &'a Commit,
-  commits: &'a HashMap<String, Commit>,
-) -> HashSet<&'a str> {
-  let mut ancestors = HashSet::<&'a str>::new();
+  commits: &'a AHashMap<String, Commit>,
+) -> AHashSet<&'a str> {
+  let mut ancestors = AHashSet::<&'a str>::new();
   let mut ancestor_commits: Vec<&Commit> = vec![&commit];
 
   while ancestor_commits.len() > 0 {
@@ -27,7 +28,7 @@ fn find_commit_ancestors<'a>(
 pub fn count_commits_between_commit_ids2(
   a_id: &String,
   b_id: &String,
-  commits: &HashMap<String, Commit>,
+  commits: &AHashMap<String, Commit>,
 ) -> u32 {
   if let Some(ids) = get_commit_ids_between_commits2(a_id, b_id, commits) {
     ids.len() as u32
@@ -40,7 +41,7 @@ pub fn count_commits_between_commit_ids2(
 pub fn count_commits_between_commit_ids(
   a_id: &String,
   b_id: &String,
-  commits: &HashMap<String, Commit>,
+  commits: &AHashMap<String, Commit>,
 ) -> u32 {
   if let Some(a) = commits.get(a_id) {
     if let Some(b) = commits.get(b_id) {
@@ -79,7 +80,7 @@ pub fn count_commits_between_commit_ids(
 pub fn get_commit_ids_between_commits2(
   a_id: &String,
   b_id: &String,
-  commits: &HashMap<String, Commit>,
+  commits: &AHashMap<String, Commit>,
 ) -> Option<Vec<String>> {
   // let commit_map: HashMap<String, Commit> = commits
   //   .clone()
@@ -97,7 +98,7 @@ pub fn get_commit_ids_between_commits2(
 fn get_commit_ids_between_commits(
   a: &Commit,
   b: &Commit,
-  commits: &HashMap<String, Commit>,
+  commits: &AHashMap<String, Commit>,
 ) -> Vec<String> {
   let mut ids: Vec<String> = Vec::new();
 

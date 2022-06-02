@@ -132,15 +132,7 @@ pub fn finish_initialising_refs_on_commits(
   commits: Vec<Commit>,
   store_lock: &RwStore,
 ) -> Vec<Commit> {
-  let mut refs: Vec<RefInfo> = Vec::new();
-
-  for c in commits.iter() {
-    for r in c.refs.iter() {
-      if !r.full_name.contains("HEAD") {
-        refs.push(r.clone())
-      }
-    }
-  }
+  let refs = get_ref_info_from_commits(&commits);
 
   set_sibling_and_remotes_for_commits(commits, &refs, store_lock)
 }

@@ -81,8 +81,8 @@ pub fn load_commits_and_stashes(
   let stashes_thread = thread::spawn(move || load_stashes(&p1));
   let commits_thread = thread::spawn(move || load_commits(&p2, num));
 
-  let stashes = stashes_thread.join().unwrap();
-  let mut commits = commits_thread.join().unwrap()?;
+  let stashes = stashes_thread.join().ok()?;
+  let mut commits = commits_thread.join().ok()??;
 
   println!(
     "Took {}ms to request stashes and commits from Git",

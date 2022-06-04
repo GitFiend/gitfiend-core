@@ -1,4 +1,4 @@
-use crate::git::git_types::{PatchType, WipPatchType};
+use crate::git::git_types::{Hunk, HunkRange, PatchType, WipPatchType};
 use std::fmt;
 
 impl fmt::Display for PatchType {
@@ -28,6 +28,27 @@ impl fmt::Display for WipPatchType {
       WipPatchType::M => write!(f, "M"),
       WipPatchType::R => write!(f, "R"),
       WipPatchType::U => write!(f, "U"),
+    }
+  }
+}
+
+impl Hunk {
+  pub fn new() -> Hunk {
+    Hunk {
+      lines: Vec::new(),
+      old_line_range: HunkRange::new(),
+      new_line_range: HunkRange::new(),
+      context_line: String::new(),
+      index: -1,
+    }
+  }
+}
+
+impl HunkRange {
+  pub fn new() -> HunkRange {
+    HunkRange {
+      start: 0,
+      length: 0,
     }
   }
 }

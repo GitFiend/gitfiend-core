@@ -7,7 +7,6 @@ mod commits_test;
 
 pub(crate) mod commit_calcs;
 pub(crate) mod config;
-pub(crate) mod git_types_impl;
 pub(crate) mod hunks;
 pub(crate) mod patches;
 pub(crate) mod refs;

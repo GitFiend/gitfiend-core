@@ -1,6 +1,7 @@
 use ahash::{AHashMap, AHashSet};
 
 use crate::git::git_types::Commit;
+use crate::git::store::{get_ref_diff_from_store, store_ref_diff, RwStore};
 
 fn find_commit_ancestors<'a>(
   commit: &'a Commit,
@@ -25,24 +26,31 @@ fn find_commit_ancestors<'a>(
   ancestors
 }
 
-pub fn count_commits_between_commit_ids2(
-  a_id: &String,
-  b_id: &String,
-  commits: &AHashMap<String, Commit>,
-) -> u32 {
-  if let Some(ids) = get_commit_ids_between_commits2(a_id, b_id, commits) {
-    ids.len() as u32
-  } else {
-    0
-  }
-}
+// pub fn count_commits_between_commit_ids2(
+//   a_id: &String,
+//   b_id: &String,
+//   commits: &AHashMap<String, Commit>,
+// ) -> u32 {
+//   if let Some(ids) = get_commit_ids_between_commits2(a_id, b_id, commits) {
+//     ids.len() as u32
+//   } else {
+//     0
+//   }
+// }
 
 // How many commits ahead is a. The order matters.
 pub fn count_commits_between_commit_ids(
   a_id: &String,
   b_id: &String,
   commits: &AHashMap<String, Commit>,
+  store: &RwStore,
 ) -> u32 {
+  let key = format!("{}{}", a_id, b_id);
+
+  if let Some(count) = get_ref_diff_from_store(store, &key) {
+    return count;
+  }
+
   if let Some(a) = commits.get(a_id) {
     if let Some(b) = commits.get(b_id) {
       if a.id == b.id {
@@ -68,6 +76,8 @@ pub fn count_commits_between_commit_ids(
           num += 1;
         }
       }
+
+      store_ref_diff(store, &key, num);
 
       return num;
     }

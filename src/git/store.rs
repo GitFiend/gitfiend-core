@@ -1,20 +1,22 @@
 use crate::git::git_types::{Commit, GitConfig};
 use crate::server::git_request::ReqOptions;
-use std::collections::HashMap;
+use ahash::AHashMap;
 use std::sync::{Arc, RwLock};
 
 pub type RwStore = Arc<RwLock<Store>>;
 
 pub struct Store {
-  pub commits: HashMap<String, Vec<Commit>>,
+  pub commits: AHashMap<String, Vec<Commit>>,
   pub config: GitConfig,
+  pub ref_diffs: AHashMap<String, u32>,
 }
 
 impl Store {
   pub fn new() -> Store {
     Store {
-      commits: HashMap::new(),
+      commits: AHashMap::new(),
       config: GitConfig::new(),
+      ref_diffs: AHashMap::new(),
     }
   }
 
@@ -35,9 +37,32 @@ pub fn load_config_from_store(store_lock: &RwStore) -> Option<GitConfig> {
   Some((*store_lock).read().ok()?.config.clone())
 }
 
+pub fn get_ref_diff_from_store(store_lock: &RwStore, key: &str) -> Option<u32> {
+  let read = (*store_lock).read();
+
+  if read.is_ok() {
+    let ref diffs = read.ok()?.ref_diffs;
+    return Some(diffs.get(key)?.clone());
+  } else {
+    println!("Failed to read from store");
+  }
+
+  None
+}
+
+pub fn store_ref_diff(store_lock: &RwStore, key: &str, value: u32) {
+  if let Ok(mut store) = store_lock.write() {
+    println!("storing {key}");
+    (*store).ref_diffs.insert(key.to_string(), value);
+  } else {
+    println!("Failed to get write lock");
+  }
+}
+
 pub fn clear_cache(_: &ReqOptions, store_lock: RwStore) {
   if let Ok(mut store) = store_lock.write() {
-    (*store).commits = HashMap::new();
+    (*store).commits = AHashMap::new();
+    // (*store).ref_diffs = AHashMap::new();
 
     println!("Cleared commits cache.");
   }

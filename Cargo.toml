@@ -17,6 +17,9 @@ similar = "2.1.0"
 rayon = "1.5.3"
 ahash = "0.7.6"
 
+[profile.dev]
+opt-level = 3
+
 [profile.release]
 #debug = true
 strip = true

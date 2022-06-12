@@ -12,6 +12,7 @@ use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::load_wip_hunks;
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::store::{clear_cache, Store};
+use crate::server::graph_instructions::api::graph_instructions;
 use tiny_http::{Response, Server};
 
 #[cfg(debug_assertions)]
@@ -105,7 +106,8 @@ pub fn start_async_server() {
       load_wip_hunks,
       git_version,
       scan_workspace,
-      calc_ref_diffs
+      calc_ref_diffs,
+      graph_instructions
     };
   }
 }

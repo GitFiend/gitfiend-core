@@ -87,23 +87,19 @@ fn load_file(repo_path: &String, file_path: &String) -> Option<FileInfo> {
   None
 }
 
-// TODO: This isn't very smart. Probably doesn't need to count all lines.
-// This could be 100ms for 100,000 lines.
-fn detect_new_line(text: &String) -> String {
-  let mut crlf = 0;
-  let mut lf = 0;
+fn detect_new_line(text: &str) -> String {
+  let mut n = 0;
+  let mut r = 0;
 
-  if let Some(result) = parse_all(MANY_LINE_PARSER, &text) {
-    for (_, le) in result {
-      if le == "\r\n" {
-        crlf += 1;
-      } else {
-        lf += 1;
-      }
+  for c in text.chars() {
+    match c {
+      '\n' => n += 1,
+      '\r' => r += 1,
+      _ => {}
     }
   }
 
-  String::from(if crlf > lf { "\r\n" } else { "\n" })
+  String::from(if r > (n / 2) { "\r\n" } else { "\n" })
 }
 
 const LINE_PARSER: Parser<(String, &str)> =
@@ -191,7 +187,7 @@ fn load_unchanged_file(
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::wip::wip_diff::calc_hunk_line_from_text;
+  use crate::git::queries::wip::wip_diff::{calc_hunk_line_from_text, detect_new_line};
 
   #[test]
   fn test_calc_hunk_line_from_text() {
@@ -230,5 +226,13 @@ export interface AnimationTime {
     let lines = calc_hunk_line_from_text("", text);
 
     assert_eq!(lines.len(), 30);
+  }
+
+  #[test]
+  fn test_detect_new_line() {
+    assert_eq!(detect_new_line("\r\na"), "\r\n");
+    assert_eq!(detect_new_line("\na\nb\nc"), "\n");
+
+    assert_eq!(detect_new_line("\r\na\r\nb\n"), "\r\n");
   }
 }

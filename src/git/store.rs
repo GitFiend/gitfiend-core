@@ -9,6 +9,7 @@ pub struct Store {
   pub commits: AHashMap<String, Vec<Commit>>,
   pub config: GitConfig,
   pub ref_diffs: AHashMap<String, u32>,
+  pub current_search: u32,
 }
 
 impl Store {
@@ -17,6 +18,7 @@ impl Store {
       commits: AHashMap::new(),
       config: GitConfig::new(),
       ref_diffs: AHashMap::new(),
+      current_search: 0,
     }
   }
 
@@ -65,5 +67,23 @@ pub fn clear_cache(_: &ReqOptions, store_lock: RwStore) {
     // (*store).ref_diffs = AHashMap::new();
 
     println!("Cleared commits cache.");
+  }
+}
+
+pub fn get_current_search_num(store_lock: &RwStore) -> Option<u32> {
+  if let Ok(store) = store_lock.read() {
+    Some((*store).current_search)
+  } else {
+    None
+  }
+}
+
+pub fn get_next_search_num(store_lock: &RwStore) -> Option<u32> {
+  if let Ok(mut store) = store_lock.write() {
+    (*store).current_search += 1;
+
+    Some((*store).current_search)
+  } else {
+    None
   }
 }

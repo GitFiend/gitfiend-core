@@ -16,6 +16,7 @@ directories = "4.0"
 similar = "2.1.0"
 rayon = "1.5.3"
 ahash = "0.7.6"
+async-process = "1.4.0"
 
 [profile.dev]
 opt-level = 3

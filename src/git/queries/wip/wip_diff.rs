@@ -4,7 +4,7 @@ use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
-use crate::{and, many, or, rep_parser_sep, until_parser_keep};
+use crate::{and, or, rep_parser_sep, until_parser_keep};
 use serde::Deserialize;
 use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;

@@ -8,6 +8,7 @@ use crate::git::queries::hunks::hunks::load_hunks;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
 use crate::git::queries::scan_workspace::scan_workspace;
+use crate::git::queries::search::search_diffs;
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::load_wip_hunks;
 use crate::git::queries::wip::wip_patches::load_wip_patches;
@@ -107,7 +108,8 @@ pub fn start_async_server() {
       git_version,
       scan_workspace,
       calc_ref_diffs,
-      graph_instructions
+      graph_instructions,
+      search_diffs
     };
   }
 }

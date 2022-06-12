@@ -4,7 +4,7 @@ use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
-use crate::{and, many, or, until_parser_keep};
+use crate::{and, many, or, rep_parser_sep, until_parser_keep};
 use serde::Deserialize;
 use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;
@@ -105,12 +105,15 @@ fn detect_new_line(text: &str) -> String {
 const LINE_PARSER: Parser<(String, &str)> =
   and!(until_parser_keep!(LINE_END), or!(LINE_END, WS_STR));
 
-const MANY_LINE_PARSER: Parser<Vec<(String, &str)>> = many!(LINE_PARSER);
+const LINES_PARSER: Parser<Vec<String>> =
+  rep_parser_sep!(until_parser_keep!(LINE_END), or!(LINE_END, WS_STR));
+
+// const MANY_LINE_PARSER: Parser<Vec<(String, &str)>> = many!(LINE_PARSER);
 
 /// Unifies line ending in text to be the provided. Also appends line ending to end.
 fn switch_to_line_ending(text: String, line_ending: &str) -> String {
-  if let Some(result) = parse_all(MANY_LINE_PARSER, &text) {
-    let lines: Vec<String> = result.into_iter().map(|line| line.0).collect();
+  if let Some(lines) = parse_all(LINES_PARSER, &text) {
+    // let lines: Vec<String> = result.into_iter().map(|line| line.0).collect();
 
     let joined_text = lines.join(line_ending);
 
@@ -187,7 +190,10 @@ fn load_unchanged_file(
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::wip::wip_diff::{calc_hunk_line_from_text, detect_new_line};
+  use crate::git::queries::wip::wip_diff::{
+    calc_hunk_line_from_text, detect_new_line, LINES_PARSER,
+  };
+  use crate::parser::parse_all;
 
   #[test]
   fn test_calc_hunk_line_from_text() {
@@ -234,5 +240,24 @@ export interface AnimationTime {
     assert_eq!(detect_new_line("\na\nb\nc"), "\n");
 
     assert_eq!(detect_new_line("\r\na\r\nb\n"), "\r\n");
+  }
+
+  #[test]
+  fn test_many_line_parser() {
+    let res = parse_all(LINES_PARSER, "asdf\nasdf");
+
+    assert!(res.is_some());
+
+    let res = parse_all(LINES_PARSER, "asdf\nasdf\n");
+
+    assert!(res.is_some());
+
+    let res = parse_all(LINES_PARSER, "asdfr\nasdfr\n");
+
+    assert!(res.is_some());
+
+    let res = parse_all(LINES_PARSER, "asdfr");
+
+    assert!(res.is_some());
   }
 }

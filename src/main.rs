@@ -4,6 +4,7 @@ use crate::server::async_server::start_async_server;
 mod git;
 mod parser;
 mod server;
+mod util;
 
 fn main() {
   // start_sync_server();

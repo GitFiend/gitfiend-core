@@ -70,20 +70,20 @@ pub fn clear_cache(_: &ReqOptions, store_lock: RwStore) {
   }
 }
 
-pub fn get_current_search_num(store_lock: &RwStore) -> Option<u32> {
+pub fn get_current_search_num(store_lock: &RwStore) -> u32 {
   if let Ok(store) = store_lock.read() {
-    Some((*store).current_search)
+    (*store).current_search
   } else {
-    None
+    0
   }
 }
 
-pub fn get_next_search_num(store_lock: &RwStore) -> Option<u32> {
+pub fn get_next_search_num(store_lock: &RwStore) -> u32 {
   if let Ok(mut store) = store_lock.write() {
     (*store).current_search += 1;
 
-    Some((*store).current_search)
+    (*store).current_search
   } else {
-    None
+    0
   }
 }

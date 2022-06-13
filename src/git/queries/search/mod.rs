@@ -6,13 +6,16 @@ use futures::executor;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::git::git_types::Patch;
+use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::store::RwStore;
 use crate::global;
+use crate::parser::parse_all;
 use crate::util::global::Global;
 
 mod search;
 
-#[derive(Debug, Deserialize, Serialize, TS)]
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct SearchOptions {
@@ -36,24 +39,26 @@ pub fn get_next_search_id() -> u32 {
 
 fn search_cancelled(search_id: u32) -> bool {
   if let Some(id) = CURRENT_SEARCH.get() {
+    println!("current: {id}, this: {search_id}");
     search_id != id
   } else {
     false
   }
 }
 
-/*
-TODO: Create and run async version of run_git
+pub fn search_diffs(options: &SearchOptions, _: RwStore) -> Option<Vec<(String, Vec<Patch>)>> {
+  let result = search_diffs_inner(&options)?;
 
-use async_process library for Command.
-call try_status on child process every x milliseconds
+  parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
+}
 
-if done, return Some(result), if not, check get_current_search_num() == search_num.
-if we are still the current search, continue polling.
-If we aren't, return None.
- */
-pub fn search_diffs(options: &SearchOptions, _: RwStore) -> Option<String> {
+fn search_diffs_inner(options: &SearchOptions) -> Option<String> {
   let search_num = get_next_search_id();
+
+  println!(
+    "Search for text: {}, num: {}",
+    options.search_text, search_num
+  );
 
   let SearchOptions {
     repo_path,
@@ -78,16 +83,18 @@ pub fn search_diffs(options: &SearchOptions, _: RwStore) -> Option<String> {
     .ok()?;
 
   loop {
-    thread::sleep(time::Duration::from_millis(60));
+    thread::sleep(time::Duration::from_millis(50));
 
     if search_cancelled(search_num) {
-      println!("Killing search {search_num}");
+      println!("Killing search {search_num} \"{search_text}\"");
 
       if let Err(e) = child.kill() {
         eprintln!("{}", e);
       }
       break;
-    } else if let Ok(exit_status) = child.try_status() {
+    }
+
+    if let Ok(exit_status) = child.try_status() {
       if exit_status.is_some() {
         if let Ok(result) = executor::block_on(child.output()) {
           let Output { stdout, stderr, .. } = &result;
@@ -133,22 +140,9 @@ mod tests {
     println!("Took {}us", now.elapsed().as_micros());
   }
 
+  // We can't run tests in parallel as they will be killed.
   #[test]
   fn test_thing() {
-    let results = search_diffs(
-      &SearchOptions {
-        num_results: 5,
-        search_text: "this".to_string(),
-        repo_path: ".".to_string(),
-      },
-      Store::new_lock(),
-    );
-
-    assert!(results.is_some());
-  }
-
-  #[test]
-  fn test_thing2() {
     let t1 = thread::spawn(move || {
       search_diffs(
         &SearchOptions {

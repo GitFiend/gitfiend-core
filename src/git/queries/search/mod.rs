@@ -1,4 +1,4 @@
-use std::process::Output;
+use std::process::{Output, Stdio};
 use std::{thread, time};
 
 use async_process::Command;
@@ -52,7 +52,7 @@ if done, return Some(result), if not, check get_current_search_num() == search_n
 if we are still the current search, continue polling.
 If we aren't, return None.
  */
-pub fn search_diffs(options: &SearchOptions, store: RwStore) -> Option<String> {
+pub fn search_diffs(options: &SearchOptions, _: RwStore) -> Option<String> {
   let search_num = get_next_search_id();
 
   let SearchOptions {
@@ -72,6 +72,7 @@ pub fn search_diffs(options: &SearchOptions, store: RwStore) -> Option<String> {
       &format!("-n{}", num_results),
       "-z",
     ])
+    .stdout(Stdio::piped())
     .current_dir(repo_path)
     .spawn()
     .ok()?;
@@ -80,6 +81,8 @@ pub fn search_diffs(options: &SearchOptions, store: RwStore) -> Option<String> {
     thread::sleep(time::Duration::from_millis(60));
 
     if search_cancelled(search_num) {
+      println!("Killing search {search_num}");
+
       if let Err(e) = child.kill() {
         eprintln!("{}", e);
       }
@@ -89,8 +92,6 @@ pub fn search_diffs(options: &SearchOptions, store: RwStore) -> Option<String> {
         if let Ok(result) = executor::block_on(child.output()) {
           let Output { stdout, stderr, .. } = &result;
 
-          println!("stdout.len(): {}", stdout.len());
-          // TODO: Is stderr sometimes valid and useful git output?
           if stdout.len() > 0 {
             return Some(String::from_utf8_lossy(stdout).to_string());
           } else {
@@ -113,10 +114,11 @@ pub fn search_diffs(options: &SearchOptions, store: RwStore) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-  use std::time::Instant;
-  use std::{assert_eq, println};
+  use std::time::{Duration, Instant};
+  use std::{assert_eq, println, thread};
 
-  use crate::git::queries::search::get_next_search_id;
+  use crate::git::queries::search::{get_next_search_id, search_diffs, SearchOptions};
+  use crate::git::store::Store;
 
   #[test]
   fn test_get_next_search_id() {
@@ -129,5 +131,69 @@ mod tests {
     while get_next_search_id() < 1_000 {}
 
     println!("Took {}us", now.elapsed().as_micros());
+  }
+
+  #[test]
+  fn test_thing() {
+    let results = search_diffs(
+      &SearchOptions {
+        num_results: 5,
+        search_text: "this".to_string(),
+        repo_path: ".".to_string(),
+      },
+      Store::new_lock(),
+    );
+
+    assert!(results.is_some());
+  }
+
+  #[test]
+  fn test_thing2() {
+    let t1 = thread::spawn(move || {
+      search_diffs(
+        &SearchOptions {
+          num_results: 500,
+          search_text: "this".to_string(),
+          repo_path: ".".to_string(),
+        },
+        Store::new_lock(),
+      )
+    });
+
+    thread::sleep(Duration::from_millis(10));
+
+    let t2 = thread::spawn(move || {
+      search_diffs(
+        &SearchOptions {
+          num_results: 500,
+          search_text: "this".to_string(),
+          repo_path: ".".to_string(),
+        },
+        Store::new_lock(),
+      )
+    });
+
+    thread::sleep(Duration::from_millis(10));
+
+    let t3 = thread::spawn(move || {
+      search_diffs(
+        &SearchOptions {
+          num_results: 5,
+          search_text: "this".to_string(),
+          repo_path: ".".to_string(),
+        },
+        Store::new_lock(),
+      )
+    });
+
+    let r1 = t1.join().unwrap();
+    let r2 = t2.join().unwrap();
+    let r3 = t3.join().unwrap();
+
+    println!("{:?}, {:?}, {:?}", r1, r2, r3);
+
+    assert!(r1.is_none());
+    assert!(r2.is_none());
+    assert!(r3.is_some());
   }
 }

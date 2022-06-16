@@ -46,6 +46,10 @@ fn search_cancelled(search_id: u32) -> bool {
   }
 }
 
+pub fn start_diff_search(options: &SearchOptions, _: RwStore) {
+  //
+}
+
 pub fn search_diffs(options: &SearchOptions, _: RwStore) -> Option<Vec<(String, Vec<Patch>)>> {
   let result = search_diffs_inner(&options)?;
 

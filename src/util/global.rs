@@ -1,5 +1,5 @@
-use cached::once_cell::sync::Lazy;
 use std::sync::RwLock;
+use cached::once_cell::sync::Lazy;
 
 #[macro_export]
 macro_rules! global {

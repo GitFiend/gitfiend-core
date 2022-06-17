@@ -60,7 +60,6 @@ pub fn calc_ref_diffs_inner(
   HashMap<String, LocalRefCommitDiff>,
   HashMap<String, RefCommitDiff>,
 ) {
-  let now = Instant::now();
   let refs = get_ref_info_map_from_commits(commits);
   let pairs = get_ref_pairs(&refs, config);
 
@@ -70,25 +69,9 @@ pub fn calc_ref_diffs_inner(
     .map(|c| (c.id.clone(), c))
     .collect();
 
-  println!(
-    "Took {}ms get data for ref diff calcs",
-    now.elapsed().as_millis(),
-  );
-
-  let now = Instant::now();
-
   let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, &commit_map, store);
-  println!(
-    "Took {}ms to calc_local_ref_diffs",
-    now.elapsed().as_millis(),
-  );
-
-  let now = Instant::now();
   let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, &commit_map, store);
-  println!(
-    "Took {}ms to calc_remote_ref_diffs",
-    now.elapsed().as_millis(),
-  );
+
   (local_ref_diffs, remote_ref_diffs)
 }
 

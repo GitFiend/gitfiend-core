@@ -10,12 +10,15 @@ use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
 use std::collections::HashMap;
+use std::time::Instant;
 
 pub fn load_patches(
   options: &ReqCommitsOptions,
   store: RwStore,
 ) -> Option<HashMap<String, Vec<Patch>>> {
   let ReqCommitsOptions { repo_path, .. } = options;
+
+  let now = Instant::now();
 
   let commits = load_commits_from_store(&repo_path, &store)
     .or_else(|| load_commits_and_stashes(options, store))?;
@@ -69,6 +72,8 @@ pub fn load_patches(
   }
 
   write_patches_cache(&repo_path, &new_patches);
+
+  println!("Took {}ms for load_patches", now.elapsed().as_millis(),);
 
   Some(new_patches)
 }

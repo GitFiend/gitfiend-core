@@ -69,6 +69,15 @@ pub fn start_diff_search(options: &SearchOptions, _: RwStore) -> u32 {
     }
   });
 
+  // Clear out stale searches.
+  if let Ok(mut searches) = DIFF_SEARCHES.data.write() {
+    (*searches) = (*searches)
+      .clone()
+      .into_iter()
+      .filter(|search| !search.1.completed)
+      .collect();
+  }
+
   search.search_id
 }
 

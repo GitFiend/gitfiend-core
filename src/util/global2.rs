@@ -24,6 +24,7 @@ impl<T: Clone> Global2<T> {
     }
   }
 
+  // The result of this should be considered potentially stale.
   pub fn get(&self) -> Option<T> {
     if let Ok(data) = self.data.read() {
       return Some((*data).clone());

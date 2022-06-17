@@ -3,7 +3,7 @@ use std::{thread, time};
 
 use async_process::Command;
 use futures::executor;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use ts_rs::TS;
 
 use crate::git::git_types::Patch;
@@ -16,7 +16,7 @@ use crate::util::global2::Global2;
 mod search;
 pub(crate) mod search_request;
 
-#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct SearchOptions {
@@ -55,6 +55,7 @@ pub fn search_diffs(options: &SearchOptions, _: RwStore) -> Option<Vec<(String, 
   parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
 }
 
+// None result means either no results or cancelled.
 pub fn search_diffs_with_id(
   options: &SearchOptions,
   search_id: u32,
@@ -67,8 +68,8 @@ pub fn search_diffs_with_id(
 // TODO: Rename this.
 pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<String> {
   println!(
-    "Search for text: {}, num: {}",
-    options.search_text, search_id
+    "Search for text: {}, id: {}, num: {}",
+    options.search_text, search_id, options.num_results
   );
 
   let SearchOptions {
@@ -140,9 +141,9 @@ mod tests {
 
   #[test]
   fn test_get_next_search_id() {
-    assert_eq!(get_next_search_id(), 0);
     assert_eq!(get_next_search_id(), 1);
     assert_eq!(get_next_search_id(), 2);
+    assert_eq!(get_next_search_id(), 3);
 
     let now = Instant::now();
 

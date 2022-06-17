@@ -1,3 +1,5 @@
+use tiny_http::{Response, Server};
+
 use crate::git::git_version;
 use crate::git::queries::commits::{
   commit_ids_between_commits, get_un_pushed_commits, load_commits_and_stashes, load_head_commit,
@@ -8,13 +10,12 @@ use crate::git::queries::hunks::hunks::load_hunks;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
 use crate::git::queries::scan_workspace::scan_workspace;
-use crate::git::queries::search::search_diffs;
+use crate::git::queries::search::search_request::start_diff_search;
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::load_wip_hunks;
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::store::{clear_cache, Store};
 use crate::server::graph_instructions::api::graph_instructions;
-use tiny_http::{Response, Server};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -109,7 +110,7 @@ pub fn start_async_server() {
       scan_workspace,
       calc_ref_diffs,
       graph_instructions,
-      search_diffs
+      start_diff_search
     };
   }
 }

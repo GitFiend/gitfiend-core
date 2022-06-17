@@ -1,5 +1,5 @@
 use crate::git::git_types::GitConfig;
-use crate::git::store::{RwStore, Store};
+use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
 use crate::map;
 use crate::parser::standard_parsers::UNTIL_LINE_END;

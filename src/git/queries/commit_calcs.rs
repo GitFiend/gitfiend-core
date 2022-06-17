@@ -28,29 +28,11 @@ fn find_commit_ancestors<'a>(
   ancestors
 }
 
-// pub fn count_commits_between_commit_ids2(
-//   a_id: &String,
-//   b_id: &String,
-//   commits: &AHashMap<String, Commit>,
-// ) -> u32 {
-//   if let Some(ids) = get_commit_ids_between_commits2(a_id, b_id, commits) {
-//     ids.len() as u32
-//   } else {
-//     0
-//   }
-// }
-
 static REF_DIFFS: Global2<AHashMap<String, u32>> = global2!(AHashMap::new());
 
 impl Global2<AHashMap<String, u32>> {
   fn get_diff(&self, key: &str) -> Option<u32> {
     Some(REF_DIFFS.get()?.get(key)?.clone())
-  }
-
-  fn store_diff(&self, key: String, count: u32) {
-    if let Ok(mut diffs) = self.data.write() {
-      diffs.insert(key.clone(), count);
-    }
   }
 }
 
@@ -67,10 +49,6 @@ pub fn count_commits_between_commit_ids(
     return count;
   }
 
-  // if let Some(count) = get_ref_diff_from_store(store, &key) {
-  //   return count;
-  // }
-
   if let Some(a) = commits.get(a_id) {
     if let Some(b) = commits.get(b_id) {
       if a.id == b.id {
@@ -79,17 +57,11 @@ pub fn count_commits_between_commit_ids(
 
       let mut num = 0;
 
-      // let now = Instant::now();
       let mut a_ancestors = find_commit_ancestors(&a, &commits);
       a_ancestors.insert(&a.id);
 
       let mut b_ancestors = find_commit_ancestors(&b, &commits);
       b_ancestors.insert(&b.id);
-
-      // println!(
-      //   "Took {}ms to find_commit_ancestors",
-      //   now.elapsed().as_millis(),
-      // );
 
       for id in a_ancestors.into_iter() {
         if !b_ancestors.contains(&id) {
@@ -97,9 +69,7 @@ pub fn count_commits_between_commit_ids(
         }
       }
 
-      REF_DIFFS.store_diff(key, num);
-
-      // store_ref_diff(store, &key, num);
+      REF_DIFFS.insert(key, num);
 
       return num;
     }
@@ -114,12 +84,6 @@ pub fn get_commit_ids_between_commits2(
   b_id: &String,
   commits: &AHashMap<String, Commit>,
 ) -> Option<Vec<String>> {
-  // let commit_map: HashMap<String, Commit> = commits
-  //   .clone()
-  //   .into_iter()
-  //   .map(|c| (c.id.clone(), c))
-  //   .collect();
-
   let a = commits.get(a_id)?;
   let b = commits.get(b_id)?;
 
@@ -159,7 +123,7 @@ mod tests {
 
   #[test]
   fn test_ref_diffs() {
-    REF_DIFFS.store_diff("OMG".to_string(), 1);
+    REF_DIFFS.insert("OMG".to_string(), 1);
 
     assert!(REF_DIFFS.get_diff("OMG").is_some());
   }

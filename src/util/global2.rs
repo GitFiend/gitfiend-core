@@ -1,5 +1,8 @@
-use cached::once_cell::sync::Lazy;
+use std::hash::Hash;
 use std::sync::RwLock;
+
+use ahash::AHashMap;
+use cached::once_cell::sync::Lazy;
 
 #[macro_export]
 macro_rules! global2 {
@@ -26,6 +29,18 @@ impl<T: Clone> Global2<T> {
       return Some((*data).clone());
     }
     None
+  }
+}
+
+impl<K, V> Global2<AHashMap<K, V>>
+where
+  K: Hash + Clone + Eq,
+  V: Eq + Clone,
+{
+  pub fn insert(&self, key: K, count: V) {
+    if let Ok(mut diffs) = self.data.write() {
+      diffs.insert(key.clone(), count);
+    }
   }
 }
 

@@ -14,6 +14,7 @@ use crate::parser::parse_all;
 use crate::util::global2::Global2;
 
 mod search;
+pub(crate) mod search_request;
 
 #[derive(Debug, Clone, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -46,22 +47,28 @@ fn search_cancelled(search_id: u32) -> bool {
   }
 }
 
-pub fn start_diff_search(options: &SearchOptions, _: RwStore) {
-  //
-}
-
+// TODO: Deprecate this.
 pub fn search_diffs(options: &SearchOptions, _: RwStore) -> Option<Vec<(String, Vec<Patch>)>> {
-  let result = search_diffs_inner(&options)?;
+  let search_id = get_next_search_id();
+  let result = search_diffs_inner(&options, search_id)?;
 
   parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
 }
 
-fn search_diffs_inner(options: &SearchOptions) -> Option<String> {
-  let search_num = get_next_search_id();
+pub fn search_diffs_with_id(
+  options: &SearchOptions,
+  search_id: u32,
+) -> Option<Vec<(String, Vec<Patch>)>> {
+  let result = search_diffs_inner(&options, search_id)?;
 
+  parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
+}
+
+// TODO: Rename this.
+pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<String> {
   println!(
     "Search for text: {}, num: {}",
-    options.search_text, search_num
+    options.search_text, search_id
   );
 
   let SearchOptions {
@@ -89,8 +96,8 @@ fn search_diffs_inner(options: &SearchOptions) -> Option<String> {
   loop {
     thread::sleep(time::Duration::from_millis(50));
 
-    if search_cancelled(search_num) {
-      println!("Killing search {search_num} \"{search_text}\"");
+    if search_cancelled(search_id) {
+      println!("Killing search {search_id} \"{search_text}\"");
 
       if let Err(e) = child.kill() {
         eprintln!("{}", e);

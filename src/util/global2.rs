@@ -1,5 +1,4 @@
 use cached::once_cell::sync::Lazy;
-use std::ops::Deref;
 use std::sync::RwLock;
 
 #[macro_export]

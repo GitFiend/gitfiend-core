@@ -9,9 +9,9 @@ use ts_rs::TS;
 use crate::git::git_types::Patch;
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::store::RwStore;
-use crate::global;
+use crate::global2;
 use crate::parser::parse_all;
-use crate::util::global::Global;
+use crate::util::global2::Global2;
 
 mod search;
 
@@ -24,7 +24,7 @@ pub struct SearchOptions {
   pub num_results: u32,
 }
 
-static CURRENT_SEARCH: Global<u32> = global!();
+static CURRENT_SEARCH: Global2<u32> = global2!(0);
 
 pub fn get_next_search_id() -> u32 {
   if let Some(id) = CURRENT_SEARCH.get() {

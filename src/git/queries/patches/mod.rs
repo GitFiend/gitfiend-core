@@ -2,6 +2,7 @@ pub(crate) mod cache;
 mod cache_test;
 pub(crate) mod patch_parsers;
 pub(crate) mod patches;
+pub(crate) mod patches_for_commit;
 
 const IMAGE_EXTENSIONS: [&str; 10] = [
   ".apng", ".bmp", ".gif", ".ico", ".cur", ".jpg", ".jpeg", ".png", ".svg", ".webp",

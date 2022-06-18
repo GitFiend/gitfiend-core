@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::time::Instant;
+
 use crate::git::git_types::{Commit, Patch};
 use crate::git::queries::commits::load_commits_and_stashes;
 use crate::git::queries::patches::cache::{load_patches_cache, write_patches_cache};
@@ -9,8 +12,6 @@ use crate::git::store::{load_commits_from_store, RwStore};
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
-use std::collections::HashMap;
-use std::time::Instant;
 
 pub fn load_patches(
   options: &ReqCommitsOptions,
@@ -129,6 +130,7 @@ fn load_all_patches_for_normal_commits(
   Some(commit_patches.into_iter().collect())
 }
 
+// without cache
 fn load_patches_for_commit(repo_path: &String, commit: &Commit) -> Option<(String, Vec<Patch>)> {
   let diff = String::from("diff");
   let name_status = String::from("--name-status");

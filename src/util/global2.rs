@@ -36,11 +36,24 @@ impl<T: Clone> Global2<T> {
 impl<K, V> Global2<AHashMap<K, V>>
 where
   K: Hash + Clone + Eq,
-  V: Eq + Clone,
+  V: Clone,
 {
   pub fn insert(&self, key: K, count: V) {
-    if let Ok(mut diffs) = self.data.write() {
-      diffs.insert(key.clone(), count);
+    if let Ok(mut data) = self.data.write() {
+      data.insert(key.clone(), count);
+    }
+  }
+
+  pub fn get_by_key(&self, key: &K) -> Option<V> {
+    if let Ok(data) = self.data.read() {
+      return Some(data.get(key)?.clone());
+    }
+    None
+  }
+
+  pub fn clear(&self) {
+    if let Ok(mut data) = self.data.write() {
+      data.clear()
     }
   }
 }

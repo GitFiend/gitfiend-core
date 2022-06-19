@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use crate::git::git_types::{Commit, Patch};
-use crate::git::queries::commits::load_commits_and_stashes;
+use crate::git::queries::commits::{load_commits_and_stashes, COMMITS};
 use crate::git::queries::patches::cache::{load_patches_cache, write_patches_cache};
 use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
 use crate::git::queries::COMMIT_0_ID;
-use crate::git::store::{load_commits_from_store, RwStore};
+use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
@@ -21,8 +21,12 @@ pub fn load_patches(
 
   let now = Instant::now();
 
-  let commits = load_commits_from_store(&repo_path, &store)
+  let commits = COMMITS
+    .get_by_key(&repo_path)
     .or_else(|| load_commits_and_stashes(options, store))?;
+
+  // let commits = load_commits_from_store(&repo_path, &store)
+  //   .or_else(|| load_commits_and_stashes(options, store))?;
 
   let mut commits_without_patches: Vec<&Commit> = Vec::new();
   let mut stashes_or_merges_without_patches: Vec<&Commit> = Vec::new();

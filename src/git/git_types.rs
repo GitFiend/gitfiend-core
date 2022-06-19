@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct DateResult {
   pub ms: f32,

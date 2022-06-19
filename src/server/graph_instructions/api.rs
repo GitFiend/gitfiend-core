@@ -1,11 +1,14 @@
-use crate::git::git_types::Commit;
-use crate::git::store::{load_commits_from_store, RwStore};
-use crate::server::graph_instructions::instruction_types::Instructions;
-use crate::server::graph_instructions::GraphInstructions;
+use std::time::Instant;
+
 use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
-use std::time::Instant;
 use ts_rs::TS;
+
+use crate::git::git_types::Commit;
+use crate::git::queries::commits::COMMITS;
+use crate::git::store::RwStore;
+use crate::server::graph_instructions::instruction_types::Instructions;
+use crate::server::graph_instructions::GraphInstructions;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -25,10 +28,16 @@ pub fn graph_instructions(options: &GraphInstructionOpts, store: RwStore) -> Opt
 
   let now = Instant::now();
 
-  let commits: AHashMap<String, Commit> = load_commits_from_store(&repo_path, &store)?
+  let commits: AHashMap<String, Commit> = COMMITS
+    .get_by_key(&repo_path)?
     .into_iter()
     .map(|c| (c.id.clone(), c))
     .collect();
+
+  // let commits: AHashMap<String, Commit> = load_commits_from_store(&repo_path, &store)?
+  //   .into_iter()
+  //   .map(|c| (c.id.clone(), c))
+  //   .collect();
 
   let ids = if *all_ids {
     commits.keys().map(|id| id.clone()).collect::<Vec<String>>()

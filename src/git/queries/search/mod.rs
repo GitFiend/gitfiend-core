@@ -13,7 +13,9 @@ use crate::global2;
 use crate::parser::parse_all;
 use crate::util::global2::Global2;
 
+mod commit_search;
 mod search;
+mod search_refs;
 pub(crate) mod search_request;
 
 #[derive(Debug, Clone, Deserialize, TS)]

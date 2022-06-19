@@ -1,8 +1,8 @@
-use ahash::AHashMap;
 use std::cmp::Ordering;
 use std::thread;
 use std::time::Instant;
 
+use ahash::AHashMap;
 use cached::proc_macro::cached;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -12,10 +12,14 @@ use crate::git::queries::commit_calcs::get_commit_ids_between_commits2;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
-use crate::git::store::{load_commits_from_store, RwStore};
+use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
+use crate::global2;
 use crate::parser::parse_all;
 use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
+use crate::util::global2::Global2;
+
+pub static COMMITS: Global2<AHashMap<String, Vec<Commit>>> = global2!(AHashMap::new());
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -115,9 +119,10 @@ pub fn load_commits_and_stashes(
     now.elapsed().as_millis(),
   );
 
-  if let Ok(mut store) = store_lock.write() {
-    (*store).commits.insert(repo_path.clone(), commits.clone());
-  }
+  COMMITS.insert(repo_path.clone(), commits.clone());
+  // if let Ok(mut store) = store_lock.write() {
+  //   (*store).commits.insert(repo_path.clone(), commits.clone());
+  // }
 
   // store_commits(&repo_path, &commits);
 
@@ -179,23 +184,24 @@ pub fn commit_ids_between_commits(
     commit_id2,
   } = options;
 
-  if let Ok(store) = store_lock.read() {
-    if let Some(commits) = (*store).commits.get(repo_path) {
-      let commit_map: AHashMap<String, Commit> = commits
-        .clone()
-        .into_iter()
-        .map(|c| (c.id.clone(), c))
-        .collect();
+  // if let Ok(store) = store_lock.read() {
+  if let Some(commits) = COMMITS.get_by_key(&repo_path) {
+    let commit_map: AHashMap<String, Commit> = commits
+      .clone()
+      .into_iter()
+      .map(|c| (c.id.clone(), c))
+      .collect();
 
-      if let Some(result) = get_commit_ids_between_commits2(&commit_id2, &commit_id1, &commit_map) {
-        return Some(result);
-      }
+    if let Some(result) = get_commit_ids_between_commits2(&commit_id2, &commit_id1, &commit_map) {
+      return Some(result);
     }
   }
+  // }
 
   commit_ids_between_commits_inner(repo_path.clone(), commit_id1.clone(), commit_id2.clone())
 }
 
+// TODO: Do we still need this lib?
 #[cached(option = true, time = 1000)]
 fn commit_ids_between_commits_inner(
   repo_path: String,
@@ -240,7 +246,8 @@ pub fn get_un_pushed_commits(options: &ReqOptions, store: RwStore) -> Vec<String
 fn get_un_pushed_commits_computed(options: &ReqOptions, store: RwStore) -> Option<Vec<String>> {
   let now = Instant::now();
 
-  let commits = load_commits_from_store(&options.repo_path, &store)?;
+  let commits = COMMITS.get_by_key(&options.repo_path)?;
+  // let commits = load_commits_from_store(&options.repo_path, &store)?;
 
   let commit_map: AHashMap<String, Commit> = commits
     .clone()

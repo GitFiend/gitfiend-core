@@ -1,3 +1,4 @@
+use crate::git::queries::commits::COMMITS;
 use crate::git::queries::search::SearchOptions;
 use serde::Serialize;
 use std::collections::HashSet;
@@ -24,6 +25,13 @@ pub struct SearchResult {
   // diff: TODO
 }
 
-pub fn search_commits(options: &SearchOptions) {
-  //
+pub fn search_commits(options: &SearchOptions) -> Option<()> {
+  let commits = COMMITS.get_by_key(&options.repo_path)?;
+  let results: Vec<SearchResult> = Vec::new();
+
+  for commit in commits {
+    //
+  }
+
+  None
 }

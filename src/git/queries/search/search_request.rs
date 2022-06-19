@@ -69,15 +69,6 @@ pub fn start_diff_search(options: &SearchOptions, _: RwStore) -> u32 {
     }
   });
 
-  // Clear out stale searches.
-  if let Ok(mut searches) = DIFF_SEARCHES.data.write() {
-    (*searches) = (*searches)
-      .clone()
-      .into_iter()
-      .filter(|search| !search.1.completed)
-      .collect();
-  }
-
   search.search_id
 }
 
@@ -97,12 +88,12 @@ pub struct PollSearchResult {
   pub results: Option<Vec<(String, Vec<Patch>)>>,
 }
 
-// TODO: Clean up DIFF_SEARCHES.
 pub fn poll_diff_search(options: &PollSearchOpts, _: RwStore) -> PollSearchResult {
   if let Some(result) = poll_diff_search_inner(options) {
     return result;
   }
 
+  // Search not found. We should return complete?
   PollSearchResult {
     search_id: options.search_id,
     complete: false,
@@ -123,4 +114,16 @@ fn poll_diff_search_inner(options: &PollSearchOpts) -> Option<PollSearchResult> 
   }
 
   None
+}
+
+// Be careful with this as all searches my be completed but client has polled and gotten the
+// last result yet.
+pub fn clear_completed_searches() {
+  if let Ok(mut searches) = DIFF_SEARCHES.data.write() {
+    (*searches) = (*searches)
+      .clone()
+      .into_iter()
+      .filter(|search| !search.1.completed)
+      .collect();
+  }
 }

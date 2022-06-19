@@ -1,4 +1,5 @@
 use crate::git::git_types::{Commit, GitConfig};
+use crate::git::queries::search::search_request::clear_completed_searches;
 use crate::server::git_request::ReqOptions;
 use ahash::AHashMap;
 use std::sync::{Arc, RwLock};
@@ -38,6 +39,7 @@ pub fn load_config_from_store(store_lock: &RwStore) -> Option<GitConfig> {
 pub fn clear_cache(_: &ReqOptions, store_lock: RwStore) {
   if let Ok(mut store) = store_lock.write() {
     (*store).commits = AHashMap::new();
+    clear_completed_searches();
 
     println!("Cleared commits cache.");
   }

@@ -1,9 +1,9 @@
-use crate::git::store::RwStore;
-use crate::server::git_request::ReqOptions;
 use std::env;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Output, Stdio};
+
+use crate::server::git_request::ReqOptions;
 
 pub(crate) mod git_types;
 pub(crate) mod git_types_extra_impl;
@@ -104,7 +104,7 @@ fn config_override_arg() -> Option<[String; 2]> {
 }
 
 // Expect this to return none if Git is not installed.
-pub fn git_version(_: &ReqOptions, _: RwStore) -> Option<String> {
+pub fn git_version(_: &ReqOptions) -> Option<String> {
   run_git(RunGitOptions {
     repo_path: ".",
     args: ["--version"],

@@ -12,7 +12,6 @@ use crate::git::queries::commit_calcs::get_commit_ids_between_commits2;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
-use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
 use crate::global2;
 use crate::parser::parse_all;
@@ -29,7 +28,7 @@ pub struct TopCommitOptions {
   pub branch_name: String,
 }
 
-pub fn load_top_commit_for_branch(options: &TopCommitOptions, _: RwStore) -> Option<Commit> {
+pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<Commit> {
   let now = Instant::now();
 
   let out = run_git(RunGitOptions {
@@ -52,7 +51,7 @@ pub fn load_top_commit_for_branch(options: &TopCommitOptions, _: RwStore) -> Opt
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
 
-pub fn load_head_commit(options: &ReqOptions, _: RwStore) -> Option<Commit> {
+pub fn load_head_commit(options: &ReqOptions) -> Option<Commit> {
   let out = run_git(RunGitOptions {
     args: [
       "log",
@@ -67,10 +66,7 @@ pub fn load_head_commit(options: &ReqOptions, _: RwStore) -> Option<Commit> {
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
 
-pub fn load_commits_and_stashes(
-  options: &ReqCommitsOptions,
-  store_lock: RwStore,
-) -> Option<Vec<Commit>> {
+pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commit>> {
   let ReqCommitsOptions {
     repo_path,
     num_commits,
@@ -112,7 +108,7 @@ pub fn load_commits_and_stashes(
 
   let now = Instant::now();
 
-  let commits = finish_initialising_refs_on_commits(commits, &store_lock);
+  let commits = finish_initialising_refs_on_commits(commits);
 
   println!(
     "Took {}ms to get refs from commits *****",
@@ -174,10 +170,7 @@ pub struct CommitDiffOpts {
   pub commit_id2: String,
 }
 
-pub fn commit_ids_between_commits(
-  options: &CommitDiffOpts,
-  store_lock: RwStore,
-) -> Option<Vec<String>> {
+pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String>> {
   let CommitDiffOpts {
     repo_path,
     commit_id1,
@@ -221,8 +214,8 @@ fn commit_ids_between_commits_inner(
 }
 
 // Use this as a fallback when calculation fails.
-pub fn get_un_pushed_commits(options: &ReqOptions, store: RwStore) -> Vec<String> {
-  if let Some(ids) = get_un_pushed_commits_computed(&options, store) {
+pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
+  if let Some(ids) = get_un_pushed_commits_computed(&options) {
     println!("Computed ids: {:?}", ids);
     return ids;
   } else {
@@ -243,7 +236,7 @@ pub fn get_un_pushed_commits(options: &ReqOptions, store: RwStore) -> Vec<String
 }
 
 // This will return none if head ref or remote ref can't be found in provided commits.
-fn get_un_pushed_commits_computed(options: &ReqOptions, store: RwStore) -> Option<Vec<String>> {
+fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
   let now = Instant::now();
 
   let commits = COMMITS.get_by_key(&options.repo_path)?;

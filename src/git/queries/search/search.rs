@@ -1,5 +1,4 @@
 use crate::git::queries::search::SearchOptions;
-use crate::git::store::RwStore;
 use serde::Serialize;
 use std::collections::HashSet;
 use ts_rs::TS;
@@ -25,6 +24,6 @@ pub struct SearchResult {
   // diff: TODO
 }
 
-pub fn search_commits(options: &SearchOptions, _: RwStore) {
+pub fn search_commits(options: &SearchOptions) {
   //
 }

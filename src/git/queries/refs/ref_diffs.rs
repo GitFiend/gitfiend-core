@@ -12,7 +12,6 @@ use crate::git::git_types::{
 use crate::git::queries::commit_calcs::count_commits_between_commit_ids;
 use crate::git::queries::commits::COMMITS;
 use crate::git::queries::config::CONFIG;
-use crate::git::store::RwStore;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -24,7 +23,6 @@ pub struct RefDiffOptions {
 
 pub fn calc_ref_diffs(
   options: &RefDiffOptions,
-  store: RwStore,
 ) -> Option<(
   HashMap<String, LocalRefCommitDiff>,
   HashMap<String, RefCommitDiff>,
@@ -40,12 +38,7 @@ pub fn calc_ref_diffs(
 
   let now = Instant::now();
 
-  let res = Some(calc_ref_diffs_inner(
-    &commits,
-    &config,
-    head_commit_id,
-    &store,
-  ));
+  let res = Some(calc_ref_diffs_inner(&commits, &config, head_commit_id));
 
   println!("Took {}ms for calc_ref_diffs", now.elapsed().as_millis());
 
@@ -57,7 +50,6 @@ pub fn calc_ref_diffs_inner(
   commits: &Vec<Commit>,
   config: &GitConfig,
   head_commit_id: &String,
-  store: &RwStore,
 ) -> (
   HashMap<String, LocalRefCommitDiff>,
   HashMap<String, RefCommitDiff>,
@@ -71,8 +63,8 @@ pub fn calc_ref_diffs_inner(
     .map(|c| (c.id.clone(), c))
     .collect();
 
-  let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, &commit_map, store);
-  let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, &commit_map, store);
+  let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, &commit_map);
+  let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, &commit_map);
 
   (local_ref_diffs, remote_ref_diffs)
 }
@@ -81,14 +73,13 @@ fn calc_remote_ref_diffs(
   head_commit_id: &String,
   refs: &AHashMap<String, RefInfo>,
   commits: &AHashMap<String, Commit>,
-  store: &RwStore,
 ) -> HashMap<String, RefCommitDiff> {
   refs
     .par_iter()
     .map(|(_, info)| {
       (
         info.id.clone(),
-        calc_remote_ref_diff(head_commit_id, &info, commits, store),
+        calc_remote_ref_diff(head_commit_id, &info, commits),
       )
     })
     .collect()
@@ -98,13 +89,11 @@ fn calc_remote_ref_diff(
   head_commit_id: &String,
   info: &RefInfo,
   commits: &AHashMap<String, Commit>,
-  store: &RwStore,
 ) -> RefCommitDiff {
   let ref ref_commit_id = info.commit_id;
 
-  let ahead_of_head =
-    count_commits_between_commit_ids(ref_commit_id, head_commit_id, commits, store);
-  let behind_head = count_commits_between_commit_ids(head_commit_id, ref_commit_id, commits, store);
+  let ahead_of_head = count_commits_between_commit_ids(ref_commit_id, head_commit_id, commits);
+  let behind_head = count_commits_between_commit_ids(head_commit_id, ref_commit_id, commits);
 
   RefCommitDiff {
     ahead_of_head,
@@ -116,14 +105,13 @@ fn calc_local_ref_diffs(
   head_commit_id: &String,
   pairs: Vec<(RefInfo, Option<RefInfo>)>,
   commits: &AHashMap<String, Commit>,
-  store: &RwStore,
 ) -> HashMap<String, LocalRefCommitDiff> {
   pairs
     .into_par_iter()
     .map(|(local, remote)| {
       (
         local.id.clone(),
-        calc_local_ref_diff(head_commit_id, local, remote, commits, store),
+        calc_local_ref_diff(head_commit_id, local, remote, commits),
       )
     })
     .collect()
@@ -134,18 +122,17 @@ fn calc_local_ref_diff(
   local: RefInfo,
   remote: Option<RefInfo>,
   commits: &AHashMap<String, Commit>,
-  store: &RwStore,
 ) -> LocalRefCommitDiff {
   let ref local_id = local.commit_id;
 
-  let ahead_of_head = count_commits_between_commit_ids(local_id, head_commit_id, commits, store);
-  let behind_head = count_commits_between_commit_ids(head_commit_id, local_id, commits, store);
+  let ahead_of_head = count_commits_between_commit_ids(local_id, head_commit_id, commits);
+  let behind_head = count_commits_between_commit_ids(head_commit_id, local_id, commits);
 
   if let Some(remote) = remote {
     let ref remote_id = remote.commit_id;
 
-    let ahead_of_remote = count_commits_between_commit_ids(local_id, remote_id, commits, store);
-    let behind_remote = count_commits_between_commit_ids(remote_id, local_id, commits, store);
+    let ahead_of_remote = count_commits_between_commit_ids(local_id, remote_id, commits);
+    let behind_remote = count_commits_between_commit_ids(remote_id, local_id, commits);
 
     LocalRefCommitDiff {
       ahead_of_remote,

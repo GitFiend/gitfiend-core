@@ -1,6 +1,5 @@
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
-use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
@@ -21,7 +20,7 @@ pub struct ReqWipHunksOptions {
   pub head_commit: Option<Commit>,
 }
 
-pub fn load_wip_hunks(options: &ReqWipHunksOptions, _: RwStore) -> Option<(Vec<Hunk>, u32)> {
+pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> Option<(Vec<Hunk>, u32)> {
   let lines = load_wip_hunk_lines(options)?;
 
   Some(convert_lines_to_hunks(lines))

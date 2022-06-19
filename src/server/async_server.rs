@@ -15,7 +15,7 @@ use crate::git::queries::search::search_request::{poll_diff_search, start_diff_s
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::load_wip_hunks;
 use crate::git::queries::wip::wip_patches::load_wip_patches;
-use crate::git::store::{clear_cache, Store};
+use crate::git::store::clear_cache;
 use crate::server::graph_instructions::api::graph_instructions;
 
 #[cfg(debug_assertions)]
@@ -57,10 +57,10 @@ macro_rules! send_response {
 
 #[macro_export]
 macro_rules! handle_request {
-  ($request:expr, $store:expr, $handler: ident) => {{
+  ($request:expr, $handler: ident) => {{
     match parse_json!($request) {
       Some(options) => {
-        send_response!($request, $handler(&options, $store));
+        send_response!($request, $handler(&options));
       }
       None => {}
     };
@@ -69,11 +69,11 @@ macro_rules! handle_request {
 
 #[macro_export]
 macro_rules! async_requests {
-  ($request:expr, $store:expr, $($handler:ident),*) => {{
+  ($request:expr, $($handler:ident),*) => {{
     match $request.url() {
       $(
       concat!("/", stringify!($handler)) => {
-        handle_request!($request, $store, $handler);
+        handle_request!($request, $handler);
       },
       )*
       unknown_url => {
@@ -88,12 +88,9 @@ pub fn start_async_server() {
 
   print_port(server.server_addr().port());
 
-  let store = Store::new_lock();
-
   for mut request in server.incoming_requests() {
     async_requests! {
       request,
-      store.clone(),
 
       load_commits_and_stashes,
       load_full_config,

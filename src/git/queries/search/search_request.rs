@@ -7,7 +7,6 @@ use ts_rs::TS;
 
 use crate::git::git_types::Patch;
 use crate::git::queries::search::{get_next_search_id, search_diffs_with_id, SearchOptions};
-use crate::git::store::RwStore;
 use crate::global2;
 use crate::util::global2::Global2;
 
@@ -40,7 +39,7 @@ static DIFF_SEARCHES: Global2<AHashMap<u32, DiffSearch>> = global2!(AHashMap::ne
 This begins a search and returns the search_id. We return before completing so
 we don't block the server, and new searches can cancel the stale ones.
  */
-pub fn start_diff_search(options: &SearchOptions, _: RwStore) -> u32 {
+pub fn start_diff_search(options: &SearchOptions) -> u32 {
   let SearchOptions {
     repo_path,
     search_text,
@@ -88,7 +87,7 @@ pub struct PollSearchResult {
   pub results: Option<Vec<(String, Vec<Patch>)>>,
 }
 
-pub fn poll_diff_search(options: &PollSearchOpts, _: RwStore) -> PollSearchResult {
+pub fn poll_diff_search(options: &PollSearchOpts) -> PollSearchResult {
   if let Some(result) = poll_diff_search_inner(options) {
     return result;
   }

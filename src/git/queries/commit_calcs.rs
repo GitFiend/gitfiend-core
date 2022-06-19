@@ -1,7 +1,6 @@
 use ahash::{AHashMap, AHashSet};
 
 use crate::git::git_types::Commit;
-use crate::git::store::RwStore;
 use crate::global2;
 use crate::util::global2::Global2;
 
@@ -41,7 +40,6 @@ pub fn count_commits_between_commit_ids(
   a_id: &String,
   b_id: &String,
   commits: &AHashMap<String, Commit>,
-  _: &RwStore,
 ) -> u32 {
   let key = format!("{}{}", a_id, b_id);
 

@@ -1,4 +1,3 @@
-use crate::git::store::RwStore;
 use serde::{Deserialize, Serialize};
 use std::fs::read_dir;
 use std::path::PathBuf;
@@ -16,7 +15,7 @@ pub struct ScanOptions {
   pub workspaces_enabled: bool,
 }
 
-pub fn scan_workspace(options: &ScanOptions, _: RwStore) -> Vec<PathBuf> {
+pub fn scan_workspace(options: &ScanOptions) -> Vec<PathBuf> {
   let dir = PathBuf::from(&options.repo_path);
   let mut repo_paths: Vec<PathBuf> = Vec::new();
 

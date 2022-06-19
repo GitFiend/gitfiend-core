@@ -6,7 +6,6 @@ use ts_rs::TS;
 
 use crate::git::git_types::Commit;
 use crate::git::queries::commits::COMMITS;
-use crate::git::store::RwStore;
 use crate::server::graph_instructions::instruction_types::Instructions;
 use crate::server::graph_instructions::GraphInstructions;
 
@@ -19,7 +18,7 @@ pub struct GraphInstructionOpts {
   pub all_ids: bool,
 }
 
-pub fn graph_instructions(options: &GraphInstructionOpts, store: RwStore) -> Option<Instructions> {
+pub fn graph_instructions(options: &GraphInstructionOpts) -> Option<Instructions> {
   let GraphInstructionOpts {
     commit_ids,
     repo_path,

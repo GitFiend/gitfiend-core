@@ -3,8 +3,6 @@ use crate::git::queries::patches::cache::load_patches_cache;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::git::store::RwStore;
-
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
@@ -13,10 +11,7 @@ pub struct ReqPatchesForCommitOpts {
   pub commit_id: String,
 }
 
-pub fn load_patches_for_commit(
-  options: &ReqPatchesForCommitOpts,
-  _: RwStore,
-) -> Option<Vec<Patch>> {
+pub fn load_patches_for_commit(options: &ReqPatchesForCommitOpts) -> Option<Vec<Patch>> {
   let ReqPatchesForCommitOpts {
     repo_path,
     commit_id,

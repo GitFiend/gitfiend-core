@@ -8,7 +8,6 @@ use ts_rs::TS;
 
 use crate::git::git_types::Patch;
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
-use crate::git::store::RwStore;
 use crate::global2;
 use crate::parser::parse_all;
 use crate::util::global2::Global2;
@@ -50,7 +49,7 @@ fn search_cancelled(search_id: u32) -> bool {
 }
 
 // TODO: Deprecate this.
-pub fn search_diffs(options: &SearchOptions, _: RwStore) -> Option<Vec<(String, Vec<Patch>)>> {
+pub fn _search_diffs(options: &SearchOptions) -> Option<Vec<(String, Vec<Patch>)>> {
   let search_id = get_next_search_id();
   let result = search_diffs_inner(&options, search_id)?;
 
@@ -138,8 +137,7 @@ mod tests {
   use std::time::{Duration, Instant};
   use std::{assert_eq, println, thread};
 
-  use crate::git::queries::search::{get_next_search_id, search_diffs, SearchOptions};
-  use crate::git::store::Store;
+  use crate::git::queries::search::{get_next_search_id, SearchOptions, _search_diffs};
 
   #[test]
   fn test_get_next_search_id() {
@@ -158,40 +156,31 @@ mod tests {
   #[test]
   fn test_thing() {
     let t1 = thread::spawn(move || {
-      search_diffs(
-        &SearchOptions {
-          num_results: 500,
-          search_text: "this".to_string(),
-          repo_path: ".".to_string(),
-        },
-        Store::new_lock(),
-      )
+      _search_diffs(&SearchOptions {
+        num_results: 500,
+        search_text: "this".to_string(),
+        repo_path: ".".to_string(),
+      })
     });
 
     thread::sleep(Duration::from_millis(10));
 
     let t2 = thread::spawn(move || {
-      search_diffs(
-        &SearchOptions {
-          num_results: 500,
-          search_text: "this".to_string(),
-          repo_path: ".".to_string(),
-        },
-        Store::new_lock(),
-      )
+      _search_diffs(&SearchOptions {
+        num_results: 500,
+        search_text: "this".to_string(),
+        repo_path: ".".to_string(),
+      })
     });
 
     thread::sleep(Duration::from_millis(10));
 
     let t3 = thread::spawn(move || {
-      search_diffs(
-        &SearchOptions {
-          num_results: 5,
-          search_text: "this".to_string(),
-          repo_path: ".".to_string(),
-        },
-        Store::new_lock(),
-      )
+      _search_diffs(&SearchOptions {
+        num_results: 5,
+        search_text: "this".to_string(),
+        repo_path: ".".to_string(),
+      })
     });
 
     let r1 = t1.join().unwrap();

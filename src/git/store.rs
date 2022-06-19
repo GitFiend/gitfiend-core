@@ -9,14 +9,14 @@ pub type RwStore = Arc<RwLock<Store>>;
 
 pub struct Store {
   // pub commits: AHashMap<String, Vec<Commit>>,
-  pub config: GitConfig,
+// pub config: GitConfig,
 }
 
 impl Store {
   pub fn new() -> Store {
     Store {
       // commits: AHashMap::new(),
-      config: GitConfig::new(),
+      // config: GitConfig::new(),
     }
   }
 
@@ -33,9 +33,9 @@ impl Store {
 //   None
 // }
 
-pub fn load_config_from_store(store_lock: &RwStore) -> Option<GitConfig> {
-  Some((*store_lock).read().ok()?.config.clone())
-}
+// pub fn load_config_from_store(store_lock: &RwStore) -> Option<GitConfig> {
+//   Some((*store_lock).read().ok()?.config.clone())
+// }
 
 pub fn clear_cache(_: &ReqOptions, store_lock: RwStore) {
   // if let Ok(mut store) = store_lock.write() {

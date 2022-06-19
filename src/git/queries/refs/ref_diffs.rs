@@ -11,7 +11,8 @@ use crate::git::git_types::{
 };
 use crate::git::queries::commit_calcs::count_commits_between_commit_ids;
 use crate::git::queries::commits::COMMITS;
-use crate::git::store::{load_config_from_store, RwStore};
+use crate::git::queries::config::CONFIG;
+use crate::git::store::RwStore;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -35,8 +36,7 @@ pub fn calc_ref_diffs(
   } = options;
 
   let commits = COMMITS.get_by_key(&repo_path)?;
-  // let commits = load_commits_from_store(&repo_path, &store)?;
-  let config = load_config_from_store(&store)?;
+  let config = CONFIG.get().unwrap_or_else(|| GitConfig::new());
 
   let now = Instant::now();
 

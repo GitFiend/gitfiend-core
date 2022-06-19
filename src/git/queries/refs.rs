@@ -1,11 +1,12 @@
-pub(crate) mod ref_diffs;
-
 use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation, RefType};
-use crate::git::store::{load_config_from_store, RwStore};
+use crate::git::queries::config::CONFIG;
+use crate::git::store::RwStore;
 use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
+
+pub(crate) mod ref_diffs;
 
 const REF_NAME_PARSER: Parser<String> =
   take_char_while!(|c: char| { !c.is_whitespace() && c != ',' && c != '(' && c != ')' });
@@ -142,7 +143,8 @@ fn set_sibling_and_remotes_for_commits(
   refs: &Vec<RefInfo>,
   store_lock: &RwStore,
 ) -> Vec<Commit> {
-  let config = load_config_from_store(store_lock).unwrap_or(GitConfig::new());
+  // let config = load_config_from_store(store_lock).unwrap_or(GitConfig::new());
+  let config = CONFIG.get().unwrap_or_else(|| GitConfig::new());
 
   commits
     .into_iter()

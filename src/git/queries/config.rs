@@ -1,12 +1,16 @@
+use std::collections::HashMap;
+
 use crate::git::git_types::GitConfig;
 use crate::git::store::RwStore;
 use crate::git::{run_git, RunGitOptions};
-use crate::map;
 use crate::parser::standard_parsers::UNTIL_LINE_END;
 use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
+use crate::util::global2::Global2;
 use crate::{and, many, until_str, word};
-use std::collections::HashMap;
+use crate::{global2, map};
+
+pub static CONFIG: Global2<GitConfig> = global2!(GitConfig::new());
 
 impl GitConfig {
   pub fn new() -> GitConfig {
@@ -82,21 +86,24 @@ pub fn load_full_config(options: &ReqOptions, store_lock: RwStore) -> Option<Git
   let config = GitConfig { entries, remotes };
 
   // store_config(&config);
-  if let Ok(mut store) = store_lock.write() {
-    (*store).config = config.clone();
-  }
+  // if let Ok(mut store) = store_lock.write() {
+  //   (*store).config = config.clone();
+  // }
+
+  CONFIG.set(config.clone());
 
   Some(config)
 }
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashMap;
+
   use crate::git::git_types::GitConfig;
   use crate::git::queries::config::{load_full_config, P_CONFIG, P_REMOTE_NAME};
   use crate::git::store::Store;
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
-  use std::collections::HashMap;
 
   #[test]
   fn load_config() {

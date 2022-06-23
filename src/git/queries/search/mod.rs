@@ -23,7 +23,7 @@ pub(crate) mod search_request;
 pub struct SearchOptions {
   pub repo_path: String,
   pub search_text: String,
-  pub num_results: u32,
+  pub num_results: usize,
 }
 
 static CURRENT_SEARCH: Global2<u32> = global2!(0);

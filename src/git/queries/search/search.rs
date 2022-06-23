@@ -25,13 +25,42 @@ pub struct SearchResult {
   // diff: TODO
 }
 
-pub fn search_commits(options: &SearchOptions) -> Option<()> {
-  let commits = COMMITS.get_by_key(&options.repo_path)?;
-  let results: Vec<SearchResult> = Vec::new();
+pub fn search_commits(options: &SearchOptions) -> Option<Vec<SearchResult>> {
+  let SearchOptions {
+    repo_path,
+    search_text,
+    num_results,
+  } = options;
+
+  let commits = COMMITS.get_by_key(repo_path)?;
+  let search_text = search_text.to_lowercase();
+  let mut results: Vec<SearchResult> = Vec::new();
 
   for commit in commits {
-    //
+    let mut matches: HashSet<SearchMatchType> = HashSet::new();
+
+    if commit.id.to_lowercase().contains(&search_text) {
+      matches.insert(SearchMatchType::CommitId);
+    }
+    if commit.email.to_lowercase().contains(&search_text) {
+      matches.insert(SearchMatchType::Email);
+    }
+    if commit.author.to_lowercase().contains(&search_text) {
+      matches.insert(SearchMatchType::Author);
+    }
+    if commit.message.to_lowercase().contains(&search_text) {
+      matches.insert(SearchMatchType::CommitMessage);
+    }
+
+    results.push(SearchResult {
+      commit_id: commit.id,
+      matches,
+    });
+
+    if results.len() > *num_results {
+      break;
+    }
   }
 
-  None
+  Some(results)
 }

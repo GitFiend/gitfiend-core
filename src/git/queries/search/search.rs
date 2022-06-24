@@ -1,10 +1,12 @@
+use std::collections::{HashMap, HashSet};
+
+use serde::Serialize;
+use ts_rs::TS;
+
 use crate::git::git_types::Patch;
 use crate::git::queries::commits::COMMITS;
 use crate::git::queries::patches::cache::load_patches_cache;
 use crate::git::queries::search::SearchOptions;
-use serde::Serialize;
-use std::collections::{HashMap, HashSet};
-use ts_rs::TS;
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Hash, TS)]
 #[ts(export)]
@@ -21,13 +23,13 @@ pub enum SearchMatchType {
 #[derive(Debug, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub struct SearchResult {
+pub struct CoreSearchResult {
   commit_id: String,
   matches: HashSet<SearchMatchType>,
   patches: Vec<Patch>,
 }
 
-pub fn search_commits(options: &SearchOptions) -> Option<Vec<SearchResult>> {
+pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> {
   let SearchOptions {
     repo_path,
     search_text,
@@ -37,7 +39,7 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<SearchResult>> {
   let commits = COMMITS.get_by_key(repo_path)?;
   let patches = load_patches_cache(repo_path)?;
   let search_text = search_text.to_lowercase();
-  let mut results: Vec<SearchResult> = Vec::new();
+  let mut results: Vec<CoreSearchResult> = Vec::new();
 
   for commit in commits {
     let mut matches: HashSet<SearchMatchType> = HashSet::new();
@@ -54,23 +56,18 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<SearchResult>> {
     if commit.message.to_lowercase().contains(&search_text) {
       matches.insert(SearchMatchType::CommitMessage);
     }
-
-    // let mut matching_patches: Vec<Patch> = Vec::new();
-    //
-    // if let Some(files) = patches.get(&commit.id) {
-    //   for patch in files {
-    //     if patch.old_file.to_lowercase().contains(&search_text)
-    //       || patch.new_file.to_lowercase().contains(&search_text)
-    //     {
-    //       matching_patches.push(patch.clone());
-    //     }
-    //   }
-    // }
+    if commit
+      .refs
+      .iter()
+      .any(|r| r.full_name.to_lowercase().contains(&search_text))
+    {
+      matches.insert(SearchMatchType::RefName);
+    }
 
     let matching_patches = get_matching_patches(&search_text, &commit.id, &patches);
 
     if matches.len() > 0 || matching_patches.len() > 0 {
-      results.push(SearchResult {
+      results.push(CoreSearchResult {
         commit_id: commit.id.clone(),
         matches,
         patches: matching_patches,

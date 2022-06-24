@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use serde::Serialize;
 use ts_rs::TS;
 
-use crate::git::git_types::Patch;
+use crate::git::git_types::{HunkLine, Patch};
 use crate::git::queries::commits::COMMITS;
 use crate::git::queries::patches::cache::load_patches_cache;
 use crate::git::queries::search::SearchOptions;
@@ -14,10 +14,8 @@ pub enum SearchMatchType {
   RefName,
   CommitId,
   CommitMessage,
-  FileName,
   Email,
   Author,
-  Diff, // This is for combining in the client.
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -27,6 +25,7 @@ pub struct CoreSearchResult {
   commit_id: String,
   matches: HashSet<SearchMatchType>,
   patches: Vec<Patch>,
+  diffs: HashMap<String, Vec<HunkLine>>,
 }
 
 pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> {
@@ -71,6 +70,7 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
         commit_id: commit.id.clone(),
         matches,
         patches: matching_patches,
+        diffs: HashMap::new(),
       });
     }
 

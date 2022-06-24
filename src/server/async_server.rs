@@ -11,6 +11,7 @@ use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::patches::patches_for_commit::load_patches_for_commit;
 use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
 use crate::git::queries::scan_workspace::scan_workspace;
+use crate::git::queries::search::search::search_commits;
 use crate::git::queries::search::search_request::{poll_diff_search, start_diff_search};
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::load_wip_hunks;
@@ -110,7 +111,8 @@ pub fn start_async_server() {
       graph_instructions,
       start_diff_search,
       poll_diff_search,
-      load_patches_for_commit
+      load_patches_for_commit,
+      search_commits
     };
   }
 }

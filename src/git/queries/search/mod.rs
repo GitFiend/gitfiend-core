@@ -13,6 +13,7 @@ use crate::parser::parse_all;
 use crate::util::global2::Global2;
 
 mod commit_search;
+pub(crate) mod matching_hunk_lines;
 pub(crate) mod search;
 mod search_refs;
 pub(crate) mod search_request;

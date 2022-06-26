@@ -1418,9 +1418,9 @@ dependencies = [
 
 [[package]]
 name = "ts-rs"
-version = "6.1.2"
+version = "6.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d26cba30c9b3a2f537f765cf754126f11c983b7426d280ae0b4cef2374cab98"
+checksum = "dc59f479df54269b400dd95bc3b7e81623b3e4b9c70c8ca7125ab8341eafa64e"
 dependencies = [
  "dprint-plugin-typescript",
  "thiserror",
@@ -1429,9 +1429,9 @@ dependencies = [
 
 [[package]]
 name = "ts-rs-macros"
-version = "6.1.2"
+version = "6.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd8e302fbcf5b60dfa1df443535967511442c5ce4eac8b4c9fa811f2274280a4"
+checksum = "9f807fdb3151fee75df7485b901a89624358cd07a67a8fb1a5831bf5a07681ff"
 dependencies = [
  "Inflector",
  "proc-macro2",

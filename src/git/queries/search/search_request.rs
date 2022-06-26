@@ -7,8 +7,8 @@ use ts_rs::TS;
 
 use crate::git::git_types::Patch;
 use crate::git::queries::search::{get_next_search_id, search_diffs_with_id, SearchOptions};
-use crate::global2;
-use crate::util::global2::Global2;
+use crate::global;
+use crate::util::global::Global;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DiffSearch {
@@ -33,7 +33,7 @@ impl DiffSearch {
   }
 }
 
-static DIFF_SEARCHES: Global2<AHashMap<u32, DiffSearch>> = global2!(AHashMap::new());
+static DIFF_SEARCHES: Global<AHashMap<u32, DiffSearch>> = global!(AHashMap::new());
 
 /*
 This begins a search and returns the search_id. We return before completing so

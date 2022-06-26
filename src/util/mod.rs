@@ -1,1 +1,1 @@
-pub(crate) mod global2;
+pub(crate) mod global;

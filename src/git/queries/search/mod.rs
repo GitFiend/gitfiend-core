@@ -8,9 +8,9 @@ use ts_rs::TS;
 
 use crate::git::git_types::Patch;
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
-use crate::global2;
+use crate::global;
 use crate::parser::parse_all;
-use crate::util::global2::Global2;
+use crate::util::global::Global;
 
 mod commit_search;
 pub(crate) mod matching_hunk_lines;
@@ -27,7 +27,7 @@ pub struct SearchOptions {
   pub num_results: usize,
 }
 
-static CURRENT_SEARCH: Global2<u32> = global2!(0);
+static CURRENT_SEARCH: Global<u32> = global!(0);
 
 pub fn get_next_search_id() -> u32 {
   if let Some(id) = CURRENT_SEARCH.get() {

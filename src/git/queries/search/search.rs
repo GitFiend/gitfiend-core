@@ -65,7 +65,7 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
 
     let matching_patches = get_matching_patches(&search_text, &commit.id, &patches);
 
-    if matches.len() > 0 || matching_patches.len() > 0 {
+    if !matches.is_empty() || !matching_patches.is_empty() {
       results.push(CoreSearchResult {
         commit_id: commit.id.clone(),
         matches,
@@ -94,7 +94,7 @@ fn get_matching_patches(
         p.old_file.to_lowercase().contains(search_text)
           || p.new_file.to_lowercase().contains(search_text)
       })
-      .map(|p| p.clone())
+      .cloned()
       .collect::<Vec<Patch>>();
   }
 

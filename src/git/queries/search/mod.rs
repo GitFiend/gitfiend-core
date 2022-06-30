@@ -52,7 +52,7 @@ fn search_cancelled(search_id: u32) -> bool {
 // TODO: Deprecate this.
 pub fn _search_diffs(options: &SearchOptions) -> Option<Vec<(String, Vec<Patch>)>> {
   let search_id = get_next_search_id();
-  let result = search_diffs_inner(&options, search_id)?;
+  let result = search_diffs_inner(options, search_id)?;
 
   parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
 }
@@ -62,7 +62,7 @@ pub fn search_diffs_with_id(
   options: &SearchOptions,
   search_id: u32,
 ) -> Option<Vec<(String, Vec<Patch>)>> {
-  let result = search_diffs_inner(&options, search_id)?;
+  let result = search_diffs_inner(options, search_id)?;
 
   parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
 }
@@ -113,7 +113,7 @@ pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<Str
         if let Ok(result) = executor::block_on(child.output()) {
           let Output { stdout, stderr, .. } = &result;
 
-          if stdout.len() > 0 {
+          if !stdout.is_empty() {
             return Some(String::from_utf8_lossy(stdout).to_string());
           } else {
             println!(

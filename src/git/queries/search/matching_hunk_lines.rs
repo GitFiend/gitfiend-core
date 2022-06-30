@@ -16,7 +16,7 @@ pub struct LinesReqOpts {
   pub num_results: usize,
 }
 
-const SHORT_PATCH_CACHE: Global2<AHashMap<String, Patch>> = global2!(AHashMap::new());
+static SHORT_PATCH_CACHE: Global2<AHashMap<String, Patch>> = global2!(AHashMap::new());
 
 // This should match "gSearchResultDiff", accidentally started wrong one.
 pub fn get_matching_hunk_lines(options: &LinesReqOpts) {

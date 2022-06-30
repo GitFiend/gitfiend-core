@@ -12,7 +12,7 @@ const REF_NAME_PARSER: Parser<String> =
 
 const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: String| {
   let cleaned = result.replace("^{}", "");
-  let parts: Vec<&str> = cleaned.split("/").collect();
+  let parts: Vec<&str> = cleaned.split('/').collect();
   let ref_type = get_type_from_name(parts[1]);
 
   RefInfoPart {

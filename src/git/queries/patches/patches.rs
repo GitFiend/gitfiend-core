@@ -18,7 +18,7 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
   let now = Instant::now();
 
   let commits = COMMITS
-    .get_by_key(&repo_path)
+    .get_by_key(repo_path)
     .or_else(|| load_commits_and_stashes(options))?;
 
   let mut commits_without_patches: Vec<&Commit> = Vec::new();
@@ -26,16 +26,14 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
 
   let mut new_patches: HashMap<String, Vec<Patch>> = HashMap::new();
 
-  if let Some(patches) = load_patches_cache(&repo_path) {
+  if let Some(patches) = load_patches_cache(repo_path) {
     for c in commits.iter() {
       if let Some(patch) = patches.get(&c.id) {
         new_patches.insert(c.id.clone(), patch.clone());
+      } else if c.stash_id.is_none() && !c.is_merge {
+        commits_without_patches.push(c);
       } else {
-        if c.stash_id.is_none() && !c.is_merge {
-          commits_without_patches.push(c);
-        } else {
-          stashes_or_merges_without_patches.push(c);
-        }
+        stashes_or_merges_without_patches.push(c);
       }
     }
   } else {
@@ -53,8 +51,8 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
     );
   }
 
-  if commits_without_patches.len() > 0 {
-    if let Some(patches) = load_normal_patches(&commits_without_patches, &options) {
+  if !commits_without_patches.is_empty() {
+    if let Some(patches) = load_normal_patches(&commits_without_patches, options) {
       new_patches.extend(patches);
     }
   }
@@ -69,7 +67,7 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
     }
   }
 
-  write_patches_cache(&repo_path, &new_patches);
+  write_patches_cache(repo_path, &new_patches);
 
   println!("Took {}ms for load_patches", now.elapsed().as_millis(),);
 
@@ -82,7 +80,7 @@ fn load_normal_patches(
 ) -> Option<HashMap<String, Vec<Patch>>> {
   if commits_without_patches.len() > 20 {
     // Assume we now have all the plain commits.
-    load_all_patches_for_normal_commits(&options)
+    load_all_patches_for_normal_commits(options)
   } else {
     // We can't handle many commit ids with this command.
     let mut ids: Vec<&str> = commits_without_patches

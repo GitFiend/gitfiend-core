@@ -5,19 +5,19 @@ use ahash::AHashMap;
 use cached::once_cell::sync::Lazy;
 
 #[macro_export]
-macro_rules! global2 {
+macro_rules! global {
   ($value: expr) => {
-    Global2 {
+    Global {
       data: cached::once_cell::sync::Lazy::new(|| std::sync::RwLock::new($value)),
     }
   };
 }
 
-pub struct Global2<T: Clone> {
+pub struct Global<T: Clone> {
   pub data: Lazy<RwLock<T>>,
 }
 
-impl<T: Clone> Global2<T> {
+impl<T: Clone> Global<T> {
   pub fn set(&self, new_data: T) {
     if let Ok(mut data) = self.data.write() {
       (*data) = new_data;
@@ -33,7 +33,7 @@ impl<T: Clone> Global2<T> {
   }
 }
 
-impl<K, V> Global2<AHashMap<K, V>>
+impl<K, V> Global<AHashMap<K, V>>
 where
   K: Hash + Clone + Eq,
   V: Clone,
@@ -60,9 +60,9 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::util::global2::Global2;
+  use crate::util::global::Global;
 
-  static MY_GLOBAL: Global2<Vec<i32>> = global2!(Vec::new());
+  static MY_GLOBAL: Global<Vec<i32>> = global!(Vec::new());
 
   #[test]
   fn test_global() {

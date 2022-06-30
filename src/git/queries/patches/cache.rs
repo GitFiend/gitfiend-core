@@ -10,8 +10,8 @@ use std::time::Instant;
 use directories::ProjectDirs;
 
 use crate::git::git_types::Patch;
-use crate::global2;
-use crate::util::global2::Global2;
+use crate::global;
+use crate::util::global::Global;
 
 pub fn write_patches_cache(
   repo_path: &String,
@@ -33,8 +33,8 @@ pub fn write_patches_cache(
   write_patches_to_file(full_path, patches).ok()
 }
 
-static TEMP_PATCHES_CACHE: Global2<(String, HashMap<String, Vec<Patch>>)> =
-  global2!((String::new(), HashMap::new()));
+static TEMP_PATCHES_CACHE: Global<(String, HashMap<String, Vec<Patch>>)> =
+  global!((String::new(), HashMap::new()));
 
 pub fn load_patches_cache(repo_path: &String) -> Option<HashMap<String, Vec<Patch>>> {
   if let Some((rp, patches)) = TEMP_PATCHES_CACHE.get() {

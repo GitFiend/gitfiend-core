@@ -5,11 +5,11 @@ use crate::git::{run_git, RunGitOptions};
 use crate::parser::standard_parsers::UNTIL_LINE_END;
 use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
-use crate::util::global2::Global2;
+use crate::util::global::Global;
 use crate::{and, many, until_str, word};
-use crate::{global2, map};
+use crate::{global, map};
 
-pub static CONFIG: Global2<GitConfig> = global2!(GitConfig::new());
+pub static CONFIG: Global<GitConfig> = global!(GitConfig::new());
 
 impl GitConfig {
   pub fn new() -> GitConfig {

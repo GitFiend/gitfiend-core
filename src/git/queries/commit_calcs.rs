@@ -1,8 +1,8 @@
 use ahash::{AHashMap, AHashSet};
 
 use crate::git::git_types::Commit;
-use crate::global2;
-use crate::util::global2::Global2;
+use crate::global;
+use crate::util::global::Global;
 
 fn find_commit_ancestors<'a>(
   commit: &'a Commit,
@@ -27,9 +27,9 @@ fn find_commit_ancestors<'a>(
   ancestors
 }
 
-static REF_DIFFS: Global2<AHashMap<String, u32>> = global2!(AHashMap::new());
+static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
 
-impl Global2<AHashMap<String, u32>> {
+impl Global<AHashMap<String, u32>> {
   fn get_diff(&self, key: &str) -> Option<u32> {
     Some(REF_DIFFS.get()?.get(key)?.clone())
   }

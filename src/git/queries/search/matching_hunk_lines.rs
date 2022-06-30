@@ -1,6 +1,6 @@
 use crate::git::git_types::{Commit, HunkLine, HunkRange, Patch};
-use crate::global2;
-use crate::util::global2::Global2;
+use crate::global;
+use crate::util::global::Global;
 use ahash::AHashMap;
 use serde::Deserialize;
 use ts_rs::TS;
@@ -16,7 +16,7 @@ pub struct LinesReqOpts {
   pub num_results: usize,
 }
 
-static SHORT_PATCH_CACHE: Global2<AHashMap<String, Patch>> = global2!(AHashMap::new());
+static SHORT_PATCH_CACHE: Global<AHashMap<String, Patch>> = global!(AHashMap::new());
 
 // This should match "gSearchResultDiff", accidentally started wrong one.
 pub fn get_matching_hunk_lines(options: &LinesReqOpts) {

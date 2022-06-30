@@ -38,7 +38,7 @@ static TEMP_PATCHES_CACHE: Global<(String, HashMap<String, Vec<Patch>>)> =
 
 pub fn load_patches_cache(repo_path: &String) -> Option<HashMap<String, Vec<Patch>>> {
   if let Some((rp, patches)) = TEMP_PATCHES_CACHE.get() {
-    if &rp == repo_path && patches.len() > 0 {
+    if &rp == repo_path && !patches.is_empty() {
       return Some(patches);
     }
   }
@@ -85,9 +85,9 @@ fn generate_file_name(repo_path: &String) -> String {
     .map(|p| p.to_str().unwrap_or(""))
     .collect::<Vec<&str>>()
     .join("")
-    .replace("\\", "")
-    .replace(":", "")
-    .replace("/", "");
+    .replace('\\', "")
+    .replace(':', "")
+    .replace('/', "");
 
   format!("{}.json", id)
 }

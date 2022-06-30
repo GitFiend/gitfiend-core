@@ -9,9 +9,9 @@ fn find_commit_ancestors<'a>(
   commits: &'a AHashMap<String, Commit>,
 ) -> AHashSet<&'a str> {
   let mut ancestors = AHashSet::<&'a str>::new();
-  let mut ancestor_commits: Vec<&Commit> = vec![&commit];
+  let mut ancestor_commits: Vec<&Commit> = vec![commit];
 
-  while ancestor_commits.len() > 0 {
+  while !ancestor_commits.is_empty() {
     if let Some(c) = ancestor_commits.pop() {
       for id in c.parent_ids.iter() {
         if !ancestors.contains(id as &str) {
@@ -31,7 +31,7 @@ static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
 
 impl Global<AHashMap<String, u32>> {
   fn get_diff(&self, key: &str) -> Option<u32> {
-    Some(REF_DIFFS.get()?.get(key)?.clone())
+    Some(*REF_DIFFS.get()?.get(key)?)
   }
 }
 
@@ -55,10 +55,10 @@ pub fn count_commits_between_commit_ids(
 
       let mut num = 0;
 
-      let mut a_ancestors = find_commit_ancestors(&a, &commits);
+      let mut a_ancestors = find_commit_ancestors(a, commits);
       a_ancestors.insert(&a.id);
 
-      let mut b_ancestors = find_commit_ancestors(&b, &commits);
+      let mut b_ancestors = find_commit_ancestors(b, commits);
       b_ancestors.insert(&b.id);
 
       for id in a_ancestors.into_iter() {
@@ -100,10 +100,10 @@ fn get_commit_ids_between_commits(
     return ids;
   }
 
-  let mut a_ancestors = find_commit_ancestors(&a, &commits);
+  let mut a_ancestors = find_commit_ancestors(a, commits);
   a_ancestors.insert(&a.id);
 
-  let mut b_ancestors = find_commit_ancestors(&b, &commits);
+  let mut b_ancestors = find_commit_ancestors(b, commits);
   b_ancestors.insert(&b.id);
 
   for id in a_ancestors.into_iter() {

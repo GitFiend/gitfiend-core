@@ -62,7 +62,7 @@ fn get_type_from_name(part: &str) -> RefType {
   }
 }
 
-fn get_ref_location(parts: &Vec<&str>) -> RefLocation {
+fn get_ref_location(parts: &[&str]) -> RefLocation {
   if parts.len() >= 3 {
     if parts[1] == "heads" {
       return RefLocation::Local;
@@ -72,7 +72,7 @@ fn get_ref_location(parts: &Vec<&str>) -> RefLocation {
   RefLocation::Local
 }
 
-fn get_short_name(parts: &Vec<&str>) -> String {
+fn get_short_name(parts: &[&str]) -> String {
   if parts[1] == "remotes" {
     parts[3..].join("/")
   } else {
@@ -80,7 +80,7 @@ fn get_short_name(parts: &Vec<&str>) -> String {
   }
 }
 
-fn get_remote_name(parts: &Vec<&str>) -> Option<String> {
+fn get_remote_name(parts: &[&str]) -> Option<String> {
   if parts.len() > 3 && parts[1] == "remotes" {
     Some(parts[2].to_string())
   } else {
@@ -89,32 +89,32 @@ fn get_remote_name(parts: &Vec<&str>) -> Option<String> {
 }
 
 pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: f32) -> RefInfo {
-  match info {
-    RefInfoPart {
-      id,
-      location,
-      full_name,
-      short_name,
-      remote_name,
-      sibling_id,
-      ref_type,
-      head,
-    } => RefInfo {
-      id,
-      location,
-      full_name,
-      short_name,
-      remote_name,
-      sibling_id,
-      ref_type,
-      head,
-      commit_id,
-      time,
-    },
+  let RefInfoPart {
+    id,
+    location,
+    full_name,
+    short_name,
+    remote_name,
+    sibling_id,
+    ref_type,
+    head,
+  } = info;
+
+  RefInfo {
+    id,
+    location,
+    full_name,
+    short_name,
+    remote_name,
+    sibling_id,
+    ref_type,
+    head,
+    commit_id,
+    time,
   }
 }
 
-pub fn get_ref_info_from_commits(commits: &Vec<Commit>) -> Vec<RefInfo> {
+pub fn get_ref_info_from_commits(commits: &[Commit]) -> Vec<RefInfo> {
   let mut refs: Vec<RefInfo> = Vec::new();
 
   for c in commits.iter() {
@@ -134,9 +134,9 @@ pub fn finish_initialising_refs_on_commits(commits: Vec<Commit>) -> Vec<Commit> 
   set_sibling_and_remotes_for_commits(commits, &refs)
 }
 
-fn set_sibling_and_remotes_for_commits(commits: Vec<Commit>, refs: &Vec<RefInfo>) -> Vec<Commit> {
+fn set_sibling_and_remotes_for_commits(commits: Vec<Commit>, refs: &[RefInfo]) -> Vec<Commit> {
   // let config = load_config_from_store(store_lock).unwrap_or(GitConfig::new());
-  let config = CONFIG.get().unwrap_or_else(|| GitConfig::new());
+  let config = CONFIG.get().unwrap_or_else(GitConfig::new);
 
   commits
     .into_iter()
@@ -146,7 +146,7 @@ fn set_sibling_and_remotes_for_commits(commits: Vec<Commit>, refs: &Vec<RefInfo>
         .into_iter()
         .map(|mut r| {
           r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
-          r.sibling_id = get_sibling_id_for_ref(&r, &refs);
+          r.sibling_id = get_sibling_id_for_ref(&r, refs);
           r
         })
         .collect();
@@ -155,7 +155,7 @@ fn set_sibling_and_remotes_for_commits(commits: Vec<Commit>, refs: &Vec<RefInfo>
     .collect()
 }
 
-fn get_sibling_id_for_ref(ri: &RefInfo, refs: &Vec<RefInfo>) -> Option<String> {
+fn get_sibling_id_for_ref(ri: &RefInfo, refs: &[RefInfo]) -> Option<String> {
   if ri.location == RefLocation::Remote {
     if let Some(local) = refs
       .iter()
@@ -163,14 +163,12 @@ fn get_sibling_id_for_ref(ri: &RefInfo, refs: &Vec<RefInfo>) -> Option<String> {
     {
       return Some(local.id.clone());
     }
-  } else {
-    if let Some(remote) = refs.iter().find(|i| {
-      i.location == RefLocation::Remote
-        && i.short_name == ri.short_name
-        && i.remote_name == ri.remote_name
-    }) {
-      return Some(remote.id.clone());
-    }
+  } else if let Some(remote) = refs.iter().find(|i| {
+    i.location == RefLocation::Remote
+      && i.short_name == ri.short_name
+      && i.remote_name == ri.remote_name
+  }) {
+    return Some(remote.id.clone());
   }
 
   None
@@ -198,18 +196,18 @@ mod tests {
 
   #[test]
   fn test_get_ref_location() {
-    let loc = get_ref_location(&vec!["refs", "heads", "commit-list-experiments"]);
+    let loc = get_ref_location(&["refs", "heads", "commit-list-experiments"]);
 
     assert_eq!(loc, Local);
   }
 
   #[test]
   fn test_get_ref_short_name() {
-    let name = get_short_name(&vec!["refs", "heads", "feature", "dialogs"]);
+    let name = get_short_name(&["refs", "heads", "feature", "dialogs"]);
 
     assert_eq!(name, "feature/dialogs");
 
-    let name = get_short_name(&vec!["refs", "remotes", "origin", "git-lib"]);
+    let name = get_short_name(&["refs", "remotes", "origin", "git-lib"]);
 
     assert_eq!(name, "git-lib");
   }
@@ -217,27 +215,27 @@ mod tests {
   #[test]
   fn test_get_remote_name() {
     assert_eq!(
-      get_remote_name(&vec!["refs", "remotes", "origin", "git-lib"]),
+      get_remote_name(&["refs", "remotes", "origin", "git-lib"]),
       Some("origin".to_string())
     );
     assert_eq!(
-      get_remote_name(&vec!["refs", "heads", "feature", "dialogs"]),
+      get_remote_name(&["refs", "heads", "feature", "dialogs"]),
       None
     );
-    assert_eq!(get_remote_name(&vec!["refs", "tags", "hello"]), None);
+    assert_eq!(get_remote_name(&["refs", "tags", "hello"]), None);
   }
 
   #[test]
   fn test_p_ref_name() {
     let res = parse_all(P_REF_NAME, "refs/heads/git-lib");
 
-    assert_eq!(res.is_some(), true);
+    assert!(res.is_some());
   }
 
   #[test]
   fn test_p_tag_ref() {
     let result = parse_all(P_TAG_REF, "tag: refs/tags/v0.11.2");
-    assert_eq!(result.is_some(), true);
+    assert!(result.is_some());
   }
 
   #[test]

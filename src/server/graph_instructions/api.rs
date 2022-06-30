@@ -28,7 +28,7 @@ pub fn graph_instructions(options: &GraphInstructionOpts) -> Option<Instructions
   let now = Instant::now();
 
   let commits: AHashMap<String, Commit> = COMMITS
-    .get_by_key(&repo_path)?
+    .get_by_key(repo_path)?
     .into_iter()
     .map(|c| (c.id.clone(), c))
     .collect();
@@ -39,7 +39,7 @@ pub fn graph_instructions(options: &GraphInstructionOpts) -> Option<Instructions
   //   .collect();
 
   let ids = if *all_ids {
-    commits.keys().map(|id| id.clone()).collect::<Vec<String>>()
+    commits.keys().cloned().collect::<Vec<String>>()
   } else {
     commit_ids.clone()
   };

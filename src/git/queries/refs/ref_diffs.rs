@@ -33,8 +33,8 @@ pub fn calc_ref_diffs(
     ..
   } = options;
 
-  let commits = COMMITS.get_by_key(&repo_path)?;
-  let config = CONFIG.get().unwrap_or_else(|| GitConfig::new());
+  let commits = COMMITS.get_by_key(repo_path)?;
+  let config = CONFIG.get().unwrap_or_else(GitConfig::new);
 
   let now = Instant::now();
 
@@ -79,7 +79,7 @@ fn calc_remote_ref_diffs(
     .map(|(_, info)| {
       (
         info.id.clone(),
-        calc_remote_ref_diff(head_commit_id, &info, commits),
+        calc_remote_ref_diff(head_commit_id, info, commits),
       )
     })
     .collect()
@@ -90,7 +90,7 @@ fn calc_remote_ref_diff(
   info: &RefInfo,
   commits: &AHashMap<String, Commit>,
 ) -> RefCommitDiff {
-  let ref ref_commit_id = info.commit_id;
+  let ref_commit_id = &info.commit_id;
 
   let ahead_of_head = count_commits_between_commit_ids(ref_commit_id, head_commit_id, commits);
   let behind_head = count_commits_between_commit_ids(head_commit_id, ref_commit_id, commits);
@@ -123,13 +123,13 @@ fn calc_local_ref_diff(
   remote: Option<RefInfo>,
   commits: &AHashMap<String, Commit>,
 ) -> LocalRefCommitDiff {
-  let ref local_id = local.commit_id;
+  let local_id = &local.commit_id;
 
   let ahead_of_head = count_commits_between_commit_ids(local_id, head_commit_id, commits);
   let behind_head = count_commits_between_commit_ids(head_commit_id, local_id, commits);
 
   if let Some(remote) = remote {
-    let ref remote_id = remote.commit_id;
+    let remote_id = &remote.commit_id;
 
     let ahead_of_remote = count_commits_between_commit_ids(local_id, remote_id, commits);
     let behind_remote = count_commits_between_commit_ids(remote_id, local_id, commits);
@@ -158,7 +158,7 @@ fn get_ref_pairs(
     .iter()
     .map(|(_, r)| r)
     .filter(|r| r.location == RefLocation::Local)
-    .map(|r| (r.clone(), get_sibling(&r, config, refs)))
+    .map(|r| (r.clone(), get_sibling(r, config, refs)))
     .collect()
 }
 
@@ -188,7 +188,7 @@ fn get_sibling(
   None
 }
 
-pub fn get_ref_info_map_from_commits(commits: &Vec<Commit>) -> AHashMap<String, RefInfo> {
+pub fn get_ref_info_map_from_commits(commits: &[Commit]) -> AHashMap<String, RefInfo> {
   let mut refs: AHashMap<String, RefInfo> = AHashMap::new();
 
   for c in commits.iter() {

@@ -1,8 +1,3 @@
-use std::time::Duration;
-
-use serde::Deserialize;
-use ts_rs::TS;
-
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::hunks::hunks::{flatten_hunks, load_hunks_args};
@@ -11,17 +6,7 @@ use crate::global;
 use crate::parser::parse_all;
 use crate::util::global::Global;
 use crate::util::short_cache::ShortCache;
-
-// #[derive(Debug, Clone, Deserialize, TS)]
-// #[serde(rename_all = "camelCase")]
-// #[ts(export)]
-// pub struct LinesReqOpts {
-//   pub repo_path: String,
-//   pub commit: Commit,
-//   pub patch: Patch,
-//   pub search_text: String,
-//   pub num_results: usize,
-// }
+use std::time::Duration;
 
 static SHORT_HUNK_CACHE: Global<ShortCache<Vec<Hunk>>> = global!(ShortCache::new(
   "Hunk Cache".to_string(),

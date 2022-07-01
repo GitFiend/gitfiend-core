@@ -77,7 +77,10 @@ pub struct FileMatch {
 }
 
 // None result means either no results or cancelled.
-pub fn search_diffs_with_id2(options: &SearchOptions, search_id: u32) -> Option<()> {
+pub fn search_diffs_with_id2(
+  options: &SearchOptions,
+  search_id: u32,
+) -> Option<Vec<(String, Vec<FileMatch>)>> {
   let result = search_diffs_inner(options, search_id)?;
 
   let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)?;
@@ -88,22 +91,29 @@ pub fn search_diffs_with_id2(options: &SearchOptions, search_id: u32) -> Option<
     ..
   } = options;
 
-  if let Some(commits) = COMMITS.get_by_key(repo_path) {
-    let mut file_matches: Vec<(String, Vec<FileMatch>)> = Vec::new();
+  let commits = COMMITS.get_by_key(repo_path)?;
 
-    // TODO: Should we check for cancelled search while we do this?
-    for (id, patches) in commit_patches {
-      if let Some(commit) = commits.iter().find(|c| c.id == id) {
-        for patch in patches {
-          if let Some(lines) = get_matching_hunk_lines(repo_path, commit, &patch, search_text) {
-            FileMatch { patch, lines };
-          }
-        }
-      }
-    }
-  }
+  // TODO: Should we check for cancelled search while we do this?
+  Some(
+    commit_patches
+      .into_iter()
+      .flat_map(|(id, patches)| {
+        let commit = commits.iter().find(|c| c.id == id)?;
 
-  None
+        let matches = patches
+          .into_iter()
+          .flat_map(|patch| {
+            Some(FileMatch {
+              lines: get_matching_hunk_lines(repo_path, commit, &patch, search_text)?,
+              patch,
+            })
+          })
+          .collect::<Vec<FileMatch>>();
+
+        Some((commit.id.clone(), matches))
+      })
+      .collect::<Vec<(String, Vec<FileMatch>)>>(),
+  )
 }
 
 // TODO: Rename this.

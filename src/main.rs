@@ -1,7 +1,7 @@
 use crate::server::async_server::start_async_server;
 // use crate::server::server::start_sync_server;
 
-mod git;
+pub(crate) mod git;
 mod parser;
 mod server;
 mod util;

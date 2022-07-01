@@ -18,20 +18,20 @@ pub struct ReqHunkOptions {
 pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
   let out = run_git(RunGitOptions {
     repo_path: &options.repo_path,
-    args: load_hunks_args(&options),
+    args: load_hunks_args(&options.commit, &options.patch),
   })?;
 
   let hunks = parse_all(P_HUNKS, &out)?;
-  let hunk_lines = flatten_hunks(&hunks);
+  let hunk_lines = flatten_hunks(hunks.clone());
 
   Some((hunks, hunk_lines))
 }
 
-pub fn load_hunks_args(options: &ReqHunkOptions) -> [String; 4] {
+pub fn load_hunks_args(commit: &Commit, patch: &Patch) -> [String; 4] {
   let diff = "diff".to_string();
   let dashes = "--".to_string();
 
-  let ReqHunkOptions { commit, patch, .. } = options;
+  // let ReqHunkOptions { commit, patch, .. } = options;
   let old_file = patch.old_file.clone();
 
   let Commit {
@@ -43,21 +43,48 @@ pub fn load_hunks_args(options: &ReqHunkOptions) -> [String; 4] {
 
   if *is_merge {
     [diff, format!("{}^@", id), dashes, old_file]
-  } else if commit.parent_ids.len() > 0 {
+  } else if !commit.parent_ids.is_empty() {
     [diff, format!("{}..{}", parent_ids[0], id), dashes, old_file]
   } else {
     [diff, format!("{}..{}", COMMIT_0_ID, id), dashes, old_file]
   }
 }
 
-fn flatten_hunks(hunks: &Vec<Hunk>) -> Vec<HunkLine> {
+// pub fn flatten_hunks(hunks: &Vec<Hunk>) -> Vec<HunkLine> {
+//   let mut lines: Vec<HunkLine> = Vec::new();
+//
+//   if hunks.len() == 0 {
+//     return lines;
+//   }
+//
+//   for hunk in hunks.iter() {
+//     lines.push(HunkLine::header_from_type(
+//       HunkLineStatus::HeaderStart,
+//       hunk.index,
+//     ));
+//     lines.push(HunkLine::header_from_type(
+//       HunkLineStatus::HeaderEnd,
+//       hunk.index,
+//     ));
+//
+//     for line in hunk.lines.iter() {
+//       lines.push(line.clone());
+//     }
+//   }
+//
+//   lines.push(HunkLine::header_from_type(HunkLineStatus::HeaderStart, -1));
+//
+//   lines
+// }
+
+pub fn flatten_hunks(hunks: Vec<Hunk>) -> Vec<HunkLine> {
   let mut lines: Vec<HunkLine> = Vec::new();
 
-  if hunks.len() == 0 {
+  if hunks.is_empty() {
     return lines;
   }
 
-  for hunk in hunks.iter() {
+  for hunk in hunks {
     lines.push(HunkLine::header_from_type(
       HunkLineStatus::HeaderStart,
       hunk.index,
@@ -67,8 +94,8 @@ fn flatten_hunks(hunks: &Vec<Hunk>) -> Vec<HunkLine> {
       hunk.index,
     ));
 
-    for line in hunk.lines.iter() {
-      lines.push(line.clone());
+    for line in hunk.lines {
+      lines.push(line);
     }
   }
 

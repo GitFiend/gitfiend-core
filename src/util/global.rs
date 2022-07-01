@@ -40,7 +40,7 @@ where
 {
   pub fn insert(&self, key: K, count: V) {
     if let Ok(mut data) = self.data.write() {
-      data.insert(key.clone(), count);
+      data.insert(key, count);
     }
   }
 

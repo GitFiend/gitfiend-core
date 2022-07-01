@@ -34,7 +34,7 @@ where
     let Output { stdout, stderr, .. } = &out;
 
     // TODO: Is stderr sometimes valid and useful git output?
-    if stdout.len() > 0 {
+    if !stdout.is_empty() {
       return Some(String::from_utf8_lossy(stdout).to_string());
     } else {
       println!("StdErr: {:?}", String::from_utf8_lossy(stderr).to_string());

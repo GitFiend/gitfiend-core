@@ -3,11 +3,13 @@ use std::{thread, time};
 
 use async_process::Command;
 use futures::executor;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::git::git_types::Patch;
+use crate::git::git_types::{HunkLine, Patch};
+use crate::git::queries::commits::COMMITS;
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
+use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
 use crate::global;
 use crate::parser::parse_all;
 use crate::util::global::Global;
@@ -65,6 +67,43 @@ pub fn search_diffs_with_id(
   let result = search_diffs_inner(options, search_id)?;
 
   parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct FileMatch {
+  patch: Patch,
+  lines: Vec<HunkLine>,
+}
+
+// None result means either no results or cancelled.
+pub fn search_diffs_with_id2(options: &SearchOptions, search_id: u32) -> Option<()> {
+  let result = search_diffs_inner(options, search_id)?;
+
+  let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)?;
+
+  let SearchOptions {
+    repo_path,
+    search_text,
+    ..
+  } = options;
+
+  if let Some(commits) = COMMITS.get_by_key(repo_path) {
+    let mut file_matches: Vec<(String, Vec<FileMatch>)> = Vec::new();
+
+    // TODO: Should we check for cancelled search while we do this?
+    for (id, patches) in commit_patches {
+      if let Some(commit) = commits.iter().find(|c| c.id == id) {
+        for patch in patches {
+          if let Some(lines) = get_matching_hunk_lines(repo_path, commit, &patch, search_text) {
+            FileMatch { patch, lines };
+          }
+        }
+      }
+    }
+  }
+
+  None
 }
 
 // TODO: Rename this.

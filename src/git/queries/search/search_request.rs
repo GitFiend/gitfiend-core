@@ -53,7 +53,7 @@ pub fn start_diff_search(options: &SearchOptions) -> u32 {
   let o = options.clone();
 
   thread::spawn(move || {
-    let result = search_diffs_with_id(&o, search.search_id.clone());
+    let result = search_diffs_with_id(&o, search.search_id);
 
     if let Some(searches) = DIFF_SEARCHES.get() {
       if let Some(initial_search) = searches.get(&search.search_id) {

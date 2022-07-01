@@ -12,16 +12,16 @@ use crate::parser::parse_all;
 use crate::util::global::Global;
 use crate::util::short_cache::ShortCache;
 
-#[derive(Debug, Clone, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct LinesReqOpts {
-  pub repo_path: String,
-  pub commit: Commit,
-  pub patch: Patch,
-  pub search_text: String,
-  pub num_results: usize,
-}
+// #[derive(Debug, Clone, Deserialize, TS)]
+// #[serde(rename_all = "camelCase")]
+// #[ts(export)]
+// pub struct LinesReqOpts {
+//   pub repo_path: String,
+//   pub commit: Commit,
+//   pub patch: Patch,
+//   pub search_text: String,
+//   pub num_results: usize,
+// }
 
 static SHORT_HUNK_CACHE: Global<ShortCache<Vec<Hunk>>> = global!(ShortCache::new(
   "Hunk Cache".to_string(),
@@ -29,15 +29,12 @@ static SHORT_HUNK_CACHE: Global<ShortCache<Vec<Hunk>>> = global!(ShortCache::new
 ));
 
 // This should match "gSearchResultDiff"
-pub fn get_matching_hunk_lines(options: &LinesReqOpts) -> Option<Vec<HunkLine>> {
-  let LinesReqOpts {
-    repo_path,
-    commit,
-    patch,
-    search_text,
-    ..
-  } = options;
-
+pub fn get_matching_hunk_lines(
+  repo_path: &String,
+  commit: &Commit,
+  patch: &Patch,
+  search_text: &str,
+) -> Option<Vec<HunkLine>> {
   let cache_id = format!("{}{}", commit.id, patch.id);
 
   if let Some(hunks) = get_hunks_from_cache(&cache_id) {

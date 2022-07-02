@@ -69,7 +69,7 @@ pub fn search_diffs_with_id(
   parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, Eq, PartialEq, TS)]
 #[ts(export)]
 pub struct FileMatch {
   patch: Patch,
@@ -94,6 +94,7 @@ pub fn search_diffs_with_id2(
   let commits = COMMITS.get_by_key(repo_path)?;
 
   // TODO: Should we check for cancelled search while we do this?
+  // TODO: Try running requests in parallel.
   Some(
     commit_patches
       .into_iter()

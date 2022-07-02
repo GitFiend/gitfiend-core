@@ -33,7 +33,7 @@ pub fn get_matching_hunk_lines(
     let hunks = parse_all(P_HUNKS, &out)?;
     store_hunk_in_cache(&cache_id, hunks.clone());
 
-    let hunk_lines = flatten_hunks(hunks);
+    let hunk_lines = get_matching_lines_in_hunks(hunks, search_text);
 
     return Some(hunk_lines);
   }
@@ -61,8 +61,8 @@ fn get_matching_lines_in_hunks(hunks: Vec<Hunk>, search_text: &str) -> Vec<HunkL
     for line in hunk.lines {
       let HunkLine { status, text, .. } = &line;
 
-      if *status == HunkLineStatus::Added
-        || *status == HunkLineStatus::Removed && text.contains(search_text)
+      if (*status == HunkLineStatus::Added || *status == HunkLineStatus::Removed)
+        && text.contains(search_text)
       {
         hunk_lines.push(line);
       }

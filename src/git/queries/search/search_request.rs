@@ -5,8 +5,9 @@ use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::git::git_types::Patch;
-use crate::git::queries::search::{get_next_search_id, search_diffs_with_id, SearchOptions};
+use crate::git::queries::search::{
+  get_next_search_id, search_diffs_with_id2, FileMatch, SearchOptions,
+};
 use crate::global;
 use crate::util::global::Global;
 
@@ -15,7 +16,7 @@ pub struct DiffSearch {
   pub repo_path: String,
   pub search_text: String,
   pub search_id: u32,
-  pub search_result: Option<Vec<(String, Vec<Patch>)>>,
+  pub search_result: Option<Vec<(String, Vec<FileMatch>)>>,
   pub time: Instant,
   pub completed: bool,
 }
@@ -53,7 +54,7 @@ pub fn start_diff_search(options: &SearchOptions) -> u32 {
   let o = options.clone();
 
   thread::spawn(move || {
-    let result = search_diffs_with_id(&o, search.search_id);
+    let result = search_diffs_with_id2(&o, search.search_id);
 
     if let Some(searches) = DIFF_SEARCHES.get() {
       if let Some(initial_search) = searches.get(&search.search_id) {
@@ -84,7 +85,7 @@ pub struct PollSearchOpts {
 pub struct PollSearchResult {
   pub search_id: u32,
   pub complete: bool,
-  pub results: Option<Vec<(String, Vec<Patch>)>>,
+  pub results: Option<Vec<(/*commit_id*/ String, Vec<FileMatch>)>>,
 }
 
 pub fn poll_diff_search(options: &PollSearchOpts) -> PollSearchResult {

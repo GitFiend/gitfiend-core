@@ -10,6 +10,7 @@ use ts_rs::TS;
 use crate::git::git_types::{Commit, RefInfo};
 use crate::git::queries::commit_calcs::get_commit_ids_between_commits2;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
+use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
 use crate::git::{run_git, RunGitOptions};
@@ -76,7 +77,7 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commi
 
   let p1 = repo_path.clone();
   let p2 = repo_path.clone();
-  let num = num_commits.clone();
+  let num = *num_commits;
 
   let stashes_thread = thread::spawn(move || load_stashes(&p1));
   let commits_thread = thread::spawn(move || load_commits(&p2, num));
@@ -89,8 +90,8 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commi
     now.elapsed().as_millis(),
   );
 
-  if stashes.is_some() {
-    commits.append(&mut stashes.unwrap());
+  if let Some(mut stashes) = stashes {
+    commits.append(&mut stashes);
   }
 
   commits.sort_by(|a, b| {
@@ -121,6 +122,9 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commi
   // }
 
   // store_commits(&repo_path, &commits);
+
+  let new_options = (*options).clone();
+  thread::spawn(move || load_patches(&new_options));
 
   Some(commits)
 }
@@ -177,19 +181,14 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String
     commit_id2,
   } = options;
 
-  // if let Ok(store) = store_lock.read() {
-  if let Some(commits) = COMMITS.get_by_key(&repo_path) {
-    let commit_map: AHashMap<String, Commit> = commits
-      .clone()
-      .into_iter()
-      .map(|c| (c.id.clone(), c))
-      .collect();
+  if let Some(commits) = COMMITS.get_by_key(repo_path) {
+    let commit_map: AHashMap<String, Commit> =
+      commits.into_iter().map(|c| (c.id.clone(), c)).collect();
 
-    if let Some(result) = get_commit_ids_between_commits2(&commit_id2, &commit_id1, &commit_map) {
+    if let Some(result) = get_commit_ids_between_commits2(commit_id2, commit_id1, &commit_map) {
       return Some(result);
     }
   }
-  // }
 
   commit_ids_between_commits_inner(repo_path.clone(), commit_id1.clone(), commit_id2.clone())
 }

@@ -12,7 +12,7 @@ pub struct ReqOptions {
   pub repo_path: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, TS)]
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReqCommitsOptions {

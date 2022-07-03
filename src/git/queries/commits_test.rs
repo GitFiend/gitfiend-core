@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::commits::{load_commits, load_commits_and_stashes};
+  use std::env::current_dir;
+
+  use crate::git::queries::commits::load_commits;
   use crate::git::queries::commits_parsers::{P_COMMIT_ROW, P_GROUP, P_ID_LIST};
   use crate::parser::{_parse_part, parse_all};
-  use crate::server::git_request::ReqCommitsOptions;
-  use std::env::current_dir;
 
   #[test]
   fn test_p_group() {
@@ -23,7 +23,7 @@ mod tests {
       ;  (HEAD -> refs/heads/master, refs/remotes/origin/master)",
     );
 
-    assert_eq!(res.is_some(), true);
+    assert!(res.is_some());
   }
 
   #[test]
@@ -36,16 +36,17 @@ mod tests {
     assert!(result.is_some());
   }
 
-  #[test]
-  fn test_load_commits_and_stashes() {
-    let result = load_commits_and_stashes(&ReqCommitsOptions {
-      repo_path: "/home/toby/Repos/gitfiend-seed/git-fiend".to_string(),
-      num_commits: 1000,
-    });
-
-    println!("{:?}", result);
-    assert!(true);
-  }
+  // #[test]
+  // fn test_load_commits_and_stashes() {
+  //   let result = load_commits_and_stashes(&ReqCommitsOptions2 {
+  //     repo_path: "/home/toby/Repos/gitfiend-seed/git-fiend".to_string(),
+  //     num_commits: 1000,
+  //     filters: Vec::new(),
+  //   });
+  //
+  //   println!("{:?}", result);
+  //   assert!(true);
+  // }
 
   #[test]
   fn test_p_id_list() {

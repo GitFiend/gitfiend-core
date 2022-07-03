@@ -26,6 +26,14 @@ const PORT: u16 = 0;
 
 const ADDRESS: fn() -> String = || format!("127.0.0.1:{}", PORT);
 
+/*
+TODO: Stop passing options into each request as reference.
+
+Stop using unwrap in these macros.
+
+Convert macros where possible to functions.
+ */
+
 #[macro_export]
 macro_rules! parse_json {
   ($request: expr) => {{

@@ -9,6 +9,7 @@ use ts_rs::TS;
 
 use crate::git::git_types::{Commit, RefInfo};
 use crate::git::queries::commit_calcs::get_commit_ids_between_commits2;
+use crate::git::queries::commit_filters::{apply_commit_filters, CommitFilter};
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::refs::finish_initialising_refs_on_commits;
@@ -67,10 +68,20 @@ pub fn load_head_commit(options: &ReqOptions) -> Option<Commit> {
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
 
-pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commit>> {
-  let ReqCommitsOptions {
+#[derive(Debug, Clone, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ReqCommitsOptions2 {
+  pub repo_path: String,
+  pub num_commits: u32,
+  pub filters: Vec<CommitFilter>,
+}
+
+pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Commit>> {
+  let ReqCommitsOptions2 {
     repo_path,
     num_commits,
+    filters,
   } = options;
 
   let now = Instant::now();
@@ -117,16 +128,14 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions) -> Option<Vec<Commi
   );
 
   COMMITS.insert(repo_path.clone(), commits.clone());
-  // if let Ok(mut store) = store_lock.write() {
-  //   (*store).commits.insert(repo_path.clone(), commits.clone());
-  // }
 
-  // store_commits(&repo_path, &commits);
-
-  let new_options = (*options).clone();
+  let new_options = ReqCommitsOptions {
+    repo_path: repo_path.clone(),
+    num_commits: *num_commits,
+  };
   thread::spawn(move || load_patches(&new_options));
 
-  Some(commits)
+  Some(apply_commit_filters(commits, filters))
 }
 
 pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
@@ -214,7 +223,7 @@ fn commit_ids_between_commits_inner(
 
 // Use this as a fallback when calculation fails.
 pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
-  if let Some(ids) = get_un_pushed_commits_computed(&options) {
+  if let Some(ids) = get_un_pushed_commits_computed(options) {
     println!("Computed ids: {:?}", ids);
     return ids;
   } else {
@@ -252,7 +261,7 @@ fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
   // println!("{:?}", commit.unwrap());
 
   let head_ref = get_head_ref(&commits)?;
-  let remote = find_sibling_ref(&head_ref, &commits)?;
+  let remote = find_sibling_ref(head_ref, &commits)?;
 
   let result = get_commit_ids_between_commits2(&head_ref.commit_id, &remote.commit_id, &commit_map);
 
@@ -264,29 +273,23 @@ fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
   result
 }
 
-fn get_head_ref(commits: &Vec<Commit>) -> Option<RefInfo> {
-  Some(
-    commits
-      .iter()
-      .find(|c| c.refs.iter().any(|r| r.head))?
-      .refs
-      .iter()
-      .find(|r| r.head)?
-      .clone(),
-  )
+fn get_head_ref(commits: &[Commit]) -> Option<&RefInfo> {
+  commits
+    .iter()
+    .find(|c| c.refs.iter().any(|r| r.head))?
+    .refs
+    .iter()
+    .find(|r| r.head)
 }
 
-fn find_sibling_ref(ri: &RefInfo, commits: &Vec<Commit>) -> Option<RefInfo> {
+pub fn find_sibling_ref<'a>(ri: &RefInfo, commits: &'a [Commit]) -> Option<&'a RefInfo> {
   if let Some(sibling_id) = &ri.sibling_id {
-    return Some(
-      commits
-        .iter()
-        .find(|c| c.refs.iter().any(|r| &r.id == sibling_id))?
-        .refs
-        .iter()
-        .find(|r| &r.id == sibling_id)?
-        .clone(),
-    );
+    return commits
+      .iter()
+      .find(|c| c.refs.iter().any(|r| &r.id == sibling_id))?
+      .refs
+      .iter()
+      .find(|r| &r.id == sibling_id);
   }
   None
 }

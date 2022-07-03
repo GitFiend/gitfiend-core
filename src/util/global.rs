@@ -38,9 +38,9 @@ where
   K: Hash + Clone + Eq,
   V: Clone,
 {
-  pub fn insert(&self, key: K, count: V) {
+  pub fn insert(&self, key: K, value: V) {
     if let Ok(mut data) = self.data.write() {
-      data.insert(key, count);
+      data.insert(key, value);
     }
   }
 

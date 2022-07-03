@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use crate::git::git_types::{Commit, Patch};
-use crate::git::queries::commits::{load_commits_and_stashes, COMMITS};
+use crate::git::queries::commits::COMMITS;
 use crate::git::queries::patches::cache::{load_patches_cache, write_patches_cache};
 use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
@@ -17,9 +17,7 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
 
   let now = Instant::now();
 
-  let commits = COMMITS
-    .get_by_key(repo_path)
-    .or_else(|| load_commits_and_stashes(options))?;
+  let commits = COMMITS.get_by_key(repo_path)?;
 
   let mut commits_without_patches: Vec<&Commit> = Vec::new();
   let mut stashes_or_merges_without_patches: Vec<&Commit> = Vec::new();

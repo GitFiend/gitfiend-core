@@ -1,6 +1,7 @@
+use std::time::Instant;
+
 use ahash::{AHashMap, AHashSet};
 use serde::Deserialize;
-use std::time::Instant;
 use ts_rs::TS;
 
 use crate::git::git_types::Commit;
@@ -55,13 +56,34 @@ pub fn apply_commit_filters(
     })
     .collect();
 
+  let ids: AHashSet<String> = commits
+    .iter()
+    .filter(|c| results.iter().all(|r| r.contains(c.id.as_str())))
+    .map(|c| c.id.clone())
+    .collect();
+
   println!("Took {}ms to filter commits", now.elapsed().as_millis());
 
-  commits
-    .iter()
-    .cloned() // Oops. We borrowed the commit ids earlier.
-    .filter(|c| results.iter().all(|r| r.contains(c.id.as_str())))
-    .collect()
+  let mut remaining_commits: Vec<Commit> = Vec::new();
+  let mut skipped = 0;
+  let mut index = 0;
+
+  for c in commits.iter() {
+    if ids.contains(c.id.as_str()) {
+      let mut c = c.clone();
+
+      c.index = index;
+      index += 1;
+
+      c.num_skipped = skipped;
+      skipped = 0;
+      remaining_commits.push(c);
+    } else {
+      skipped += 1;
+    }
+  }
+
+  remaining_commits
 }
 
 fn get_all_commits_with_branch_name<'a>(

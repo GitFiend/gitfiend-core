@@ -5,4 +5,5 @@ export interface ReqCommitsOptions2 {
   repoPath: string;
   numCommits: number;
   filters: Array<CommitFilter>;
+  fast: boolean;
 }

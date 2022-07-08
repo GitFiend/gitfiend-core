@@ -72,6 +72,7 @@ pub struct ReqCommitsOptions2 {
   pub repo_path: String,
   pub num_commits: u32,
   pub filters: Vec<CommitFilter>,
+  pub fast: bool, // Fast means to use the cache only, don't run git command.
 }
 
 pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Commit>> {
@@ -79,7 +80,14 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
     repo_path,
     num_commits,
     filters,
+    fast,
   } = options;
+
+  if *fast {
+    if let Some(commits) = COMMITS.get_by_key(repo_path) {
+      return Some(apply_commit_filters(repo_path, commits, filters));
+    }
+  }
 
   let now = Instant::now();
 

@@ -20,7 +20,7 @@ async-process = "1.4.0"
 
 [profile.dev]
 #opt-level = 3
-incremental = false
+#incremental = false
 
 [profile.release]
 #debug = true

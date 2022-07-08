@@ -16,8 +16,6 @@ pub enum CommitFilter {
 }
 
 pub fn apply_commit_filters(mut commits: Vec<Commit>, filters: &Vec<CommitFilter>) -> Vec<Commit> {
-  // let unfiltered_commits = commits.clone();
-
   let commit_map = get_commit_map_cloned(&commits);
 
   for filter in filters {
@@ -31,10 +29,14 @@ pub fn apply_commit_filters(mut commits: Vec<Commit>, filters: &Vec<CommitFilter
           .collect();
       }
       CommitFilter::User { author, email } => {
+        let ids = get_commits_for_user(author, &commits);
+      }
+      CommitFilter::Commit { commit_id } => {
+        let ids: AHashSet<&str> = [commit_id.as_str()].into_iter().collect();
+      }
+      CommitFilter::File { file_name } => {
         //
       }
-      CommitFilter::Commit { commit_id } => {}
-      CommitFilter::File { file_name } => {}
     };
   }
 
@@ -71,4 +73,12 @@ fn get_all_commits_with_branch_name<'a>(
   }
 
   ids_to_keep
+}
+
+fn get_commits_for_user<'a>(author: &str, commits: &'a [Commit]) -> AHashSet<&'a str> {
+  commits
+    .iter()
+    .filter(|c| c.author == author)
+    .map(|c| c.id.as_str())
+    .collect()
 }

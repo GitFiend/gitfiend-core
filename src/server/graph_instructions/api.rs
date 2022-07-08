@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::git::git_types::Commit;
-use crate::git::queries::commits::COMMITS;
+use crate::git::store::COMMITS;
 use crate::server::graph_instructions::instruction_types::Instructions;
 use crate::server::graph_instructions::GraphInstructions;
 

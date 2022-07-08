@@ -10,8 +10,7 @@ use std::time::Instant;
 use directories::ProjectDirs;
 
 use crate::git::git_types::Patch;
-use crate::global;
-use crate::util::global::Global;
+use crate::git::store::PATCHES;
 
 pub fn write_patches_cache(
   repo_path: &String,
@@ -24,7 +23,7 @@ pub fn write_patches_cache(
 
   let now = Instant::now();
 
-  TEMP_PATCHES_CACHE.set((repo_path.clone(), patches.clone()));
+  PATCHES.set((repo_path.clone(), patches.clone()));
   println!(
     "Took {}ms to put patches in temp cache (write).",
     now.elapsed().as_millis(),
@@ -33,11 +32,8 @@ pub fn write_patches_cache(
   write_patches_to_file(full_path, patches).ok()
 }
 
-static TEMP_PATCHES_CACHE: Global<(String, HashMap<String, Vec<Patch>>)> =
-  global!((String::new(), HashMap::new()));
-
 pub fn load_patches_cache(repo_path: &String) -> Option<HashMap<String, Vec<Patch>>> {
-  if let Some((rp, patches)) = TEMP_PATCHES_CACHE.get() {
+  if let Some((rp, patches)) = PATCHES.get() {
     if &rp == repo_path && !patches.is_empty() {
       return Some(patches);
     }
@@ -55,7 +51,7 @@ pub fn load_patches_cache(repo_path: &String) -> Option<HashMap<String, Vec<Patc
   if let Some(patches) = maybe_patches {
     let now = Instant::now();
 
-    TEMP_PATCHES_CACHE.set((repo_path.clone(), patches.clone()));
+    PATCHES.set((repo_path.clone(), patches.clone()));
     println!(
       "Took {}ms to put patches in temp cache (load).",
       now.elapsed().as_millis(),

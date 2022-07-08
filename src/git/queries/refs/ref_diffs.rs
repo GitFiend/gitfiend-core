@@ -10,8 +10,8 @@ use crate::git::git_types::{
   Commit, GitConfig, LocalRefCommitDiff, RefCommitDiff, RefInfo, RefLocation,
 };
 use crate::git::queries::commit_calcs::count_commits_between_commit_ids;
-use crate::git::queries::commits::COMMITS;
-use crate::git::queries::config::CONFIG;
+use crate::git::store::COMMITS;
+use crate::git::store::CONFIG;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]

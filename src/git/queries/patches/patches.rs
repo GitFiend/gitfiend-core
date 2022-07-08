@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use crate::git::git_types::{Commit, Patch};
-use crate::git::queries::commits::COMMITS;
 use crate::git::queries::patches::cache::{load_patches_cache, write_patches_cache};
 use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
 use crate::git::queries::COMMIT_0_ID;
+use crate::git::store::COMMITS;
 use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;

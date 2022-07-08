@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::git::git_types::{HunkLine, Patch};
-use crate::git::queries::commits::COMMITS;
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
+use crate::git::store::COMMITS;
 use crate::global;
 use crate::parser::parse_all;
 use crate::util::global::Global;

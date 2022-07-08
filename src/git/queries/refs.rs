@@ -1,5 +1,5 @@
 use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation, RefType};
-use crate::git::queries::config::CONFIG;
+use crate::git::store::CONFIG;
 use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;

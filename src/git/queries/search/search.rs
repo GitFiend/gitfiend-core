@@ -4,9 +4,9 @@ use serde::Serialize;
 use ts_rs::TS;
 
 use crate::git::git_types::Patch;
-use crate::git::queries::commits::COMMITS;
 use crate::git::queries::patches::cache::load_patches_cache;
 use crate::git::queries::search::{FileMatch, SearchOptions};
+use crate::git::store::COMMITS;
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Hash, TS)]
 #[ts(export)]

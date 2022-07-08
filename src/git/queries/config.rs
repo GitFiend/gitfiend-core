@@ -1,15 +1,13 @@
 use std::collections::HashMap;
 
 use crate::git::git_types::GitConfig;
+use crate::git::store::CONFIG;
 use crate::git::{run_git, RunGitOptions};
+use crate::map;
 use crate::parser::standard_parsers::UNTIL_LINE_END;
 use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
-use crate::util::global::Global;
 use crate::{and, many, until_str, word};
-use crate::{global, map};
-
-pub static CONFIG: Global<GitConfig> = global!(GitConfig::new());
 
 impl GitConfig {
   pub fn new() -> GitConfig {

@@ -1,19 +1,15 @@
 use ahash::{AHashMap, AHashSet};
 
 use crate::git::git_types::Commit;
-use crate::global;
+use crate::git::store::REF_DIFFS;
 use crate::util::global::Global;
 
-pub fn get_commit_map<'a>(commits: &'a Vec<Commit>) -> AHashMap<&'a String, &'a Commit> {
+fn _get_commit_map(commits: &[Commit]) -> AHashMap<&String, &Commit> {
   commits.iter().map(|c| (&c.id, c)).collect()
 }
 
-pub fn get_commit_map_cloned<'a>(commits: &Vec<Commit>) -> AHashMap<String, Commit> {
-  commits
-    .clone()
-    .into_iter()
-    .map(|c| (c.id.clone(), c))
-    .collect()
+pub fn get_commit_map_cloned(commits: &[Commit]) -> AHashMap<String, Commit> {
+  commits.iter().map(|c| (c.id.clone(), c.clone())).collect()
 }
 
 pub fn find_commit_ancestors<'a>(
@@ -38,9 +34,6 @@ pub fn find_commit_ancestors<'a>(
 
   ancestors
 }
-
-// TODO: Move this to global store.
-static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
 
 impl Global<AHashMap<String, u32>> {
   fn get_diff(&self, key: &str) -> Option<u32> {
@@ -130,7 +123,7 @@ fn get_commit_ids_between_commits(
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::commit_calcs::REF_DIFFS;
+  use crate::git::store::REF_DIFFS;
 
   #[test]
   fn test_ref_diffs() {

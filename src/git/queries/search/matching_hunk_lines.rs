@@ -1,12 +1,13 @@
+use std::time::Duration;
+
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
-use crate::git::queries::hunks::hunks::{flatten_hunks, load_hunks_args};
+use crate::git::queries::hunks::hunks::load_hunks_args;
 use crate::git::{run_git, RunGitOptions};
 use crate::global;
 use crate::parser::parse_all;
 use crate::util::global::Global;
 use crate::util::short_cache::ShortCache;
-use std::time::Duration;
 
 static SHORT_HUNK_CACHE: Global<ShortCache<Vec<Hunk>>> = global!(ShortCache::new(
   "Hunk Cache".to_string(),

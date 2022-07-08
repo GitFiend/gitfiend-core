@@ -1,9 +1,9 @@
-use ahash::AHashMap;
+use ahash::{AHashMap, AHashSet};
 use serde::Deserialize;
 use ts_rs::TS;
 
-use crate::git::git_types::{Commit, RefInfo};
-use crate::git::queries::commits::find_sibling_ref;
+use crate::git::git_types::Commit;
+use crate::git::queries::commit_calcs::{find_commit_ancestors, get_commit_map_cloned};
 
 #[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -16,24 +16,23 @@ pub enum CommitFilter {
 }
 
 pub fn apply_commit_filters(mut commits: Vec<Commit>, filters: &Vec<CommitFilter>) -> Vec<Commit> {
-  let unfiltered_commits = commits.clone();
+  // let unfiltered_commits = commits.clone();
 
-  let commit_map: AHashMap<String, Commit> = commits
-    .clone()
-    .into_iter()
-    .map(|c| (c.id.clone(), c))
-    .collect();
+  let commit_map = get_commit_map_cloned(&commits);
 
   for filter in filters {
     match filter {
-      CommitFilter::Branch { id, short_name } => {
-        if let Some(highest_ref) = get_highest_sibling_ref(&unfiltered_commits, short_name) {
-          if let Some(c) = commit_map.get(&highest_ref.commit_id) {
-            //
-          }
-        }
+      CommitFilter::Branch { short_name, .. } => {
+        let ids = get_all_commits_with_branch_name(short_name, &commit_map);
+
+        commits = commits
+          .into_iter()
+          .filter(|c| ids.contains(c.id.as_str()))
+          .collect();
       }
-      CommitFilter::User { author, email } => {}
+      CommitFilter::User { author, email } => {
+        //
+      }
       CommitFilter::Commit { commit_id } => {}
       CommitFilter::File { file_name } => {}
     };
@@ -42,50 +41,34 @@ pub fn apply_commit_filters(mut commits: Vec<Commit>, filters: &Vec<CommitFilter
   commits
 }
 
-// TODO: This is probably buggy when there are multiple remotes.
-// We should just look up the id of the given ref and then look up the sibling.
-// We then compare the index.
-// TODO: Consider how this should work with multiple remotes. Show all with the same short_name?
-fn get_highest_sibling_ref<'a>(
-  unfiltered_commits: &'a Vec<Commit>,
+fn get_all_commits_with_branch_name<'a>(
   short_name: &str,
-) -> Option<&'a RefInfo> {
-  let mut highest_ref: Option<(&Commit, &RefInfo)> = None;
+  commits: &'a AHashMap<String, Commit>,
+) -> AHashSet<&'a str> {
+  let mut ids_to_keep = AHashSet::<&'a str>::new();
 
-  for c in unfiltered_commits {
-    for r in c.refs.iter() {
-      if r.short_name == short_name {
-        if let Some(highest) = &highest_ref {
-          if c.index < highest.0.index {
-            highest_ref = Some((c, r));
-          }
-        } else {
-          highest_ref = Some((c, r));
-        }
+  commits
+    .iter()
+    .filter(|(_, c)| c.refs.iter().any(|r| r.short_name == short_name))
+    .for_each(|(id, c)| {
+      if !ids_to_keep.contains(id.as_str()) {
+        let ancestors = find_commit_ancestors(c, commits);
+
+        ids_to_keep.extend(ancestors);
       }
+    });
+
+  // We include any stashes that have one of our commits as a parent.
+  for (id, c) in commits {
+    if c.stash_id.is_some()
+      && c
+        .parent_ids
+        .iter()
+        .any(|id| ids_to_keep.contains(id.as_str()))
+    {
+      ids_to_keep.insert(id);
     }
   }
 
-  Some(highest_ref?.1)
+  ids_to_keep
 }
-
-// fn get_highest_sibling_ref2<'a>(
-//   unfiltered_commits: &'a Vec<Commit>,
-//   commits_map: &AHashMap<String, Commit>,
-//   id: &str,
-// ) -> Option<&'a RefInfo> {
-//   let given_ref: &RefInfo = unfiltered_commits
-//     .iter()
-//     .find(|c| c.refs.iter().any(|r| &r.id == id))?
-//     .refs
-//     .iter()
-//     .find(|r| &r.id == id)?;
-//
-//   if let Some(sibling) = find_sibling_ref(given_ref, unfiltered_commits) {
-//     if let Some(commit) = commits_map.get(&sibling.commit_id) {
-//       if commit.index < g
-//     }
-//   }
-//
-//   Some(given_ref)
-// }

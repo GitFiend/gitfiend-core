@@ -4,7 +4,19 @@ use crate::git::git_types::Commit;
 use crate::global;
 use crate::util::global::Global;
 
-fn find_commit_ancestors<'a>(
+pub fn get_commit_map<'a>(commits: &'a Vec<Commit>) -> AHashMap<&'a String, &'a Commit> {
+  commits.iter().map(|c| (&c.id, c)).collect()
+}
+
+pub fn get_commit_map_cloned<'a>(commits: &Vec<Commit>) -> AHashMap<String, Commit> {
+  commits
+    .clone()
+    .into_iter()
+    .map(|c| (c.id.clone(), c))
+    .collect()
+}
+
+pub fn find_commit_ancestors<'a>(
   commit: &'a Commit,
   commits: &'a AHashMap<String, Commit>,
 ) -> AHashSet<&'a str> {
@@ -27,6 +39,7 @@ fn find_commit_ancestors<'a>(
   ancestors
 }
 
+// TODO: Move this to global store.
 static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
 
 impl Global<AHashMap<String, u32>> {

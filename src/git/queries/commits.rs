@@ -132,7 +132,7 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
   };
   thread::spawn(move || load_patches(&new_options));
 
-  Some(apply_commit_filters(commits, filters))
+  Some(apply_commit_filters(repo_path, commits, filters))
 }
 
 pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {

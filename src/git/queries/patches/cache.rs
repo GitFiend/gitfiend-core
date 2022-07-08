@@ -12,10 +12,7 @@ use directories::ProjectDirs;
 use crate::git::git_types::Patch;
 use crate::git::store::PATCHES;
 
-pub fn write_patches_cache(
-  repo_path: &String,
-  patches: &HashMap<String, Vec<Patch>>,
-) -> Option<()> {
+pub fn write_patches_cache(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) -> Option<()> {
   let cache_dir = get_cache_dir()?;
   let file_name = generate_file_name(repo_path);
 
@@ -23,7 +20,8 @@ pub fn write_patches_cache(
 
   let now = Instant::now();
 
-  PATCHES.set((repo_path.clone(), patches.clone()));
+  PATCHES.set((repo_path.to_string(), patches.clone()));
+
   println!(
     "Took {}ms to put patches in temp cache (write).",
     now.elapsed().as_millis(),
@@ -32,9 +30,9 @@ pub fn write_patches_cache(
   write_patches_to_file(full_path, patches).ok()
 }
 
-pub fn load_patches_cache(repo_path: &String) -> Option<HashMap<String, Vec<Patch>>> {
+pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
   if let Some((rp, patches)) = PATCHES.get() {
-    if &rp == repo_path && !patches.is_empty() {
+    if rp == repo_path && !patches.is_empty() {
       return Some(patches);
     }
   }
@@ -51,7 +49,7 @@ pub fn load_patches_cache(repo_path: &String) -> Option<HashMap<String, Vec<Patc
   if let Some(patches) = maybe_patches {
     let now = Instant::now();
 
-    PATCHES.set((repo_path.clone(), patches.clone()));
+    PATCHES.set((repo_path.to_string(), patches.clone()));
     println!(
       "Took {}ms to put patches in temp cache (load).",
       now.elapsed().as_millis(),
@@ -75,7 +73,7 @@ fn get_cache_dir() -> Option<PathBuf> {
 
 /// This generates a file name from the repo path e.g.
 /// c:\user\something\thing -> cusersomethingthing.json
-fn generate_file_name(repo_path: &String) -> String {
+fn generate_file_name(repo_path: &str) -> String {
   let id = Path::new(&repo_path)
     .iter()
     .map(|p| p.to_str().unwrap_or(""))

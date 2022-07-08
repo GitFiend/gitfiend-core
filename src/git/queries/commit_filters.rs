@@ -1,9 +1,11 @@
 use ahash::{AHashMap, AHashSet};
 use serde::Deserialize;
+use std::time::Instant;
 use ts_rs::TS;
 
 use crate::git::git_types::Commit;
 use crate::git::queries::commit_calcs::{find_commit_ancestors, get_commit_map_cloned};
+use crate::git::queries::patches::cache::load_patches_cache;
 
 #[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -15,32 +17,51 @@ pub enum CommitFilter {
   File { file_name: String },
 }
 
-pub fn apply_commit_filters(mut commits: Vec<Commit>, filters: &Vec<CommitFilter>) -> Vec<Commit> {
+pub fn apply_commit_filters(
+  repo_path: &str,
+  commits: Vec<Commit>,
+  filters: &[CommitFilter],
+) -> Vec<Commit> {
   let commit_map = get_commit_map_cloned(&commits);
 
-  for filter in filters {
-    match filter {
-      CommitFilter::Branch { short_name, .. } => {
-        let ids = get_all_commits_with_branch_name(short_name, &commit_map);
+  let now = Instant::now();
 
-        commits = commits
-          .into_iter()
-          .filter(|c| ids.contains(c.id.as_str()))
-          .collect();
+  let results: Vec<AHashSet<&str>> = filters
+    .iter()
+    .map(|filter| match filter {
+      CommitFilter::Branch { short_name, .. } => {
+        get_all_commits_with_branch_name(short_name, &commit_map)
       }
-      CommitFilter::User { author, email } => {
-        let ids = get_commits_for_user(author, &commits);
-      }
-      CommitFilter::Commit { commit_id } => {
-        let ids: AHashSet<&str> = [commit_id.as_str()].into_iter().collect();
-      }
+      CommitFilter::User { author, .. } => get_commits_for_user(author, &commits),
+      CommitFilter::Commit { commit_id } => [commit_id.as_str()].into_iter().collect(),
       CommitFilter::File { file_name } => {
-        //
+        if let Some(patches) = load_patches_cache(repo_path) {
+          return commits
+            .iter()
+            .filter(|c| {
+              if let Some(files) = patches.get(&c.id) {
+                return files
+                  .iter()
+                  .any(|p| p.new_file == *file_name || p.old_file == *file_name);
+              }
+
+              false
+            })
+            .map(|c| c.id.as_str())
+            .collect();
+        }
+        AHashSet::new()
       }
-    };
-  }
+    })
+    .collect();
+
+  println!("Took {}ms to filter commits", now.elapsed().as_millis(),);
 
   commits
+    .iter()
+    .cloned() // Oops. We borrowed the commit ids earlier.
+    .filter(|c| results.iter().all(|r| r.contains(c.id.as_str())))
+    .collect()
 }
 
 fn get_all_commits_with_branch_name<'a>(

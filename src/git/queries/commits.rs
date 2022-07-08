@@ -110,8 +110,7 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
     }
   });
 
-  for i in 0..commits.len() {
-    let mut c = &mut commits[i];
+  for (i, c) in commits.iter_mut().enumerate() {
     c.index = i;
   }
 

@@ -19,7 +19,7 @@ ahash = "0.7.6"
 async-process = "1.4.0"
 
 [profile.dev]
-opt-level = 3
+#opt-level = 3
 incremental = false
 
 [profile.release]

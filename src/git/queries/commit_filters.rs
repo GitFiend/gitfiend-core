@@ -55,7 +55,7 @@ pub fn apply_commit_filters(
     })
     .collect();
 
-  println!("Took {}ms to filter commits", now.elapsed().as_millis(),);
+  println!("Took {}ms to filter commits", now.elapsed().as_millis());
 
   commits
     .iter()
@@ -77,6 +77,7 @@ fn get_all_commits_with_branch_name<'a>(
       if !ids_to_keep.contains(id.as_str()) {
         let ancestors = find_commit_ancestors(c, commits);
 
+        ids_to_keep.insert(id);
         ids_to_keep.extend(ancestors);
       }
     });

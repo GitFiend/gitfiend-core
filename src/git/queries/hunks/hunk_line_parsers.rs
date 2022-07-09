@@ -35,7 +35,8 @@ pub const P_HUNK_LINE_RANGES: Parser<(HunkRange, HunkRange)> = map!(
   |res: (&str, String, HunkRange, String, HunkRange, String, &str)| { (res.2, res.4) }
 );
 
-pub fn generate_line_ranges_text(range: &(HunkRange, HunkRange)) -> String {
+// Only used for testing.
+pub fn _generate_line_ranges_text(range: &(HunkRange, HunkRange)) -> String {
   let (old, new) = range;
 
   format!(
@@ -172,7 +173,7 @@ pub const P_HUNK_LINES: Parser<Vec<Line>> = many!(P_HUNK_LINE);
 mod tests {
   use crate::git::git_types::{HunkLineStatus, HunkRange};
   use crate::git::queries::hunks::hunk_line_parsers::{
-    generate_line_ranges_text, P_ADDED_LINE, P_HUNK_LINE, P_HUNK_LINES, P_HUNK_LINE_RANGE,
+    _generate_line_ranges_text, P_ADDED_LINE, P_HUNK_LINE, P_HUNK_LINES, P_HUNK_LINE_RANGE,
     P_HUNK_LINE_RANGES,
   };
 
@@ -234,7 +235,7 @@ mod tests {
       )
     );
 
-    assert_eq!(generate_line_ranges_text(&ranges), "@@ -1,1 +1,2 @@");
+    assert_eq!(_generate_line_ranges_text(&ranges), "@@ -1,1 +1,2 @@");
 
     let res = parse_all(P_HUNK_LINE_RANGES, "@@ -0,0 +1,26 @@");
 
@@ -256,7 +257,7 @@ mod tests {
       )
     );
 
-    assert_eq!(generate_line_ranges_text(&ranges), "@@ -0,0 +1,26 @@");
+    assert_eq!(_generate_line_ranges_text(&ranges), "@@ -0,0 +1,26 @@");
 
     let res = parse_all(P_HUNK_LINE_RANGES, "@@ -1,19 +1,17 @@");
 
@@ -278,7 +279,7 @@ mod tests {
       )
     );
 
-    assert_eq!(generate_line_ranges_text(&ranges), "@@ -1,19 +1,17 @@");
+    assert_eq!(_generate_line_ranges_text(&ranges), "@@ -1,19 +1,17 @@");
   }
 
   #[test]

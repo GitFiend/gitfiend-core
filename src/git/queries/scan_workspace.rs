@@ -1,13 +1,13 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::fs::read_dir;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 use ts_rs::TS;
 
 const MAX_SCAN_DEPTH: u8 = 5;
 const MAX_DIR_SIZE: usize = 50;
 
-#[derive(Debug, Deserialize, Serialize, TS)]
+#[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ScanOptions {
@@ -33,12 +33,10 @@ fn scan_workspace_inner(
   workspaces_enabled: bool,
   repo_paths: &mut Vec<PathBuf>,
   depth: u8,
-) -> () {
+) {
   if !workspaces_enabled {
     if is_git_repo(&dir) {
       repo_paths.push(dir);
-
-      return;
     }
   } else {
     if is_git_repo(&dir) {
@@ -72,7 +70,7 @@ fn get_dir_entries(dir: &PathBuf) -> Vec<PathBuf> {
   vec![]
 }
 
-fn is_git_repo(dir: &PathBuf) -> bool {
+fn is_git_repo(dir: &Path) -> bool {
   if dir.is_dir() {
     let git_file_path = dir.join(".git");
 
@@ -82,9 +80,9 @@ fn is_git_repo(dir: &PathBuf) -> bool {
   false
 }
 
-fn is_hidden(entry: &PathBuf) -> bool {
+fn is_hidden(entry: &Path) -> bool {
   if let Some(last) = entry.components().last() {
-    return last.as_os_str().to_str().unwrap_or("").starts_with(".");
+    return last.as_os_str().to_str().unwrap_or("").starts_with('.');
   }
   false
 }

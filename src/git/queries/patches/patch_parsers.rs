@@ -144,7 +144,7 @@ mod tests {
 
   const P1: &str = "src2/parser-lib/input.ts";
   const P2: &str = "src2/renderer-process/redux-store/repo-state/commits/commits-reducer.test.ts";
-  const P3: &str = "\"src2/Parser Lib/input.ts\"";
+  // const P3: &str = "\"src2/Parser Lib/input.ts\"";
 
   #[test]
   fn test_p_rename_patch() {

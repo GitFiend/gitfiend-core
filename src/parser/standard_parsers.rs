@@ -1,7 +1,6 @@
 use crate::parser::Parser;
 use crate::{
-  and, conditional_char, map, optional_take_char_while, or, take_char_while, until_parser,
-  until_parser_keep, word,
+  and, conditional_char, map, optional_take_char_while, or, take_char_while, until_parser, word,
 };
 
 pub const ANY_WORD: Parser<String> = take_char_while!(|c: char| { c.is_alphanumeric() });
@@ -16,17 +15,16 @@ pub const WS_STR: Parser<&str> = map!(WS, |_: String| { "" });
 
 pub const LINE_END: Parser<&str> = or!(word!("\n"), word!("\r\n"));
 pub const UNTIL_LINE_END: Parser<String> = until_parser!(LINE_END);
-pub const UNTIL_LINE_END_KEEP: Parser<(String, &str)> =
-  and!(until_parser_keep!(LINE_END), LINE_END);
+// pub const UNTIL_LINE_END_KEEP: Parser<(String, &str)> =
+//   and!(until_parser_keep!(LINE_END), LINE_END);
 
 pub const UNTIL_NUL: Parser<String> =
   until_parser!(conditional_char!(|c: char| { c.is_control() }));
 
-pub const UNTIL_END: Parser<String> = optional_take_char_while!(|c: char| { c != char::from(0) });
+// pub const UNTIL_END: Parser<String> = optional_take_char_while!(|c: char| { c != char::from(0) });
 
 #[cfg(test)]
 mod tests {
-  
   use crate::parser::standard_parsers::{
     ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, UNTIL_NUL, WS,
   };
@@ -91,27 +89,24 @@ mod tests {
   fn test_ws_parser() {
     let result = parse_all(WS, " ");
 
-    assert_eq!(result.is_some(), true);
+    assert!(result.is_some());
 
     // Expect success even when nothing parsed.
-    assert_eq!(parse_all(WS, "").is_some(), true);
+    assert!(parse_all(WS, "").is_some());
 
-    assert_eq!(parse_all(WS, "\t").is_some(), true);
+    assert!(parse_all(WS, "\t").is_some());
 
-    assert_eq!(parse_all(WS, "\n\n").is_some(), true);
+    assert!(parse_all(WS, "\n\n").is_some());
 
-    assert_eq!(
-      run_parser(
-        WS,
-        "ab",
-        ParseOptions {
-          must_parse_all: true,
-          print_error: false
-        }
-      )
-      .is_none(),
-      true
-    );
+    assert!(run_parser(
+      WS,
+      "ab",
+      ParseOptions {
+        must_parse_all: true,
+        print_error: false
+      }
+    )
+    .is_none());
   }
 
   #[test]

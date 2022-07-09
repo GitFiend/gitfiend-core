@@ -59,15 +59,15 @@ pub fn _search_diffs(options: &SearchOptions) -> Option<Vec<(String, Vec<Patch>)
   parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
 }
 
-// None result means either no results or cancelled.
-pub fn search_diffs_with_id(
-  options: &SearchOptions,
-  search_id: u32,
-) -> Option<Vec<(String, Vec<Patch>)>> {
-  let result = search_diffs_inner(options, search_id)?;
-
-  parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
-}
+// // None result means either no results or cancelled.
+// pub fn search_diffs_with_id(
+//   options: &SearchOptions,
+//   search_id: u32,
+// ) -> Option<Vec<(String, Vec<Patch>)>> {
+//   let result = search_diffs_inner(options, search_id)?;
+//
+//   parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
+// }
 
 #[derive(Debug, Clone, Serialize, Eq, PartialEq, TS)]
 #[ts(export)]

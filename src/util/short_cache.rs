@@ -4,7 +4,8 @@ use std::time::{Duration, Instant};
 #[derive(Clone)]
 pub struct ShortCache<V> {
   map: AHashMap<String, V>,
-  name: String,
+  // Just for testing.
+  _name: String,
   duration: Duration,
   last_access: Instant,
 }
@@ -16,7 +17,7 @@ where
   pub fn new(name: String, duration: Duration) -> Self {
     Self {
       map: AHashMap::new(),
-      name,
+      _name: name,
       duration,
       last_access: Instant::now(),
     }

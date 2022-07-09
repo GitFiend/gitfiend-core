@@ -14,7 +14,7 @@ use crate::git::queries::scan_workspace::scan_workspace;
 use crate::git::queries::search::search::search_commits;
 use crate::git::queries::search::search_request::{poll_diff_search, start_diff_search};
 use crate::git::queries::wip::is_merge_in_progress;
-use crate::git::queries::wip::wip_diff::load_wip_hunks;
+use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::store::clear_cache;
 use crate::server::graph_instructions::api::graph_instructions;
@@ -113,6 +113,7 @@ pub fn start_async_server() {
       get_un_pushed_commits,
       clear_cache,
       load_wip_hunks,
+      load_wip_hunk_lines,
       git_version,
       scan_workspace,
       calc_ref_diffs,

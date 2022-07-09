@@ -134,9 +134,11 @@ pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<Str
   let mut child = Command::new("git")
     .args([
       "log",
-      "-S",
+      "-G",
       search_text,
       "--name-status",
+      "--branches",
+      "--remotes",
       "--pretty=format:%H,",
       &format!("-n{}", num_results),
       "-z",

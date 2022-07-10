@@ -30,3 +30,8 @@ strip = true
 # Set the default for dependencies.
 [profile.dev.package."*"]
 opt-level = 3
+
+[features]
+# cargo build --features internal-git
+internal-git = []
+

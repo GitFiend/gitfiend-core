@@ -3,7 +3,8 @@ use std::time::Duration;
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::hunks::hunks::load_hunks_args;
-use crate::git::{run_git, RunGitOptions};
+use crate::git::run_git;
+use crate::git::run_git::RunGitOptions;
 use crate::global;
 use crate::parser::parse_all;
 use crate::util::global::Global;
@@ -27,7 +28,7 @@ pub fn get_matching_hunk_lines(
     return Some(get_matching_lines_in_hunks(hunks, search_text));
   }
 
-  if let Some(out) = run_git(RunGitOptions {
+  if let Some(out) = run_git::run_git(RunGitOptions {
     repo_path,
     args: load_hunks_args(commit, patch),
   }) {

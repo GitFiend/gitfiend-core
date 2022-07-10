@@ -1,6 +1,7 @@
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
-use crate::git::{run_git, RunGitOptions};
+use crate::git::run_git;
+use crate::git::run_git::RunGitOptions;
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
 use crate::{and, or, rep_parser_sep, until_parser_keep};
@@ -181,7 +182,7 @@ fn load_unchanged_file(
   patch: &WipPatch,
   head_commit: &Commit,
 ) -> Option<String> {
-  run_git(RunGitOptions {
+  run_git::run_git(RunGitOptions {
     repo_path,
     args: ["show", &format!("{}:{}", head_commit.id, &patch.old_file)],
   })

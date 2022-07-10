@@ -14,8 +14,8 @@ use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
+use crate::git::run_git::{run_git, RunGitOptions};
 use crate::git::store::COMMITS;
-use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
 

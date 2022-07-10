@@ -2,13 +2,14 @@ use std::time::Instant;
 
 use crate::git::git_types::Commit;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS};
-use crate::git::{run_git, RunGitOptions};
+use crate::git::run_git;
+use crate::git::run_git::RunGitOptions;
 use crate::parser::parse_all;
 
 pub fn load_stashes(repo_path: &String) -> Option<Vec<Commit>> {
   let now = Instant::now();
 
-  let out = run_git(RunGitOptions {
+  let out = run_git::run_git(RunGitOptions {
     args: [
       "reflog",
       "show",

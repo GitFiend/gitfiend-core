@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use crate::git::git_types::GitConfig;
+use crate::git::run_git;
+use crate::git::run_git::RunGitOptions;
 use crate::git::store::CONFIG;
-use crate::git::{run_git, RunGitOptions};
 use crate::map;
 use crate::parser::standard_parsers::UNTIL_LINE_END;
 use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
@@ -39,7 +40,7 @@ impl GitConfig {
 
 const P_CONFIG: Parser<HashMap<String, String>> = map!(
   many!(and!(until_str!("="), UNTIL_LINE_END)),
-  |result: Vec<(String, String)>| { result.into_iter().collect() }
+  |result: Vec<(String, String)>| { result.into_iter().collect::<HashMap<String, String>>() }
 );
 
 const P_REMOTE_NAME: Parser<String> = map!(
@@ -54,7 +55,7 @@ const P_REMOTE_NAME: Parser<String> = map!(
 
 /// Use this version on focus of GitFiend only. Get it from the store otherwise.
 pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
-  let result_text = run_git(RunGitOptions {
+  let result_text = run_git::run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["config", "--list"],
   });
@@ -74,8 +75,8 @@ pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
         },
       );
 
-      if name.is_some() {
-        remotes.insert(name.unwrap(), value.clone());
+      if let Some(name) = name {
+        remotes.insert(name, value.clone());
       }
     }
   }
@@ -108,7 +109,7 @@ mod tests {
     });
 
     assert!(result.is_some());
-    assert!(result.unwrap().entries.len() > 0);
+    assert!(!result.unwrap().entries.is_empty());
   }
 
   #[test]

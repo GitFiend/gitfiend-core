@@ -1,7 +1,8 @@
 use crate::git::git_types::{WipPatch, WipPatchType};
 use crate::git::queries::patches::file_is_image;
 use crate::git::queries::wip::wip_patch_parsers::P_WIP_PATCHES;
-use crate::git::{run_git, RunGitOptions};
+use crate::git::run_git::run_git;
+use crate::git::run_git::RunGitOptions;
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
 
@@ -81,5 +82,6 @@ fn pick_type_from_patch(un_staged: &WipPatchType, staged: &WipPatchType) -> WipP
   if staged == &WipPatchType::Question {
     return WipPatchType::A;
   }
-  return staged.clone();
+
+  staged.clone()
 }

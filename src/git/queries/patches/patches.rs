@@ -7,8 +7,9 @@ use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
 use crate::git::queries::COMMIT_0_ID;
+use crate::git::run_git;
+use crate::git::run_git::RunGitOptions;
 use crate::git::store::COMMITS;
-use crate::git::{run_git, RunGitOptions};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
 
@@ -89,7 +90,7 @@ fn load_normal_patches(
     ids.insert(0, "show");
     ids.extend(["--name-status", "--pretty=format:%H,", "-z"]);
 
-    let out = run_git(RunGitOptions {
+    let out = run_git::run_git(RunGitOptions {
       repo_path: &options.repo_path,
       args: ids,
     })?;
@@ -104,7 +105,7 @@ fn load_normal_patches(
 fn load_all_patches_for_normal_commits(
   options: &ReqCommitsOptions,
 ) -> Option<HashMap<String, Vec<Patch>>> {
-  let out = run_git(RunGitOptions {
+  let out = run_git::run_git(RunGitOptions {
     args: [
       "log",
       "--remotes",
@@ -135,7 +136,7 @@ fn load_patches_for_commit(repo_path: &String, commit: &Commit) -> Option<(Strin
       is_merge: true,
       id,
       ..
-    } => run_git(RunGitOptions {
+    } => run_git::run_git(RunGitOptions {
       repo_path,
       args: [diff, name_status, z, format!("{}^1", id), id.to_string()],
     }),
@@ -144,11 +145,11 @@ fn load_patches_for_commit(repo_path: &String, commit: &Commit) -> Option<(Strin
       parent_ids,
       id,
       ..
-    } => run_git(RunGitOptions {
+    } => run_git::run_git(RunGitOptions {
       repo_path,
       args: [diff, format!("{}..{}", parent_ids[0], id), name_status, z],
     }),
-    Commit { id, .. } => run_git(RunGitOptions {
+    Commit { id, .. } => run_git::run_git(RunGitOptions {
       repo_path,
       args: [diff, format!("{}..{}", COMMIT_0_ID, id), name_status, z],
     }),

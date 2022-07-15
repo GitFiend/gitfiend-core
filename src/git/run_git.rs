@@ -20,6 +20,8 @@ where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
 {
+  println!("Using git path: `{}`", GIT_PATH.to_string_lossy());
+
   let result = Command::new(Path::new(GIT_PATH.as_path()))
     .args(options.args)
     .current_dir(options.repo_path)

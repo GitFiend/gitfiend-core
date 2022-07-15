@@ -1,6 +1,8 @@
+use crate::git::git_settings::GIT_PATH;
 use std::env;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader};
+use std::path::Path;
 use std::process::{Command, Output, Stdio};
 
 #[derive(Clone, Debug)]
@@ -18,7 +20,7 @@ where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
 {
-  let result = Command::new("git")
+  let result = Command::new(Path::new(GIT_PATH.as_path()))
     .args(options.args)
     .current_dir(options.repo_path)
     .output();
@@ -100,6 +102,7 @@ fn config_override_arg() -> Option<[String; 2]> {
 mod tests {
   use crate::git::run_git;
   use crate::git::run_git::RunGitOptions;
+  use std::path::Path;
 
   #[test]
   fn test_run_git() {
@@ -110,5 +113,12 @@ mod tests {
 
     assert!(text.is_some());
     assert!(!text.unwrap().is_empty());
+  }
+
+  #[test]
+  fn test_git_path() {
+    let p = Path::new("git");
+
+    assert_eq!(p.to_str().unwrap(), "git");
   }
 }

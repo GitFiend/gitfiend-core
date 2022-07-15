@@ -11,7 +11,7 @@ pub const INTERNAL_GIT: bool = true;
 pub const INTERNAL_GIT: bool = false;
 
 fn main() {
-  println!("INTERNAL_GIT: {}", INTERNAL_GIT);
+  // println!("INTERNAL_GIT: {}", INTERNAL_GIT);
 
   start_async_server();
 }

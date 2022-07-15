@@ -1,6 +1,7 @@
 use crate::server::git_request::ReqOptions;
 use run_git::RunGitOptions;
 
+mod git_settings;
 pub(crate) mod git_types;
 pub(crate) mod git_types_extra_impl;
 pub(crate) mod queries;

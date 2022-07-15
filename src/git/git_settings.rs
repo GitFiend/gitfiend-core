@@ -46,12 +46,18 @@ fn get_git_exec_location(git_dir: &Path) -> PathBuf {
   }
 }
 
-// #[cfg(test)]
-// mod tests {
-//   use std::env;
-//
-//   #[test]
-//   fn test_internal_git_path_dev() {
-//     println!("{:?}", env::current_dir());
-//   }
-// }
+pub fn set_git_env() {
+  #[cfg(feature = "internal-git")]
+  env::set_var("GIT_EXEC_PATH", get_git_exec_location(GIT_PATH.as_path()));
+
+  // We don't want any prompts in the terminal (e.g for password).
+  env::set_var("GIT_TERMINAL_PROMPT", "0");
+
+  if env::consts::OS == "macos" {
+    if let Ok(path) = env::var("PATH") {
+      if !path.contains("usr/local/bin") {
+        env::set_var("PATH", format!("{}:/usr/local/bin", path));
+      }
+    }
+  }
+}

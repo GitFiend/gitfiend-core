@@ -47,7 +47,7 @@ where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
 {
-  let mut cmd = Command::new("git")
+  let mut cmd = Command::new(GIT_PATH.as_path())
     .args(args_with_config(options.args))
     .current_dir(options.repo_path)
     .stdout(Stdio::piped())
@@ -87,6 +87,7 @@ where
   new_args
 }
 
+// Currently not using this as normal run_git should never trigger a credential error.
 fn config_override_arg() -> Option<[String; 2]> {
   match env::consts::OS {
     "windows" => Some([

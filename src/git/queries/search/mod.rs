@@ -1,6 +1,7 @@
 use std::process::{Output, Stdio};
 use std::{thread, time};
 
+use crate::git::git_settings::GIT_PATH;
 use async_process::Command;
 use futures::executor;
 use serde::{Deserialize, Serialize};
@@ -131,7 +132,7 @@ pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<Str
     ..
   } = options;
 
-  let mut child = Command::new("git")
+  let mut child = Command::new(GIT_PATH.as_path())
     .args([
       "log",
       "-G",

@@ -18,7 +18,6 @@ use crate::util::global::Global;
 mod commit_search;
 pub(crate) mod matching_hunk_lines;
 pub(crate) mod search;
-mod search_refs;
 pub(crate) mod search_request;
 
 #[derive(Debug, Clone, Deserialize, TS)]

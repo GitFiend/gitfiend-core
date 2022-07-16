@@ -11,7 +11,6 @@ use crate::git::store::COMMITS;
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Hash, TS)]
 #[ts(export)]
 pub enum SearchMatchType {
-  RefName,
   CommitId,
   CommitMessage,
   Email,
@@ -26,6 +25,7 @@ pub struct CoreSearchResult {
   matches: HashSet<SearchMatchType>,
   patches: Vec<Patch>,
   diffs: Vec<FileMatch>,
+  ref_ids: Vec<String>,
 }
 
 pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> {
@@ -55,22 +55,23 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
     if commit.message.to_lowercase().contains(&search_text) {
       matches.insert(SearchMatchType::CommitMessage);
     }
-    if commit
-      .refs
-      .iter()
-      .any(|r| r.full_name.to_lowercase().contains(&search_text))
-    {
-      matches.insert(SearchMatchType::RefName);
-    }
 
     let matching_patches = get_matching_patches(&search_text, &commit.id, &patches);
 
-    if !matches.is_empty() || !matching_patches.is_empty() {
+    let ref_ids: Vec<String> = commit
+      .refs
+      .iter()
+      .filter(|r| r.full_name.to_lowercase().contains(&search_text))
+      .map(|r| r.id.clone())
+      .collect();
+
+    if !matches.is_empty() || !matching_patches.is_empty() || !ref_ids.is_empty() {
       results.push(CoreSearchResult {
         commit_id: commit.id.clone(),
         matches,
         patches: matching_patches,
         diffs: Vec::new(),
+        ref_ids,
       });
     }
 

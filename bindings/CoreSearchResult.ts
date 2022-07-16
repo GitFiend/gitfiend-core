@@ -8,4 +8,5 @@ export interface CoreSearchResult {
   matches: Array<SearchMatchType>;
   patches: Array<Patch>;
   diffs: Array<FileMatch>;
+  refIds: Array<string>;
 }

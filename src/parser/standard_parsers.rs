@@ -28,7 +28,7 @@ mod tests {
   use crate::parser::standard_parsers::{
     ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, UNTIL_NUL, WS,
   };
-  use crate::parser::{_parse_part, parse_all, run_parser, ParseOptions};
+  use crate::parser::{parse_all, parse_part, run_parser, ParseOptions};
   use crate::take_char_while;
 
   #[test]
@@ -111,7 +111,7 @@ mod tests {
 
   #[test]
   fn test_until_line_end_parser() {
-    let result = _parse_part(UNTIL_LINE_END, "asdfsdf&^HF JC\tasd !@\nasdf");
+    let result = parse_part(UNTIL_LINE_END, "asdfsdf&^HF JC\tasd !@\nasdf");
 
     assert!(result.is_some());
     assert_eq!(result.unwrap(), "asdfsdf&^HF JC\tasd !@");

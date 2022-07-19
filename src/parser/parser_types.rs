@@ -297,7 +297,7 @@ macro_rules! rep_parser_sep {
 mod tests {
   use crate::parser::input::Input;
   use crate::parser::standard_parsers::WS;
-  use crate::parser::{parse_all, Parser, _parse_part, run_parser, ParseOptions};
+  use crate::parser::{parse_all, parse_part, run_parser, ParseOptions, Parser};
 
   pub const P_3: Parser<char> = character!('3');
   const ALL: Parser<(char, char, char)> = and!(P_3, P_3, P_3);
@@ -376,7 +376,7 @@ mod tests {
     assert!(result.is_some());
     assert_eq!(result.unwrap().len(), 6);
 
-    let result = _parse_part(parser, "x");
+    let result = parse_part(parser, "x");
 
     // Succeed with no results.
     assert!(result.is_some());

@@ -92,9 +92,10 @@ where
 // Currently not using this as normal run_git should never trigger a credential error.
 fn config_override_arg() -> Option<[String; 2]> {
   match env::consts::OS {
+    // TODO: Check version. Return "manager" on windows if less than 2.29.0
     "windows" => Some([
       String::from("-c"),
-      String::from("credential.helper=manager"),
+      String::from("credential.helper=manager-core"),
     ]),
     "linux" => Some([String::from("-c"), String::from("credential.helper=store")]),
     _ => None,

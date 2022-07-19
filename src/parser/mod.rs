@@ -18,7 +18,7 @@ pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
 }
 
 // Beware: Doesn't complain.
-pub fn _parse_part<T>(parser: Parser<T>, text: &str) -> Option<T> {
+pub fn parse_part<T>(parser: Parser<T>, text: &str) -> Option<T> {
   run_parser(
     parser,
     text,

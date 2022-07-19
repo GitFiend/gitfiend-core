@@ -4,11 +4,11 @@ mod tests {
 
   use crate::git::queries::commits::load_commits;
   use crate::git::queries::commits_parsers::{P_COMMIT_ROW, P_GROUP, P_ID_LIST};
-  use crate::parser::{_parse_part, parse_all};
+  use crate::parser::{parse_all, parse_part};
 
   #[test]
   fn test_p_group() {
-    let result = _parse_part(P_GROUP, "omg,");
+    let result = parse_part(P_GROUP, "omg,");
 
     assert!(result.is_some());
   }

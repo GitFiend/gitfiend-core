@@ -8,7 +8,9 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::git::git_types::{Commit, RefInfo};
-use crate::git::queries::commit_calcs::get_commit_ids_between_commits2;
+use crate::git::queries::commit_calcs::{
+  find_commit_ancestors, get_commit_ids_between_commits2, get_commit_map_cloned,
+};
 use crate::git::queries::commit_filters::{apply_commit_filters, CommitFilter};
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
 use crate::git::queries::patches::patches::load_patches;
@@ -296,4 +298,33 @@ pub fn find_sibling_ref<'a>(ri: &RefInfo, commits: &'a [Commit]) -> Option<&'a R
       .find(|r| &r.id == sibling_id);
   }
   None
+}
+
+#[derive(Debug, Deserialize, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CommitAncestorOpts {
+  pub repo_path: String,
+  pub commit_id: String,
+  pub ancestor_candidate_id: String,
+}
+
+pub fn commit_is_ancestor(options: &CommitAncestorOpts) -> bool {
+  let CommitAncestorOpts {
+    repo_path,
+    commit_id,
+    ancestor_candidate_id,
+  } = options;
+
+  if let Some(commits) = COMMITS.get_by_key(repo_path) {
+    let commits = get_commit_map_cloned(&commits);
+
+    if let Some(commit) = commits.get(commit_id) {
+      let ancestors = find_commit_ancestors(commit, &commits);
+
+      return ancestors.contains(ancestor_candidate_id.as_str());
+    }
+  }
+
+  false
 }

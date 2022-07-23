@@ -15,6 +15,8 @@ pub static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
 
 pub static CONFIG: Global<GitConfig> = global!(GitConfig::new());
 
+pub static ACTION_LOGS: Global<Vec<String>> = global!(Vec::new());
+
 pub fn clear_cache(_: &ReqOptions) {
   COMMITS.clear();
   clear_completed_searches();

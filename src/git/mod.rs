@@ -11,6 +11,7 @@ pub(crate) mod git_types;
 pub(crate) mod git_types_extra_impl;
 pub(crate) mod queries;
 pub(crate) mod run_git;
+pub(crate) mod run_git_action;
 pub(crate) mod store;
 
 // Expect this to return none if Git is not installed.

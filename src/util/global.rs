@@ -33,6 +33,23 @@ impl<T: Clone> Global<T> {
   }
 }
 
+impl<V> Global<Vec<V>>
+where
+  V: Clone,
+{
+  pub fn push(&self, value: V) {
+    if let Ok(mut data) = self.data.write() {
+      data.push(value);
+    }
+  }
+
+  pub fn clear(&self) {
+    if let Ok(mut data) = self.data.write() {
+      data.clear()
+    }
+  }
+}
+
 impl<K, V> Global<AHashMap<K, V>>
 where
   K: Hash + Clone + Eq,

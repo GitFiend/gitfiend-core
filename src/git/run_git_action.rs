@@ -1,6 +1,6 @@
 use crate::git::git_settings::GIT_PATH;
+use crate::git::git_version::GitVersion;
 use crate::git::store::ACTION_LOGS;
-use crate::git::GitVersion;
 use std::env;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Read};
@@ -18,8 +18,8 @@ where
 }
 
 pub struct ActionResult {
-  stdout: Vec<String>,
-  stderr: String,
+  pub stdout: Vec<String>,
+  pub stderr: String,
 }
 
 pub fn run_get_action<I, S>(options: RunGitActionOptions<I, S>) -> Option<ActionResult>
@@ -76,6 +76,8 @@ where
       new_args.push(arg.to_string());
     }
   }
+
+  println!("git {}", new_args.join(" "));
 
   new_args
 }

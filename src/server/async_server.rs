@@ -1,6 +1,7 @@
+use crate::git::actions::stash::stash_changes;
 use tiny_http::{Response, Server};
 
-use crate::git::git_version;
+use crate::git::git_version::git_version;
 use crate::git::queries::commits::{
   commit_ids_between_commits, commit_is_ancestor, get_un_pushed_commits, load_commits_and_stashes,
   load_head_commit, load_top_commit_for_branch,
@@ -101,6 +102,7 @@ pub fn start_async_server() {
     async_requests! {
       request,
 
+      // Queries
       load_commits_and_stashes,
       load_full_config,
       load_head_commit,
@@ -122,7 +124,10 @@ pub fn start_async_server() {
       poll_diff_search,
       load_patches_for_commit,
       search_commits,
-      commit_is_ancestor
+      commit_is_ancestor,
+
+      // Actions
+      stash_changes
     };
   }
 }

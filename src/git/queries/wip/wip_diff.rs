@@ -51,7 +51,8 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> Option<Vec<HunkLine>
   }
 
   if let Some(commit) = head_commit {
-    let mut old_text = load_unchanged_file(repo_path, patch, commit).unwrap_or(String::from(""));
+    let mut old_text =
+      load_unchanged_file(repo_path, patch, commit).unwrap_or_else(|| String::from(""));
 
     if *patch_type == WipPatchType::D {
       return Some(calc_hunk_line_from_text(&old_text, ""));

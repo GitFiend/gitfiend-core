@@ -25,7 +25,10 @@ opt-level = 2
 
 [profile.release]
 #debug = true
+opt-level = "z"
 strip = true
+lto = true
+codegen-units = 1
 
 # Set the default for dependencies.
 [profile.dev.package."*"]

@@ -42,6 +42,8 @@ where
 
   for line in stdout_lines.flatten() {
     ACTION_LOGS.push(line.clone());
+    println!("{}", line);
+
     lines.push(line);
   }
 
@@ -101,5 +103,13 @@ fn config_override_arg(git_version: GitVersion) -> Option<[String; 2]> {
     ]),
     "linux" => Some([String::from("-c"), String::from("credential.helper=store")]),
     _ => None,
+  }
+}
+
+pub fn print_action_result(out: Option<ActionResult>) {
+  if let Some(out) = out {
+    eprintln!("{:?} {:?}", out.stdout, out.stderr);
+  } else {
+    eprintln!("No result from git action");
   }
 }

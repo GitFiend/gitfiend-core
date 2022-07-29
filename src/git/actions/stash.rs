@@ -1,4 +1,4 @@
-use crate::git::run_git_action::{run_git_action, ActionResult, RunGitActionOptions};
+use crate::git::run_git_action::{run_git_action, RunGitActionOptions};
 use crate::git::store::GIT_VERSION;
 use crate::server::git_request::ReqOptions;
 

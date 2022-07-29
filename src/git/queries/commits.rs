@@ -230,7 +230,7 @@ fn commit_ids_between_commits_inner(
 // Use this as a fallback when calculation fails.
 pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
   if let Some(ids) = get_un_pushed_commits_computed(options) {
-    println!("Computed ids: {:?}", ids);
+    // println!("Computed ids: {:?}", ids);
     return ids;
   } else {
     #[cfg(debug_assertions)]

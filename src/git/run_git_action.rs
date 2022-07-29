@@ -22,7 +22,7 @@ pub struct ActionResult {
   pub stderr: String,
 }
 
-pub fn run_get_action<I, S>(options: RunGitActionOptions<I, S>) -> Option<ActionResult>
+pub fn run_git_action<I, S>(options: RunGitActionOptions<I, S>) -> Option<ActionResult>
 where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
@@ -36,7 +36,6 @@ where
 
   let mut lines: Vec<String> = Vec::new();
 
-  // {
   let stdout = cmd.stdout.as_mut()?;
   let stdout_reader = BufReader::new(stdout);
   let stdout_lines = stdout_reader.lines();
@@ -45,14 +44,18 @@ where
     ACTION_LOGS.push(line.clone());
     lines.push(line);
   }
-  // }
 
   cmd.wait().ok()?;
 
   let mut stderr = String::new();
-  cmd.stderr?.read_to_string(&mut stderr).ok()?;
 
-  ACTION_LOGS.push(stderr.clone());
+  if let Some(mut err) = cmd.stderr {
+    if let Ok(len) = err.read_to_string(&mut stderr) {
+      if len > 0 {
+        ACTION_LOGS.push(stderr.clone());
+      }
+    }
+  }
 
   Some(ActionResult {
     stdout: lines,

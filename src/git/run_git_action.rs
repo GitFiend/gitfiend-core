@@ -1,10 +1,13 @@
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::store::ACTION_LOGS;
+use crate::server::git_request::ReqOptions;
+use serde::Serialize;
 use std::env;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Read};
 use std::process::{Command, Stdio};
+use ts_rs::TS;
 
 #[derive(Clone, Debug)]
 pub struct RunGitActionOptions<'a, I, S>
@@ -20,6 +23,14 @@ where
 pub struct ActionResult {
   pub stdout: Vec<String>,
   pub stderr: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub enum ActionProgress {
+  Out(String),
+  Err(String),
 }
 
 pub fn run_git_action<I, S>(options: RunGitActionOptions<I, S>) -> Option<ActionResult>
@@ -41,7 +52,7 @@ where
   let stdout_lines = stdout_reader.lines();
 
   for line in stdout_lines.flatten() {
-    ACTION_LOGS.push(line.clone());
+    ACTION_LOGS.push(ActionProgress::Out(line.clone()));
     println!("{}", line);
 
     lines.push(line);
@@ -54,7 +65,7 @@ where
   if let Some(mut err) = cmd.stderr {
     if let Ok(len) = err.read_to_string(&mut stderr) {
       if len > 0 {
-        ACTION_LOGS.push(stderr.clone());
+        ACTION_LOGS.push(ActionProgress::Err(stderr.clone()));
       }
     }
   }
@@ -104,6 +115,10 @@ fn config_override_arg(git_version: GitVersion) -> Option<[String; 2]> {
     "linux" => Some([String::from("-c"), String::from("credential.helper=store")]),
     _ => None,
   }
+}
+
+pub fn get_action_logs(_: &ReqOptions) -> Vec<ActionProgress> {
+  ACTION_LOGS.get().unwrap_or_default()
 }
 
 pub fn print_action_result(out: Option<ActionResult>) {

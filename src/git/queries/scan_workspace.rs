@@ -21,7 +21,7 @@ pub fn scan_workspace(options: &ScanOptions) -> Vec<PathBuf> {
 
   let now = Instant::now();
 
-  scan_workspace_inner(dir, true, &mut repo_paths, 0);
+  scan_workspace_inner(dir, options.workspaces_enabled, &mut repo_paths, 0);
 
   println!("Took {}ms to scan", now.elapsed().as_millis(),);
 

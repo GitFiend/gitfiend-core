@@ -25,6 +25,14 @@ pub fn git_version(_: &ReqOptions) -> Option<GitVersion> {
   let version = GIT_VERSION.get()?;
 
   if version.major == 0 {
+    load_git_version();
+
+    let version = GIT_VERSION.get()?;
+
+    if version.major != 0 {
+      return Some(version);
+    }
+
     return None;
   }
 

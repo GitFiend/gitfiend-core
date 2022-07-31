@@ -121,6 +121,12 @@ pub fn get_action_logs(_: &ReqOptions) -> Vec<ActionProgress> {
   ACTION_LOGS.get().unwrap_or_default()
 }
 
+pub fn clear_action_logs(_: &ReqOptions) -> Option<()> {
+  ACTION_LOGS.clear();
+
+  Some(())
+}
+
 pub fn print_action_result(out: Option<ActionResult>) {
   if let Some(out) = out {
     eprintln!("{:?} {:?}", out.stdout, out.stderr);

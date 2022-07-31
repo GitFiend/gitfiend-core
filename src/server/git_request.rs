@@ -1,14 +1,14 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use ts_rs::TS;
 
-#[derive(Debug, Deserialize, Serialize, TS)]
+#[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReqOptions {
   pub repo_path: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReqCommitsOptions {

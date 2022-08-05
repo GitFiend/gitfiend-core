@@ -1,4 +1,5 @@
-use crate::git::run_git_action::{print_action_result, run_git_action, RunGitActionOptions};
+use crate::git::git_version::GitVersion;
+use crate::git::run_git_action::{run_git_action, ActionError, ActionOutput, RunGitActionOptions};
 use crate::git::store::GIT_VERSION;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -12,14 +13,16 @@ pub struct CloneOptions {
   pub url: String,
 }
 
-pub fn clone_repo(options: &CloneOptions) -> Option<()> {
+pub fn clone_repo(options: &CloneOptions) -> Result<ActionOutput, ActionError> {
   let out = run_git_action(RunGitActionOptions {
-    git_version: GIT_VERSION.get()?,
+    git_version: GIT_VERSION.get().unwrap_or_else(GitVersion::new),
     repo_path: &options.repo_path,
     args: ["clone", "--progress", &options.url],
   });
 
-  print_action_result(out);
+  // print_action_result(out);
 
-  Some(())
+  println!("{:?}", out);
+
+  out
 }

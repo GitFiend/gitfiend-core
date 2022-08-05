@@ -1,11 +1,12 @@
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
+use crate::git::run_git_action::ActionError::Credential;
 use crate::git::store::ACTION_LOGS;
 use crate::server::git_request::ReqOptions;
 use serde::Serialize;
 use std::env;
 use std::ffi::OsStr;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufRead, BufReader, Error, Read};
 use std::process::{Command, Stdio};
 use ts_rs::TS;
 
@@ -20,7 +21,10 @@ where
   pub git_version: GitVersion,
 }
 
-pub struct ActionResult {
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ActionOutput {
   pub stdout: Vec<String>,
   pub stderr: String,
 }
@@ -33,7 +37,65 @@ pub enum ActionProgress {
   Err(String),
 }
 
-pub fn run_git_action<I, S>(options: RunGitActionOptions<I, S>) -> Option<ActionResult>
+// pub fn run_git_action<I, S>(options: RunGitActionOptions<I, S>) -> Option<ActionOutput>
+// where
+//   I: IntoIterator<Item = S>,
+//   S: AsRef<OsStr>,
+// {
+//   let mut cmd = Command::new(GIT_PATH.as_path())
+//     .args(args_with_config(options.args, options.git_version))
+//     .current_dir(options.repo_path)
+//     .stdout(Stdio::piped())
+//     .spawn()
+//     .ok()?;
+//
+//   let mut lines: Vec<String> = Vec::new();
+//
+//   let stdout = cmd.stdout.as_mut()?;
+//   let stdout_reader = BufReader::new(stdout);
+//   let stdout_lines = stdout_reader.lines();
+//
+//   for line in stdout_lines.flatten() {
+//     ACTION_LOGS.push(ActionProgress::Out(line.clone()));
+//     println!("{}", line);
+//
+//     lines.push(line);
+//   }
+//
+//   cmd.wait().ok()?;
+//
+//   let mut stderr = String::new();
+//
+//   if let Some(mut err) = cmd.stderr {
+//     if let Ok(len) = err.read_to_string(&mut stderr) {
+//       if len > 0 {
+//         ACTION_LOGS.push(ActionProgress::Err(stderr.clone()));
+//       }
+//     }
+//   }
+//
+//   Some(ActionOutput {
+//     stdout: lines,
+//     stderr,
+//   })
+// }
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub enum ActionError {
+  Credential,
+  Git { stdout: String, stderr: String },
+  IO(String),
+}
+
+impl From<Error> for ActionError {
+  fn from(err: Error) -> Self {
+    ActionError::IO(err.to_string())
+  }
+}
+
+pub fn run_git_action<I, S>(options: RunGitActionOptions<I, S>) -> Result<ActionOutput, ActionError>
 where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
@@ -42,12 +104,15 @@ where
     .args(args_with_config(options.args, options.git_version))
     .current_dir(options.repo_path)
     .stdout(Stdio::piped())
-    .spawn()
-    .ok()?;
+    .spawn()?;
 
   let mut lines: Vec<String> = Vec::new();
 
-  let stdout = cmd.stdout.as_mut()?;
+  let stdout = cmd
+    .stdout
+    .as_mut()
+    .ok_or_else(|| ActionError::IO("Failed to get stdout as mut".to_string()))?;
+
   let stdout_reader = BufReader::new(stdout);
   let stdout_lines = stdout_reader.lines();
 
@@ -58,7 +123,7 @@ where
     lines.push(line);
   }
 
-  cmd.wait().ok()?;
+  let status = cmd.wait()?;
 
   let mut stderr = String::new();
 
@@ -70,7 +135,18 @@ where
     }
   }
 
-  Some(ActionResult {
+  if !status.success() {
+    return if has_credential_error(&stderr) {
+      Err(Credential)
+    } else {
+      Err(ActionError::Git {
+        stdout: lines.join(""),
+        stderr: stderr.clone(),
+      })
+    };
+  }
+
+  Ok(ActionOutput {
     stdout: lines,
     stderr,
   })
@@ -127,10 +203,7 @@ pub fn clear_action_logs(_: &ReqOptions) -> Option<()> {
   Some(())
 }
 
-pub fn print_action_result(out: Option<ActionResult>) {
-  if let Some(out) = out {
-    eprintln!("{:?} {:?}", out.stdout, out.stderr);
-  } else {
-    eprintln!("No result from git action");
-  }
+// TODO: This seems brittle.
+fn has_credential_error(stderr: &str) -> bool {
+  stderr.contains("could not read Username") || stderr.contains("Invalid username or password")
 }

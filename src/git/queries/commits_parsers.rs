@@ -36,6 +36,23 @@ const P_PARENTS: Parser<Vec<String>> = rep_parser_sep!(ANY_WORD, WS);
 
 const P_MESSAGE: Parser<String> = until_str!(END);
 
+type PCommitResult = (
+  /*  0 */ String,
+  /*  1 */ char,
+  /*  2 */ String,
+  /*  3 */ char,
+  /*  4 */ DateResult,
+  /*  5 */ char,
+  /*  6 */ String,
+  /*  7 */ char,
+  /*  8 */ Vec<String>,
+  /*  9 */ char,
+  /* 10 */ String,
+  /* 11 */ char,
+  /* 12 */ Vec<RefInfoPart>,
+  /* 13 */ String,
+);
+
 // Don't put a comma on the last one otherwise the macro will complain
 pub const P_COMMIT_ROW: Parser<Commit> = map!(
   and!(
@@ -54,22 +71,7 @@ pub const P_COMMIT_ROW: Parser<Commit> = map!(
     /* 12 */ P_OPTIONAL_REFS,
     /* 13 */ WS
   ),
-  |result: (
-    /*  0 */ String,
-    /*  1 */ char,
-    /*  2 */ String,
-    /*  3 */ char,
-    /*  4 */ DateResult,
-    /*  5 */ char,
-    /*  6 */ String,
-    /*  7 */ char,
-    /*  8 */ Vec<String>,
-    /*  9 */ char,
-    /* 10 */ String,
-    /* 11 */ char,
-    /* 12 */ Vec<RefInfoPart>,
-    /* 13 */ String
-  )| {
+  |result: PCommitResult| {
     let refs = result
       .12
       .into_iter()

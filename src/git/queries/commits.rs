@@ -3,7 +3,6 @@ use std::thread;
 use std::time::Instant;
 
 use ahash::AHashMap;
-use cached::proc_macro::cached;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -205,12 +204,11 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String
     }
   }
 
-  commit_ids_between_commits_inner(repo_path.clone(), commit_id1.clone(), commit_id2.clone())
+  commit_ids_between_commits_fallback(repo_path.clone(), commit_id1.clone(), commit_id2.clone())
 }
 
-// TODO: Do we still need this lib?
-#[cached(option = true, time = 1000)]
-fn commit_ids_between_commits_inner(
+// We use this when commit ids are outside our loaded range (not in COMMITS).
+fn commit_ids_between_commits_fallback(
   repo_path: String,
   commit_id1: String,
   commit_id2: String,

@@ -160,6 +160,6 @@ pub fn clear_action_logs(_: &ReqOptions) -> Option<()> {
 }
 
 // TODO: This seems brittle.
-fn has_credential_error(stderr: &str) -> bool {
+pub fn has_credential_error(stderr: &str) -> bool {
   stderr.contains("could not read Username") || stderr.contains("Invalid username or password")
 }

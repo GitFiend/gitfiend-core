@@ -1,4 +1,4 @@
-use cached::once_cell::sync::Lazy;
+use once_cell::sync::Lazy;
 use std::env;
 use std::path::{Path, PathBuf};
 

@@ -2,13 +2,13 @@ use std::hash::Hash;
 use std::sync::RwLock;
 
 use ahash::AHashMap;
-use cached::once_cell::sync::Lazy;
+use once_cell::sync::Lazy;
 
 #[macro_export]
 macro_rules! global {
   ($value: expr) => {
     Global {
-      data: cached::once_cell::sync::Lazy::new(|| std::sync::RwLock::new($value)),
+      data: once_cell::sync::Lazy::new(|| std::sync::RwLock::new($value)),
     }
   };
 }

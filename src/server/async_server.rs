@@ -1,5 +1,6 @@
 use crate::git::actions::clone::clone_repo;
 use crate::git::actions::credentials::set_credentials;
+use crate::git::actions::fake_action::run_fake_action;
 use crate::git::actions::fetch::fetch_all;
 use crate::git::actions::stash::stash_changes;
 use tiny_http::{Response, Server};
@@ -138,7 +139,8 @@ pub fn start_async_server() {
       // Actions
       stash_changes,
       fetch_all,
-      clone_repo
+      clone_repo,
+      run_fake_action
     };
   }
 }

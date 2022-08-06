@@ -37,49 +37,6 @@ pub enum ActionProgress {
   Err(String),
 }
 
-// pub fn run_git_action<I, S>(options: RunGitActionOptions<I, S>) -> Option<ActionOutput>
-// where
-//   I: IntoIterator<Item = S>,
-//   S: AsRef<OsStr>,
-// {
-//   let mut cmd = Command::new(GIT_PATH.as_path())
-//     .args(args_with_config(options.args, options.git_version))
-//     .current_dir(options.repo_path)
-//     .stdout(Stdio::piped())
-//     .spawn()
-//     .ok()?;
-//
-//   let mut lines: Vec<String> = Vec::new();
-//
-//   let stdout = cmd.stdout.as_mut()?;
-//   let stdout_reader = BufReader::new(stdout);
-//   let stdout_lines = stdout_reader.lines();
-//
-//   for line in stdout_lines.flatten() {
-//     ACTION_LOGS.push(ActionProgress::Out(line.clone()));
-//     println!("{}", line);
-//
-//     lines.push(line);
-//   }
-//
-//   cmd.wait().ok()?;
-//
-//   let mut stderr = String::new();
-//
-//   if let Some(mut err) = cmd.stderr {
-//     if let Ok(len) = err.read_to_string(&mut stderr) {
-//       if len > 0 {
-//         ACTION_LOGS.push(ActionProgress::Err(stderr.clone()));
-//       }
-//     }
-//   }
-//
-//   Some(ActionOutput {
-//     stdout: lines,
-//     stderr,
-//   })
-// }
-
 #[derive(Debug, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]

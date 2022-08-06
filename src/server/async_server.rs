@@ -1,4 +1,5 @@
 use crate::git::actions::clone::clone_repo;
+use crate::git::actions::credentials::set_credentials;
 use crate::git::actions::fetch::fetch_all;
 use crate::git::actions::stash::stash_changes;
 use tiny_http::{Response, Server};
@@ -116,7 +117,6 @@ pub fn start_async_server() {
       is_merge_in_progress,
       load_wip_patches,
       get_un_pushed_commits,
-      clear_cache,
       load_wip_hunks,
       load_wip_hunk_lines,
       git_version,
@@ -128,8 +128,12 @@ pub fn start_async_server() {
       load_patches_for_commit,
       search_commits,
       commit_is_ancestor,
+
+      // Core messages
+      clear_cache,
       get_action_logs,
       clear_action_logs,
+      set_credentials,
 
       // Actions
       stash_changes,

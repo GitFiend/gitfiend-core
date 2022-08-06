@@ -178,7 +178,6 @@ fn config_override_arg(git_version: GitVersion) -> Option<[String; 2]> {
   match env::consts::OS {
     "windows" => Some([
       String::from("-c"),
-      // String::from("credential.helper=manager-core"),
       format!(
         "credential.helper=manager{}",
         if git_version.major >= 2 && git_version.minor >= 29 {

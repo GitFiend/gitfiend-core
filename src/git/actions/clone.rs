@@ -1,10 +1,10 @@
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::{run_git_action, ActionError, ActionOutput, RunGitActionOptions};
 use crate::git::store::GIT_VERSION;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use ts_rs::TS;
 
-#[derive(Debug, Deserialize, Serialize, TS)]
+#[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct CloneOptions {

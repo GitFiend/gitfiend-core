@@ -89,4 +89,11 @@ mod tests {
 
     assert_eq!(MY_GLOBAL.get(), Some(vec![1, 2, 3]));
   }
+
+  static OPTIONAL: Global<Option<i32>> = global!(None);
+
+  #[test]
+  fn test_optional() {
+    assert_eq!(OPTIONAL.get(), Some(None));
+  }
 }

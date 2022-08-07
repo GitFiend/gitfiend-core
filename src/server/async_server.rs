@@ -21,7 +21,7 @@ use crate::git::queries::search::search_request::{poll_diff_search, start_diff_s
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
-use crate::git::run_git_action::{clear_action_logs, get_action_logs};
+use crate::git::run_git_action::{clear_action_logs, get_action_logs, poll_action};
 use crate::git::store::clear_cache;
 use crate::server::graph_instructions::api::graph_instructions;
 
@@ -135,6 +135,7 @@ pub fn start_async_server() {
       get_action_logs,
       clear_action_logs,
       set_credentials,
+      poll_action,
 
       // Actions
       stash_changes,

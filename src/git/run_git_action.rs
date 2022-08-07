@@ -3,7 +3,7 @@ use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::Credential;
 use crate::git::store::ACTION_LOGS;
 use crate::global;
-use crate::server::git_request::{ActionOptions, ReqOptions};
+use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 use ahash::AHashMap;
 use serde::Deserialize;
@@ -27,6 +27,15 @@ pub struct RunGitActionOptions<'a, const N: usize> {
 pub struct ActionOutput {
   pub stdout: Vec<String>,
   pub stderr: String,
+}
+
+impl ActionOutput {
+  fn new() -> Self {
+    Self {
+      stdout: vec![],
+      stderr: String::new(),
+    }
+  }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, TS)]
@@ -120,6 +129,51 @@ fn get_next_action_id() -> u32 {
   } else {
     0
   }
+}
+
+#[derive(Clone, Debug)]
+pub struct RunGitActionOptions2<'a, const N: usize> {
+  pub commands: [Vec<&'a str>; N],
+  pub repo_path: &'a str,
+  pub git_version: GitVersion,
+}
+
+pub fn run_git_action3<const N: usize>(options: RunGitActionOptions2<N>) -> u32 {
+  let id = get_next_action_id();
+
+  ACTIONS.insert(id, None);
+
+  let RunGitActionOptions2 {
+    commands,
+    git_version,
+    repo_path,
+  } = options;
+
+  let git_commands: Vec<Vec<String>> = commands
+    .iter()
+    .map(|c| c.iter().map(|a| a.to_string()).collect())
+    .collect();
+  let repo_path = repo_path.to_string();
+
+  thread::spawn(move || {
+    let mut output = ActionOutput::new();
+
+    for c in git_commands {
+      let result = run_git_action_inner(repo_path.clone(), git_version.clone(), c);
+
+      if let Ok(result) = result {
+        output.stdout.extend(result.stdout);
+        output.stderr.push_str(&result.stderr);
+      } else {
+        ACTIONS.insert(id, Some(result));
+        return;
+      }
+    }
+
+    ACTIONS.insert(id, Some(Ok(output)));
+  });
+
+  id
 }
 
 pub fn run_git_action2<const N: usize>(options: RunGitActionOptions<N>) -> u32 {

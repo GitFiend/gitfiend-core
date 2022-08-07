@@ -68,6 +68,13 @@ where
     None
   }
 
+  pub fn remove(&self, key: &K) -> Option<V> {
+    if let Ok(mut data) = self.data.write() {
+      return data.remove(key);
+    }
+    None
+  }
+
   pub fn clear(&self) {
     if let Ok(mut data) = self.data.write() {
       data.clear()

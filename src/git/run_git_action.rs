@@ -2,12 +2,15 @@ use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::Credential;
 use crate::git::store::ACTION_LOGS;
+use crate::global;
 use crate::server::git_request::ReqOptions;
+use crate::util::global::Global;
+use ahash::AHashMap;
 use serde::Serialize;
-use std::env;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Error, Read};
 use std::process::{Command, Stdio};
+use std::{env, thread};
 use ts_rs::TS;
 
 #[derive(Clone, Debug)]
@@ -37,7 +40,7 @@ pub enum ActionProgress {
   Err(String),
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub enum ActionError {
@@ -107,6 +110,43 @@ where
     stdout: lines,
     stderr,
   })
+}
+
+static ACTIONS: Global<AHashMap<u32, Option<Result<ActionOutput, ActionError>>>> =
+  global!(AHashMap::new());
+
+static ACTION_IDS: Global<u32> = global!(0);
+
+fn get_next_action_id() -> u32 {
+  if let Some(id) = ACTION_IDS.get() {
+    let new_id = id + 1;
+    ACTION_IDS.set(new_id);
+    new_id
+  } else {
+    0
+  }
+}
+
+pub fn run_git_action2<I, S>(options: RunGitActionOptions<I, S>) -> u32
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
+  let id = get_next_action_id();
+
+  ACTIONS.insert(id, None);
+
+  // let options2 = options.clone();
+  //
+  // thread::spawn(move || {
+  //   let mut cmd = Command::new(GIT_PATH.as_path())
+  //     .args(args_with_config(options.args, options.git_version))
+  //     .current_dir(options.repo_path)
+  //     .stdout(Stdio::piped())
+  //     .spawn();
+  // });
+
+  id
 }
 
 pub fn args_with_config<I, S>(args: I, git_version: GitVersion) -> Vec<String>

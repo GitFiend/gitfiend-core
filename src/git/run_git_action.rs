@@ -1,4 +1,13 @@
-use crate::git::actions::fake_action::script_path;
+use std::ffi::OsStr;
+use std::io::{BufRead, BufReader, Error, Read};
+use std::process::{Command, Stdio};
+use std::{env, thread};
+
+use ahash::AHashMap;
+use serde::Deserialize;
+use serde::Serialize;
+use ts_rs::TS;
+
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::Credential;
@@ -6,14 +15,6 @@ use crate::git::store::ACTION_LOGS;
 use crate::global;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
-use ahash::AHashMap;
-use serde::Deserialize;
-use serde::Serialize;
-use std::ffi::OsStr;
-use std::io::{BufRead, BufReader, Error, Read};
-use std::process::{Command, Stdio};
-use std::{env, thread};
-use ts_rs::TS;
 
 #[derive(Clone, Debug)]
 pub struct RunGitActionOptions<'a, const N: usize> {
@@ -62,60 +63,60 @@ impl From<Error> for ActionError {
   }
 }
 
-pub fn run_git_action<const N: usize>(
-  options: RunGitActionOptions<N>,
-) -> Result<ActionOutput, ActionError> {
-  let mut cmd = Command::new(GIT_PATH.as_path())
-    .args(args_with_config(options.args, options.git_version))
-    .current_dir(options.repo_path)
-    .stdout(Stdio::piped())
-    .spawn()?;
-
-  let mut lines: Vec<String> = Vec::new();
-
-  let stdout = cmd
-    .stdout
-    .as_mut()
-    .ok_or_else(|| ActionError::IO("Failed to get stdout as mut".to_string()))?;
-
-  let stdout_reader = BufReader::new(stdout);
-  let stdout_lines = stdout_reader.lines();
-
-  for line in stdout_lines.flatten() {
-    ACTION_LOGS.push(ActionProgress::Out(line.clone()));
-    println!("{}", line);
-
-    lines.push(line);
-  }
-
-  let status = cmd.wait()?;
-
-  let mut stderr = String::new();
-
-  if let Some(mut err) = cmd.stderr {
-    if let Ok(len) = err.read_to_string(&mut stderr) {
-      if len > 0 {
-        ACTION_LOGS.push(ActionProgress::Err(stderr.clone()));
-      }
-    }
-  }
-
-  if !status.success() {
-    return if has_credential_error(&stderr) {
-      Err(Credential)
-    } else {
-      Err(ActionError::Git {
-        stdout: lines.join(""),
-        stderr: stderr.clone(),
-      })
-    };
-  }
-
-  Ok(ActionOutput {
-    stdout: lines.join("\n"),
-    stderr,
-  })
-}
+// pub fn run_git_action<const N: usize>(
+//   options: RunGitActionOptions<N>,
+// ) -> Result<ActionOutput, ActionError> {
+//   let mut cmd = Command::new(GIT_PATH.as_path())
+//     .args(args_with_config(options.args, options.git_version))
+//     .current_dir(options.repo_path)
+//     .stdout(Stdio::piped())
+//     .spawn()?;
+//
+//   let mut lines: Vec<String> = Vec::new();
+//
+//   let stdout = cmd
+//     .stdout
+//     .as_mut()
+//     .ok_or_else(|| ActionError::IO("Failed to get stdout as mut".to_string()))?;
+//
+//   let stdout_reader = BufReader::new(stdout);
+//   let stdout_lines = stdout_reader.lines();
+//
+//   for line in stdout_lines.flatten() {
+//     ACTION_LOGS.push(ActionProgress::Out(line.clone()));
+//     println!("{}", line);
+//
+//     lines.push(line);
+//   }
+//
+//   let status = cmd.wait()?;
+//
+//   let mut stderr = String::new();
+//
+//   if let Some(mut err) = cmd.stderr {
+//     if let Ok(len) = err.read_to_string(&mut stderr) {
+//       if len > 0 {
+//         ACTION_LOGS.push(ActionProgress::Err(stderr.clone()));
+//       }
+//     }
+//   }
+//
+//   if !status.success() {
+//     return if has_credential_error(&stderr) {
+//       Err(Credential)
+//     } else {
+//       Err(ActionError::Git {
+//         stdout: lines.join(""),
+//         stderr: stderr.clone(),
+//       })
+//     };
+//   }
+//
+//   Ok(ActionOutput {
+//     stdout: lines.join("\n"),
+//     stderr,
+//   })
+// }
 
 static ACTIONS: Global<AHashMap<u32, Option<Result<ActionOutput, ActionError>>>> =
   global!(AHashMap::new());
@@ -177,28 +178,28 @@ pub fn run_git_action3<const N: usize>(options: RunGitActionOptions2<N>) -> u32 
   id
 }
 
-pub fn run_git_action2<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
-  let id = get_next_action_id();
-
-  ACTIONS.insert(id, None);
-
-  let RunGitActionOptions {
-    args,
-    git_version,
-    repo_path,
-  } = options;
-
-  let args: Vec<String> = args.iter().map(|a| a.to_string()).collect();
-  let repo_path = repo_path.to_string();
-
-  thread::spawn(move || {
-    let result = run_git_action_inner(repo_path, git_version, args);
-
-    ACTIONS.insert(id, Some(result));
-  });
-
-  id
-}
+// pub fn run_git_action2<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
+//   let id = get_next_action_id();
+//
+//   ACTIONS.insert(id, None);
+//
+//   let RunGitActionOptions {
+//     args,
+//     git_version,
+//     repo_path,
+//   } = options;
+//
+//   let args: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+//   let repo_path = repo_path.to_string();
+//
+//   thread::spawn(move || {
+//     let result = run_git_action_inner(repo_path, git_version, args);
+//
+//     ACTIONS.insert(id, Some(result));
+//   });
+//
+//   id
+// }
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -217,8 +218,6 @@ pub fn poll_action(options: &PollOptions) -> Option<Result<ActionOutput, ActionE
   result
 }
 
-const _USE_FAKE: bool = false;
-
 pub fn run_git_action_inner(
   repo_path: String,
   git_version: GitVersion,
@@ -226,19 +225,17 @@ pub fn run_git_action_inner(
 ) -> Result<ActionOutput, ActionError> {
   println!("GIT_TERMINAL_PROMPT: {:?}", env::var("GIT_TERMINAL_PROMPT"));
 
-  let mut cmd = if _USE_FAKE {
-    Command::new(script_path().expect("Fake action script path"))
-      .stdout(Stdio::piped())
-      .stderr(Stdio::piped())
-      .spawn()?
-  } else {
-    Command::new(GIT_PATH.as_path())
-      .args(args_with_config(args, git_version))
-      .current_dir(repo_path)
-      .stderr(Stdio::piped())
-      .stdout(Stdio::piped())
-      .spawn()?
-  };
+  // let mut cmd = Command::new(script_path().expect("Fake action script path"))
+  //   .stdout(Stdio::piped())
+  //   .stderr(Stdio::piped())
+  //   .spawn()?;
+
+  let mut cmd = Command::new(GIT_PATH.as_path())
+    .args(args_with_config(args, git_version))
+    .current_dir(repo_path)
+    .stderr(Stdio::piped())
+    .stdout(Stdio::piped())
+    .spawn()?;
 
   let mut stderr_lines: Vec<String> = Vec::new();
 

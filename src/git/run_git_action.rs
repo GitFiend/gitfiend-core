@@ -1,3 +1,4 @@
+use crate::git::actions::fake_action::script_path;
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::Credential;
@@ -25,14 +26,14 @@ pub struct RunGitActionOptions<'a, const N: usize> {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ActionOutput {
-  pub stdout: Vec<String>,
+  pub stdout: String,
   pub stderr: String,
 }
 
 impl ActionOutput {
   fn new() -> Self {
     Self {
-      stdout: vec![],
+      stdout: String::new(),
       stderr: String::new(),
     }
   }
@@ -111,7 +112,7 @@ pub fn run_git_action<const N: usize>(
   }
 
   Ok(ActionOutput {
-    stdout: lines,
+    stdout: lines.join("\n"),
     stderr,
   })
 }
@@ -162,7 +163,7 @@ pub fn run_git_action3<const N: usize>(options: RunGitActionOptions2<N>) -> u32 
       let result = run_git_action_inner(repo_path.clone(), git_version.clone(), c);
 
       if let Ok(result) = result {
-        output.stdout.extend(result.stdout);
+        output.stdout.push_str(&result.stdout);
         output.stderr.push_str(&result.stderr);
       } else {
         ACTIONS.insert(id, Some(result));
@@ -216,60 +217,72 @@ pub fn poll_action(options: &PollOptions) -> Option<Result<ActionOutput, ActionE
   result
 }
 
+const _USE_FAKE: bool = false;
+
 pub fn run_git_action_inner(
   repo_path: String,
   git_version: GitVersion,
   args: Vec<String>,
 ) -> Result<ActionOutput, ActionError> {
-  let mut cmd = Command::new(GIT_PATH.as_path())
-    .args(args_with_config(args, git_version))
-    .current_dir(repo_path)
-    .stdout(Stdio::piped())
-    .spawn()?;
+  println!("GIT_TERMINAL_PROMPT: {:?}", env::var("GIT_TERMINAL_PROMPT"));
 
-  let mut lines: Vec<String> = Vec::new();
+  let mut cmd = if _USE_FAKE {
+    Command::new(script_path().expect("Fake action script path"))
+      .stdout(Stdio::piped())
+      .stderr(Stdio::piped())
+      .spawn()?
+  } else {
+    Command::new(GIT_PATH.as_path())
+      .args(args_with_config(args, git_version))
+      .current_dir(repo_path)
+      .stderr(Stdio::piped())
+      .stdout(Stdio::piped())
+      .spawn()?
+  };
 
-  let stdout = cmd
-    .stdout
+  let mut stderr_lines: Vec<String> = Vec::new();
+
+  let stderr = cmd
+    .stderr
     .as_mut()
     .ok_or_else(|| ActionError::IO("Failed to get stdout as mut".to_string()))?;
 
-  let stdout_reader = BufReader::new(stdout);
+  let stdout_reader = BufReader::new(stderr);
   let stdout_lines = stdout_reader.lines();
 
   for line in stdout_lines.flatten() {
-    ACTION_LOGS.push(ActionProgress::Out(line.clone()));
-    println!("{}", line);
+    ACTION_LOGS.push(ActionProgress::Err(line.clone()));
+    println!("Line: {}", line);
 
-    lines.push(line);
+    stderr_lines.push(line);
   }
 
   let status = cmd.wait()?;
 
-  let mut stderr = String::new();
+  let mut stdout = String::new();
 
-  if let Some(mut err) = cmd.stderr {
-    if let Ok(len) = err.read_to_string(&mut stderr) {
+  if let Some(mut out) = cmd.stdout.take() {
+    if let Ok(len) = out.read_to_string(&mut stdout) {
       if len > 0 {
-        ACTION_LOGS.push(ActionProgress::Err(stderr.clone()));
+        ACTION_LOGS.push(ActionProgress::Out(stdout.clone()));
       }
     }
   }
 
   if !status.success() {
-    return if has_credential_error(&stderr) {
+    return if has_credential_error(&stderr_lines.join("\n")) {
       Err(Credential)
     } else {
       Err(ActionError::Git {
-        stdout: lines.join(""),
-        stderr: stderr.clone(),
+        stdout,
+        stderr: stderr_lines.join("\n"),
       })
     };
   }
 
   Ok(ActionOutput {
-    stdout: lines,
-    stderr,
+    stdout,
+    stderr: stderr_lines.join("\n"),
   })
 }
 
@@ -322,6 +335,14 @@ pub fn clear_action_logs(_: &ReqOptions) -> Option<()> {
 
   Some(())
 }
+
+/*
+git fetch --all --prune
+fatal: could not read Username for 'https://github.com': terminal prompts disabled
+error: Could not fetch origin
+
+(These are printed to stderr and failure status code returned)
+ */
 
 // TODO: This seems brittle.
 pub fn has_credential_error(stderr: &str) -> bool {

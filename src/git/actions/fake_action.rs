@@ -8,7 +8,7 @@ use crate::git::run_git_action::{has_credential_error, ActionError, ActionOutput
 use crate::git::store::ACTION_LOGS;
 use crate::server::git_request::ActionOptions;
 
-fn script_path() -> Option<PathBuf> {
+pub fn script_path() -> Option<PathBuf> {
   Some(
     env::current_dir()
       .ok()?
@@ -65,7 +65,7 @@ pub fn run_fake_action(_: &ActionOptions) -> Result<ActionOutput, ActionError> {
   }
 
   Ok(ActionOutput {
-    stdout: lines,
+    stdout: lines.join("\n"),
     stderr,
   })
 }

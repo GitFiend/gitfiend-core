@@ -30,7 +30,7 @@ where
     // TODO: Is stderr sometimes valid and useful git output?
     if !stdout.is_empty() {
       return Some(String::from_utf8_lossy(stdout).to_string());
-    } else {
+    } else if !stderr.is_empty() {
       println!("StdErr: {:?}", String::from_utf8_lossy(stderr).to_string());
     }
   }

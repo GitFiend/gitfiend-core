@@ -1,4 +1,5 @@
 use crate::git::actions::clone::clone_repo;
+use crate::git::actions::command::command;
 use crate::git::actions::credentials::set_credentials;
 use crate::git::actions::fetch::fetch_all;
 use crate::git::actions::stash::stash_changes;
@@ -139,7 +140,8 @@ pub fn start_async_server() {
       // Actions
       stash_changes,
       fetch_all,
-      clone_repo
+      clone_repo,
+      command
     };
   }
 }

@@ -13,6 +13,7 @@ pub struct ReqOptions {
 #[ts(export)]
 pub struct ActionOptions {
   pub repo_path: String,
+  pub args: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, TS)]

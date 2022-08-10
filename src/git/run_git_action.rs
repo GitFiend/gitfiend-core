@@ -16,13 +16,6 @@ use crate::global;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 
-#[derive(Clone, Debug)]
-pub struct RunGitActionOptions<'a, const N: usize> {
-  pub args: [&'a str; N],
-  pub repo_path: &'a str,
-  pub git_version: GitVersion,
-}
-
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
@@ -134,18 +127,18 @@ fn get_next_action_id() -> u32 {
 }
 
 #[derive(Clone, Debug)]
-pub struct RunGitActionOptions2<'a, const N: usize> {
+pub struct RunGitActionOptions<'a, const N: usize> {
   pub commands: [Vec<&'a str>; N],
   pub repo_path: &'a str,
   pub git_version: GitVersion,
 }
 
-pub fn run_git_action3<const N: usize>(options: RunGitActionOptions2<N>) -> u32 {
+pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
   let id = get_next_action_id();
 
   ACTIONS.insert(id, None);
 
-  let RunGitActionOptions2 {
+  let RunGitActionOptions {
     commands,
     git_version,
     repo_path,
@@ -177,29 +170,6 @@ pub fn run_git_action3<const N: usize>(options: RunGitActionOptions2<N>) -> u32 
 
   id
 }
-
-// pub fn run_git_action2<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
-//   let id = get_next_action_id();
-//
-//   ACTIONS.insert(id, None);
-//
-//   let RunGitActionOptions {
-//     args,
-//     git_version,
-//     repo_path,
-//   } = options;
-//
-//   let args: Vec<String> = args.iter().map(|a| a.to_string()).collect();
-//   let repo_path = repo_path.to_string();
-//
-//   thread::spawn(move || {
-//     let result = run_git_action_inner(repo_path, git_version, args);
-//
-//     ACTIONS.insert(id, Some(result));
-//   });
-//
-//   id
-// }
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]

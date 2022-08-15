@@ -22,9 +22,14 @@ pub struct StashStagedOptions {
 }
 
 pub fn stash_staged(options: &StashStagedOptions) -> u32 {
+  let StashStagedOptions {
+    repo_path,
+    head_commit_id,
+  } = options;
+
   run_git_action(RunGitActionOptions {
     git_version: GIT_VERSION.get().unwrap_or_else(GitVersion::new),
-    repo_path: &options.repo_path,
+    repo_path,
     commands: [
       vec![
         "commit",
@@ -32,10 +37,10 @@ pub fn stash_staged(options: &StashStagedOptions) -> u32 {
         "TEMP_COMMIT: If you are seeing this commit there has been an error while stashing.",
       ],
       vec!["add", "--all"],
-      vec!["stash"],
-      vec!["reset", "--soft"],
+      vec!["stash", "push"],
+      vec!["reset", "--soft", head_commit_id],
       vec!["add", "--all"],
-      vec!["stash"],
+      vec!["stash", "push"],
       vec!["stash", "pop", "stash@{1}"],
       vec!["reset"],
     ],

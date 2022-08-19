@@ -56,61 +56,6 @@ impl From<Error> for ActionError {
   }
 }
 
-// pub fn run_git_action<const N: usize>(
-//   options: RunGitActionOptions<N>,
-// ) -> Result<ActionOutput, ActionError> {
-//   let mut cmd = Command::new(GIT_PATH.as_path())
-//     .args(args_with_config(options.args, options.git_version))
-//     .current_dir(options.repo_path)
-//     .stdout(Stdio::piped())
-//     .spawn()?;
-//
-//   let mut lines: Vec<String> = Vec::new();
-//
-//   let stdout = cmd
-//     .stdout
-//     .as_mut()
-//     .ok_or_else(|| ActionError::IO("Failed to get stdout as mut".to_string()))?;
-//
-//   let stdout_reader = BufReader::new(stdout);
-//   let stdout_lines = stdout_reader.lines();
-//
-//   for line in stdout_lines.flatten() {
-//     ACTION_LOGS.push(ActionProgress::Out(line.clone()));
-//     println!("{}", line);
-//
-//     lines.push(line);
-//   }
-//
-//   let status = cmd.wait()?;
-//
-//   let mut stderr = String::new();
-//
-//   if let Some(mut err) = cmd.stderr {
-//     if let Ok(len) = err.read_to_string(&mut stderr) {
-//       if len > 0 {
-//         ACTION_LOGS.push(ActionProgress::Err(stderr.clone()));
-//       }
-//     }
-//   }
-//
-//   if !status.success() {
-//     return if has_credential_error(&stderr) {
-//       Err(Credential)
-//     } else {
-//       Err(ActionError::Git {
-//         stdout: lines.join(""),
-//         stderr: stderr.clone(),
-//       })
-//     };
-//   }
-//
-//   Ok(ActionOutput {
-//     stdout: lines.join("\n"),
-//     stderr,
-//   })
-// }
-
 static ACTIONS: Global<AHashMap<u32, Option<Result<ActionOutput, ActionError>>>> =
   global!(AHashMap::new());
 

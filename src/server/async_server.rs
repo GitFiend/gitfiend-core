@@ -1,10 +1,10 @@
+use tiny_http::{Response, Server};
+
 use crate::git::actions::clone::clone_repo;
 use crate::git::actions::command::command;
 use crate::git::actions::credentials::set_credentials;
 use crate::git::actions::fetch::fetch_all;
 use crate::git::actions::stash::{stash_changes, stash_staged};
-use tiny_http::{Response, Server};
-
 use crate::git::git_version::git_version;
 use crate::git::queries::commits::{
   commit_ids_between_commits, commit_is_ancestor, get_un_pushed_commits, load_commits_and_stashes,
@@ -15,6 +15,7 @@ use crate::git::queries::hunks::hunks::load_hunks;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::patches::patches_for_commit::load_patches_for_commit;
 use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
+use crate::git::queries::run::run;
 use crate::git::queries::scan_workspace::scan_workspace;
 use crate::git::queries::search::search::search_commits;
 use crate::git::queries::search::search_request::{poll_diff_search, start_diff_search};
@@ -23,7 +24,6 @@ use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::run_git_action::{clear_action_logs, get_action_logs, poll_action};
 use crate::git::store::clear_cache;
-use crate::server::graph_instructions::api::graph_instructions;
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -108,6 +108,7 @@ pub fn start_async_server() {
       request,
 
       // Queries
+      run,
       load_commits_and_stashes,
       load_full_config,
       load_head_commit,
@@ -123,7 +124,7 @@ pub fn start_async_server() {
       git_version,
       scan_workspace,
       calc_ref_diffs,
-      graph_instructions,
+      // graph_instructions,
       start_diff_search,
       poll_diff_search,
       load_patches_for_commit,
@@ -138,10 +139,10 @@ pub fn start_async_server() {
       poll_action,
 
       // Actions
+      command,
       stash_changes,
       fetch_all,
       clone_repo,
-      command,
       stash_staged
     };
   }

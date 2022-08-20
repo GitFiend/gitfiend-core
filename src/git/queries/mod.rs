@@ -11,6 +11,7 @@ pub(crate) mod config;
 pub(crate) mod hunks;
 pub(crate) mod patches;
 pub(crate) mod refs;
+pub(crate) mod run;
 pub(crate) mod scan_workspace;
 pub(crate) mod search;
 pub(crate) mod stashes;

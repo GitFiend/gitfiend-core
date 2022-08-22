@@ -145,7 +145,10 @@ fn set_sibling_and_remotes_for_commits(commits: Vec<Commit>, refs: &[RefInfo]) -
         .refs
         .into_iter()
         .map(|mut r| {
-          r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
+          if r.remote_name.is_none() {
+            r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
+          }
+
           r.sibling_id = get_sibling_id_for_ref(&r, refs);
           r
         })

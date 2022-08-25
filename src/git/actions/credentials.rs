@@ -1,6 +1,7 @@
 use std::env;
 use std::path::PathBuf;
 
+use crate::dprintln;
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -20,7 +21,7 @@ pub fn set_credentials(credentials: &Credentials) -> Option<()> {
   env::set_var("GITFIEND_PASSWORD", &credentials.password);
 
   if let Some(path) = get_ask_pass_path() {
-    println!("Setting GIT_ASKPASS to {:?}", path.to_str());
+    dprintln!("Setting GIT_ASKPASS to {:?}", path.to_str());
 
     env::set_var("GIT_ASKPASS", path.to_str()?);
   }

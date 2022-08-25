@@ -1,3 +1,4 @@
+use crate::dprintln;
 use std::time::Instant;
 
 use crate::git::git_types::Commit;
@@ -22,9 +23,9 @@ pub fn load_stashes(repo_path: &String) -> Option<Vec<Commit>> {
     repo_path,
   });
 
-  println!(
+  dprintln!(
     "Took {}ms to request stashes from Git",
-    now.elapsed().as_millis(),
+    now.elapsed().as_millis()
   );
 
   let mut commits = parse_all(P_COMMITS, out?.as_str())?;
@@ -45,10 +46,10 @@ pub fn load_stashes(repo_path: &String) -> Option<Vec<Commit>> {
   Some(commits)
 }
 
-fn tidy_commit_message(message: &String) -> String {
+fn tidy_commit_message(message: &str) -> String {
   message
-    .split(":")
-    .nth(0)
+    .split(':')
+    .next()
     .unwrap_or("Stash")
     .replace("WIP", "Stash")
 }

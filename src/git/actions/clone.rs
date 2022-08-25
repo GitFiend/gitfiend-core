@@ -1,3 +1,4 @@
+use crate::dprintln;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::{run_git_action, RunGitActionOptions};
 use crate::git::store::GIT_VERSION;
@@ -22,7 +23,7 @@ pub fn clone_repo(options: &CloneOptions) -> u32 {
 
   // print_action_result(out);
 
-  println!("{:?}", out);
+  dprintln!("{:?}", out);
 
   out
 }

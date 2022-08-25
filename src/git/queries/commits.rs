@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::thread;
 use std::time::Instant;
 
+use crate::dprintln;
 use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -43,9 +44,9 @@ pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<Commit> 
     repo_path: &options.repo_path,
   });
 
-  println!(
+  dprintln!(
     "Took {}ms to request top commit from Git",
-    now.elapsed().as_millis(),
+    now.elapsed().as_millis()
   );
 
   parse_all(P_COMMIT_ROW, out?.as_str())
@@ -102,9 +103,9 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
   let stashes = stashes_thread.join().ok()?;
   let mut commits = commits_thread.join().ok()??;
 
-  println!(
+  dprintln!(
     "Took {}ms to request stashes and commits from Git",
-    now.elapsed().as_millis(),
+    now.elapsed().as_millis()
   );
 
   if let Some(mut stashes) = stashes {
@@ -127,9 +128,9 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
 
   let commits = finish_initialising_refs_on_commits(commits);
 
-  println!(
+  dprintln!(
     "Took {}ms to get refs from commits *****",
-    now.elapsed().as_millis(),
+    now.elapsed().as_millis()
   );
 
   COMMITS.insert(repo_path.clone(), commits.clone());
@@ -160,7 +161,7 @@ pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
     repo_path,
   })?;
 
-  println!(
+  dprintln!(
     "Took {}ms to request {} commits from Git",
     now.elapsed().as_millis(),
     num
@@ -169,7 +170,7 @@ pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
   let now = Instant::now();
   let result = parse_all(P_COMMITS, &out);
 
-  println!(
+  dprintln!(
     "Took {}ms to parse {} commits. Length {}",
     now.elapsed().as_millis(),
     num,
@@ -220,7 +221,7 @@ fn commit_ids_between_commits_fallback(
     repo_path: &repo_path,
   })?;
 
-  println!("Took {}ms to request ids", now.elapsed().as_millis());
+  dprintln!("Took {}ms to request ids", now.elapsed().as_millis());
 
   parse_all(P_ID_LIST, &out)
 }
@@ -231,8 +232,7 @@ pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
     // println!("Computed ids: {:?}", ids);
     return ids;
   } else {
-    #[cfg(debug_assertions)]
-    println!("get_un_pushed_commits: Refs not found in commits, fall back to git request.")
+    dprintln!("get_un_pushed_commits: Refs not found in commits, fall back to git request.");
   }
 
   if let Some(out) = run_git(RunGitOptions {
@@ -269,9 +269,9 @@ fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
 
   let result = get_commit_ids_between_commits2(&head_ref.commit_id, &remote.commit_id, &commit_map);
 
-  println!(
+  dprintln!(
     "get_un_pushed_commits_computed Took {}ms",
-    now.elapsed().as_millis(),
+    now.elapsed().as_millis()
   );
 
   result

@@ -7,6 +7,7 @@ use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+use crate::dprintln;
 use directories::ProjectDirs;
 
 use crate::git::git_types::Patch;
@@ -22,9 +23,9 @@ pub fn write_patches_cache(repo_path: &str, patches: &HashMap<String, Vec<Patch>
 
   PATCHES.set((repo_path.to_string(), patches.clone()));
 
-  println!(
+  dprintln!(
     "Took {}ms to put patches in temp cache (write).",
-    now.elapsed().as_millis(),
+    now.elapsed().as_millis()
   );
 
   write_patches_to_file(full_path, patches).ok()
@@ -50,9 +51,9 @@ pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>
     let now = Instant::now();
 
     PATCHES.set((repo_path.to_string(), patches.clone()));
-    println!(
+    dprintln!(
       "Took {}ms to put patches in temp cache (load).",
-      now.elapsed().as_millis(),
+      now.elapsed().as_millis()
     );
 
     return Some(patches);
@@ -99,7 +100,7 @@ fn read_patches_from_file<P: AsRef<Path>>(
 
   let patches = serde_json::from_str(&text)?;
 
-  println!(
+  dprintln!(
     "Took {}ms to read and parse patches. Length {}.",
     now.elapsed().as_millis(),
     text.len()
@@ -118,7 +119,7 @@ fn write_patches_to_file<P: AsRef<Path>>(
 
   file.write_all(str.as_ref())?;
 
-  println!("Wrote patches to '{:?}'", path.as_ref().to_str());
+  dprintln!("Wrote patches to '{:?}'", path.as_ref().to_str());
 
   Ok(())
 }

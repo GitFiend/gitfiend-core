@@ -1,3 +1,4 @@
+use crate::dprintln;
 use std::ffi::OsStr;
 use std::path::Path;
 use std::process::{Command, Output};
@@ -31,7 +32,7 @@ where
     if !stdout.is_empty() {
       return Some(String::from_utf8_lossy(stdout).to_string());
     } else if !stderr.is_empty() {
-      println!("StdErr: {:?}", String::from_utf8_lossy(stderr).to_string());
+      dprintln!("StdErr: {:?}", String::from_utf8_lossy(stderr).to_string());
     }
   }
 

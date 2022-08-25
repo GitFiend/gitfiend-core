@@ -11,9 +11,9 @@ use crate::git::git_types::{HunkLine, Patch};
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
 use crate::git::store::COMMITS;
-use crate::global;
 use crate::parser::parse_all;
 use crate::util::global::Global;
+use crate::{dprintln, global};
 
 mod commit_search;
 pub(crate) mod matching_hunk_lines;
@@ -44,7 +44,7 @@ pub fn get_next_search_id() -> u32 {
 
 fn search_cancelled(search_id: u32) -> bool {
   if let Some(id) = CURRENT_SEARCH.get() {
-    println!("current: {id}, this: {search_id}");
+    dprintln!("current: {id}, this: {search_id}");
     search_id != id
   } else {
     false
@@ -119,9 +119,11 @@ pub fn search_diffs_with_id2(
 
 // TODO: Rename this.
 pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<String> {
-  println!(
+  dprintln!(
     "Search for text: {}, id: {}, num: {}",
-    options.search_text, search_id, options.num_results
+    options.search_text,
+    search_id,
+    options.num_results
   );
 
   let SearchOptions {
@@ -152,10 +154,10 @@ pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<Str
     thread::sleep(time::Duration::from_millis(50));
 
     if search_cancelled(search_id) {
-      println!("Killing search {search_id} \"{search_text}\"");
+      dprintln!("Killing search {search_id} \"{search_text}\"");
 
       if let Err(e) = child.kill() {
-        eprintln!("{}", e);
+        dprintln!("{}", e);
       }
       break;
     }
@@ -168,7 +170,7 @@ pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<Str
           if !stdout.is_empty() {
             return Some(String::from_utf8_lossy(stdout).to_string());
           } else {
-            println!(
+            dprintln!(
               "Git Command stderr: {:?}",
               String::from_utf8_lossy(stderr).to_string()
             );

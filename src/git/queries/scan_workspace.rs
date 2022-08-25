@@ -1,3 +1,4 @@
+use crate::dprintln;
 use serde::Deserialize;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
@@ -23,7 +24,7 @@ pub fn scan_workspace(options: &ScanOptions) -> Vec<PathBuf> {
 
   scan_workspace_inner(dir, options.workspaces_enabled, &mut repo_paths, 0);
 
-  println!("Took {}ms to scan", now.elapsed().as_millis(),);
+  dprintln!("Took {}ms to scan", now.elapsed().as_millis());
 
   repo_paths
 }

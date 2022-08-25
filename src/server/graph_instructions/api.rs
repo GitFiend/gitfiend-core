@@ -1,5 +1,6 @@
 use std::time::Instant;
 
+use crate::dprintln;
 use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -48,9 +49,9 @@ pub fn graph_instructions(options: &GraphInstructionOpts) -> Option<Instructions
 
   i.generate(&ids, &commits);
 
-  println!(
+  dprintln!(
     "Took {}ms for graph_instructions",
-    now.elapsed().as_millis(),
+    now.elapsed().as_millis()
   );
 
   Some(Instructions {

@@ -12,9 +12,9 @@ use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::Credential;
 use crate::git::store::ACTION_LOGS;
-use crate::global;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
+use crate::{dprintln, global};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -138,7 +138,7 @@ pub fn run_git_action_inner(
   git_version: GitVersion,
   args: Vec<String>,
 ) -> Result<ActionOutput, ActionError> {
-  println!("GIT_TERMINAL_PROMPT: {:?}", env::var("GIT_TERMINAL_PROMPT"));
+  dprintln!("GIT_TERMINAL_PROMPT: {:?}", env::var("GIT_TERMINAL_PROMPT"));
 
   // let mut cmd = Command::new(script_path().expect("Fake action script path"))
   //   .stdout(Stdio::piped())
@@ -164,7 +164,7 @@ pub fn run_git_action_inner(
 
   for line in stdout_lines.flatten() {
     ACTION_LOGS.push(ActionProgress::Err(line.clone()));
-    println!("Line: {}", line);
+    dprintln!("Line: {}", line);
 
     stderr_lines.push(line);
   }
@@ -215,7 +215,7 @@ where
     }
   }
 
-  println!("git {}", new_args.join(" "));
+  dprintln!("git {}", new_args.join(" "));
 
   new_args
 }

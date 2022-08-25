@@ -1,5 +1,6 @@
 use std::time::Instant;
 
+use crate::dprintln;
 use ahash::{AHashMap, AHashSet};
 use serde::Deserialize;
 use ts_rs::TS;
@@ -62,7 +63,7 @@ pub fn apply_commit_filters(
     .map(|c| c.id.clone())
     .collect();
 
-  println!("Took {}ms to filter commits", now.elapsed().as_millis());
+  dprintln!("Took {}ms to filter commits", now.elapsed().as_millis());
 
   let mut remaining_commits: Vec<Commit> = Vec::new();
   let mut skipped = 0;

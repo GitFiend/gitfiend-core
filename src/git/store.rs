@@ -2,7 +2,7 @@ use crate::git::git_types::{Commit, GitConfig, Patch};
 use crate::git::git_version::GitVersion;
 use crate::git::queries::search::search_request::clear_completed_searches;
 use crate::git::run_git_action::ActionProgress;
-use crate::global;
+use crate::{dprintln, global};
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 use ahash::AHashMap;
@@ -25,5 +25,5 @@ pub fn clear_cache(_: &ReqOptions) {
   COMMITS.clear();
   clear_completed_searches();
 
-  println!("Cleared cache.");
+  dprintln!("Cleared cache.");
 }

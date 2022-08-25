@@ -1,3 +1,4 @@
+use crate::dprintln;
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -62,13 +63,13 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
     } else {
       // TODO: Some commits have no patches. We should probably save it anyway?
       // Maybe not if we aren't sure our method is correct.
-      println!("Failed to get patches for commit {}", c.id);
+      dprintln!("Failed to get patches for commit {}", c.id);
     }
   }
 
   write_patches_cache(repo_path, &new_patches);
 
-  println!("Took {}ms for load_patches", now.elapsed().as_millis(),);
+  dprintln!("Took {}ms for load_patches", now.elapsed().as_millis());
 
   Some(new_patches)
 }

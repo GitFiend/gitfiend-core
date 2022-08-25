@@ -4,7 +4,7 @@ use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
-use crate::{and, or, rep_parser_sep, until_parser_keep};
+use crate::{and, dprintln, or, rep_parser_sep, until_parser_keep};
 use serde::Deserialize;
 use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;
@@ -81,7 +81,7 @@ fn load_file(repo_path: &String, file_path: &String) -> Option<FileInfo> {
       return Some(FileInfo { text, line_ending });
     }
     Err(e) => {
-      println!("{}", e)
+      dprintln!("{}", e);
     }
   }
 

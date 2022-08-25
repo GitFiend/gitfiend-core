@@ -1,3 +1,4 @@
+use crate::dprintln;
 use tiny_http::{Response, Server};
 
 use crate::git::actions::clone::clone_repo;
@@ -49,7 +50,7 @@ macro_rules! parse_json {
     match serde_json::from_str(&content) {
       Ok(options) => options,
       Err(e) => {
-        println!("{}", e);
+        dprintln!("{}", e);
         None
       }
     }
@@ -64,7 +65,7 @@ macro_rules! send_response {
     match $request.respond(Response::from_string(serialized)) {
       Ok(_) => {}
       Err(e) => {
-        println!("{}", e);
+        dprintln!("{}", e);
       }
     };
   }};
@@ -92,7 +93,7 @@ macro_rules! async_requests {
       },
       )*
       unknown_url => {
-        println!("Unknown url {}", unknown_url);
+        dprintln!("Unknown url {}", unknown_url);
       }
     }
   }};

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::time::Instant;
 
+use crate::dprintln;
 use ahash::AHashMap;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -40,7 +41,7 @@ pub fn calc_ref_diffs(
 
   let res = Some(calc_ref_diffs_inner(&commits, &config, head_commit_id));
 
-  println!("Took {}ms for calc_ref_diffs", now.elapsed().as_millis());
+  dprintln!("Took {}ms for calc_ref_diffs", now.elapsed().as_millis());
 
   res
 }

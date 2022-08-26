@@ -1,19 +1,17 @@
 #[macro_export]
 macro_rules! and {
   ( $($parser:expr),* ) => {
-    |input: &mut crate::parser::input::Input| {
+    |input: &mut $crate::parser::input::Input| {
       let start_pos = input.position;
 
       Some((
         $({
-          let res = $parser(input);
-
-          if res.is_none() {
-            input.set_position(start_pos);
-            return None;
+          if let Some(res) = $parser(input) {
+            res
           }
           else {
-            res.unwrap()
+            input.set_position(start_pos);
+            return None;
           }
         },)*
       ))
@@ -24,7 +22,7 @@ macro_rules! and {
 #[macro_export]
 macro_rules! or {
   ( $($p:expr),* ) => {
-    |input: &mut crate::parser::input::Input| {
+    |input: &mut $crate::parser::input::Input| {
       $({
         let res = $p(input);
 
@@ -41,7 +39,7 @@ macro_rules! or {
 #[macro_export]
 macro_rules! character {
   ($c:expr) => {
-    |input: &mut crate::parser::input::Input| -> Option<char> {
+    |input: &mut $crate::parser::input::Input| -> Option<char> {
       if !input.end() {
         let r = input.next_char();
 
@@ -58,7 +56,7 @@ macro_rules! character {
 #[macro_export]
 macro_rules! word {
   ($text:expr) => {
-    |input: &mut crate::parser::input::Input| {
+    |input: &mut $crate::parser::input::Input| {
       let start_pos = input.position;
 
       for c in $text.chars() {
@@ -78,7 +76,7 @@ macro_rules! word {
 #[macro_export]
 macro_rules! conditional_char {
   ($function:expr) => {
-    |input: &mut crate::parser::input::Input| -> Option<char> {
+    |input: &mut $crate::parser::input::Input| -> Option<char> {
       let c = input.next_char();
 
       if $function(c) {
@@ -96,7 +94,7 @@ macro_rules! conditional_char {
 #[macro_export]
 macro_rules! take_char_while {
   ($function:expr) => {
-    |input: &mut crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<String> {
       let start_pos = input.position;
 
       while !input.end() && $function(input.next_char()) {
@@ -117,7 +115,7 @@ macro_rules! take_char_while {
 #[macro_export]
 macro_rules! optional_take_char_while {
   ($function:expr) => {
-    |input: &mut crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<String> {
       let start_pos = input.position;
 
       while !input.end() && $function(input.next_char()) {
@@ -137,7 +135,7 @@ macro_rules! optional_take_char_while {
 #[macro_export]
 macro_rules! until_str {
   ($str:expr) => {
-    |input: &mut crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<String> {
       let char_vec: Vec<char> = $str.chars().collect();
       let str_len = $str.len();
       let start_pos = input.position;
@@ -166,7 +164,7 @@ macro_rules! until_str {
 #[macro_export]
 macro_rules! until_parser {
   ($parser:expr) => {
-    |input: &mut crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<String> {
       let start_pos = input.position;
       let mut current_pos = start_pos;
 
@@ -191,7 +189,7 @@ macro_rules! until_parser {
 #[macro_export]
 macro_rules! until_parser_keep {
   ($parser:expr) => {
-    |input: &mut crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<String> {
       let start_pos = input.position;
 
       while !input.end() {
@@ -218,7 +216,7 @@ macro_rules! until_parser_keep {
 #[macro_export]
 macro_rules! until_parser_keep_happy {
   ($parser:expr) => {
-    |input: &mut crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<String> {
       let start_pos = input.position;
 
       while !input.end() {
@@ -242,7 +240,7 @@ macro_rules! until_parser_keep_happy {
 #[macro_export]
 macro_rules! many {
   ($parser:expr) => {
-    |input: &mut crate::parser::input::Input| {
+    |input: &mut $crate::parser::input::Input| {
       let mut results = Vec::new();
 
       while !input.end() {
@@ -269,7 +267,7 @@ macro_rules! rep_sep {
 #[macro_export]
 macro_rules! rep_parser_sep {
   ($parser:expr, $sep_parser:expr) => {
-    |input: &mut crate::parser::input::Input| {
+    |input: &mut $crate::parser::input::Input| {
       let mut results = Vec::new();
 
       while !input.end() {
@@ -329,12 +327,12 @@ mod tests {
   fn test_or() {
     let result = parse_all(or!(word!("a"), word!("b")), "b");
 
-    assert_eq!(result.is_some(), true);
+    assert!(result.is_some());
     assert_eq!(result.unwrap(), "b");
 
     let result = parse_all(or!(word!("a"), word!("b"), word!("p")), "c");
 
-    assert_eq!(result.is_none(), true);
+    assert!(result.is_none());
   }
 
   #[test]
@@ -343,7 +341,7 @@ mod tests {
 
     let result = parse_all(parser, "a,a,a");
 
-    assert_eq!(result.is_some(), true);
+    assert!(result.is_some());
     assert_eq!(result.unwrap().len(), 3);
   }
 
@@ -353,7 +351,7 @@ mod tests {
 
     let result = parse_all(parser, "a, a , a");
 
-    assert_eq!(result.is_some(), true);
+    assert!(result.is_some());
     assert_eq!(result.unwrap().len(), 3);
   }
 
@@ -363,7 +361,7 @@ mod tests {
 
     let result = parse_all(parser, "aaaaaaaomg");
 
-    assert_eq!(result.is_some(), true);
+    assert!(result.is_some());
     assert_eq!(result.unwrap(), "aaaaaaa");
   }
 
@@ -410,7 +408,7 @@ mod tests {
 
     let res = ALL(&mut input);
 
-    assert_eq!(res.is_none(), false);
+    assert!(res.is_some());
 
     println!("{}", res.unwrap().0)
   }
@@ -421,7 +419,7 @@ mod tests {
 
     let result = parse_all(parser, "aaaaaaaomg");
 
-    assert_eq!(result.is_some(), true);
+    assert!(result.is_some());
     assert_eq!(result.unwrap(), "aaaaaaa");
   }
 
@@ -431,7 +429,7 @@ mod tests {
 
     let result = parse_all(parser, "aaaaaaaomg");
 
-    assert_eq!(result.is_some(), true);
+    assert!(result.is_some());
     assert_eq!(result.unwrap(), ("aaaaaaa".to_string(), "omg"));
 
     let parser = until_parser_keep!(word!("omg"));

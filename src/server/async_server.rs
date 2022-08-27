@@ -126,7 +126,6 @@ pub fn start_async_server() {
       git_version,
       scan_workspace,
       calc_ref_diffs,
-      // graph_instructions,
       start_diff_search,
       poll_diff_search,
       load_patches_for_commit,

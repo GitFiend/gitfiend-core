@@ -2,11 +2,12 @@ use crate::git::git_types::{Commit, GitConfig, Patch};
 use crate::git::git_version::GitVersion;
 use crate::git::queries::search::search_request::clear_completed_searches;
 use crate::git::run_git_action::ActionProgress;
-use crate::{dprintln, global};
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
+use crate::{dprintln, global};
 use ahash::AHashMap;
 use std::collections::HashMap;
+use std::env;
 
 pub static COMMITS: Global<AHashMap<String, Vec<Commit>>> = global!(AHashMap::new());
 
@@ -26,4 +27,10 @@ pub fn clear_cache(_: &ReqOptions) {
   clear_completed_searches();
 
   dprintln!("Cleared cache.");
+}
+
+pub fn override_git_home(options: &ReqOptions) {
+  dprintln!("HOME before override: {:?}", env::var("HOME"));
+
+  env::set_var("HOME", &options.repo_path);
 }

@@ -25,7 +25,7 @@ use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::run_git_action::{clear_action_logs, get_action_logs, poll_action};
-use crate::git::store::clear_cache;
+use crate::git::store::{clear_cache, override_git_home};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -139,6 +139,7 @@ pub fn start_async_server() {
       clear_action_logs,
       set_credentials,
       poll_action,
+      override_git_home,
 
       // Actions
       command,

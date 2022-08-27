@@ -10,7 +10,7 @@ use ts_rs::TS;
 
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
-use crate::git::run_git_action::ActionError::Credential;
+use crate::git::run_git_action::ActionError::{Credential, IO};
 use crate::git::store::ACTION_LOGS;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
@@ -59,7 +59,8 @@ impl From<Error> for ActionError {
 static ACTIONS: Global<AHashMap<u32, Option<Result<ActionOutput, ActionError>>>> =
   global!(AHashMap::new());
 
-static ACTION_IDS: Global<u32> = global!(0);
+// 0 will be treated as an error.
+static ACTION_IDS: Global<u32> = global!(1);
 
 fn get_next_action_id() -> u32 {
   if let Some(id) = ACTION_IDS.get() {
@@ -124,7 +125,15 @@ pub struct PollOptions {
 }
 
 pub fn poll_action(options: &PollOptions) -> Option<Result<ActionOutput, ActionError>> {
-  let result = ACTIONS.get_by_key(&options.action_id)?;
+  let PollOptions { action_id } = options;
+
+  if *action_id == 0 {
+    return Some(Err(IO(String::from(
+      "Action id is 0. There was an error before run_git_action began.",
+    ))));
+  }
+
+  let result = ACTIONS.get_by_key(&action_id)?;
 
   if result.is_some() {
     ACTIONS.remove(&options.action_id);

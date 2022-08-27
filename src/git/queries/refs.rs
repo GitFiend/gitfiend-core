@@ -13,7 +13,7 @@ const REF_NAME_PARSER: Parser<String> =
 const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: String| {
   let cleaned = result.replace("^{}", "");
   let parts: Vec<&str> = cleaned.split('/').collect();
-  let ref_type = get_type_from_name(parts[1]);
+  let ref_type = get_type_from_name(&parts);
 
   RefInfoPart {
     id: cleaned.to_owned(),
@@ -54,11 +54,23 @@ const P_COMMIT_REFS: Parser<Vec<RefInfoPart>> = map!(
 pub const P_OPTIONAL_REFS: Parser<Vec<RefInfoPart>> =
   or!(P_COMMIT_REFS, map!(WS, |_: String| { Vec::new() }));
 
-fn get_type_from_name(part: &str) -> RefType {
-  match part {
-    "tags" => RefType::Tag,
-    "stash" => RefType::Stash,
-    _ => RefType::Branch,
+// fn get_type_from_name(part: &str) -> RefType {
+//   match part {
+//     "tags" => RefType::Tag,
+//     "stash" => RefType::Stash,
+//     _ => RefType::Branch,
+//   }
+// }
+
+fn get_type_from_name(parts: &[&str]) -> RefType {
+  if parts.len() > 1 {
+    match parts[1] {
+      "tags" => RefType::Tag,
+      "stash" => RefType::Stash,
+      _ => RefType::Branch,
+    }
+  } else {
+    RefType::Branch
   }
 }
 
@@ -73,7 +85,9 @@ fn get_ref_location(parts: &[&str]) -> RefLocation {
 }
 
 fn get_short_name(parts: &[&str]) -> String {
-  if parts[1] == "remotes" {
+  if parts.len() == 1 {
+    parts[0].to_string()
+  } else if parts[1] == "remotes" {
     parts[3..].join("/")
   } else {
     parts[2..].join("/")
@@ -191,9 +205,10 @@ pub struct RefInfoPart {
 #[cfg(test)]
 mod tests {
   use crate::git::git_types::RefLocation::Local;
+  use crate::git::git_types::RefType;
   use crate::git::queries::refs::{
-    get_ref_location, get_remote_name, get_short_name, P_COMMIT_REFS, P_HEAD_REF, P_OPTIONAL_REFS,
-    P_REF_NAME, P_TAG_REF,
+    get_ref_location, get_remote_name, get_short_name, get_type_from_name, P_COMMIT_REFS,
+    P_HEAD_REF, P_OPTIONAL_REFS, P_REF_NAME, P_TAG_REF,
   };
   use crate::parser::parse_all;
 
@@ -206,13 +221,15 @@ mod tests {
 
   #[test]
   fn test_get_ref_short_name() {
-    let name = get_short_name(&["refs", "heads", "feature", "dialogs"]);
-
-    assert_eq!(name, "feature/dialogs");
-
-    let name = get_short_name(&["refs", "remotes", "origin", "git-lib"]);
-
-    assert_eq!(name, "git-lib");
+    assert_eq!(
+      get_short_name(&["refs", "heads", "feature", "dialogs"]),
+      "feature/dialogs"
+    );
+    assert_eq!(
+      get_short_name(&["refs", "remotes", "origin", "git-lib"]),
+      "git-lib"
+    );
+    assert_eq!(get_short_name(&["HEAD"]), "HEAD");
   }
 
   #[test]
@@ -280,5 +297,15 @@ mod tests {
 
     assert_eq!(refs.len(), 3);
     assert_eq!(refs[1].id, "refs/remotes/origin/master");
+  }
+
+  #[test]
+  fn test_get_type_from_name() {
+    assert_eq!(
+      get_type_from_name(&["refs", "remotes", "origin", "git-lib"]),
+      RefType::Branch
+    );
+    assert_eq!(get_type_from_name(&["refs", "tags", "hello"]), RefType::Tag);
+    assert_eq!(get_type_from_name(&["HEAD"]), RefType::Branch);
   }
 }

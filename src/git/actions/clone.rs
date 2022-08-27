@@ -1,9 +1,8 @@
-use crate::dprintln;
-use crate::git::git_version::GitVersion;
-use crate::git::run_git_action::{run_git_action, RunGitActionOptions};
-use crate::git::store::GIT_VERSION;
 use serde::Deserialize;
 use ts_rs::TS;
+
+use crate::dprintln;
+use crate::git::run_git_action::{run_git_action, RunGitActionOptions};
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -16,7 +15,6 @@ pub struct CloneOptions {
 
 pub fn clone_repo(options: &CloneOptions) -> u32 {
   let out = run_git_action(RunGitActionOptions {
-    git_version: GIT_VERSION.get().unwrap_or_else(GitVersion::new),
     repo_path: &options.repo_path,
     commands: [vec!["clone", "--progress", &options.url]],
   });

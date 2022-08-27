@@ -11,7 +11,7 @@ use ts_rs::TS;
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::{Credential, IO};
-use crate::git::store::ACTION_LOGS;
+use crate::git::store::{ACTION_LOGS, GIT_VERSION};
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 use crate::{dprintln, global};
@@ -52,7 +52,7 @@ pub enum ActionError {
 
 impl From<Error> for ActionError {
   fn from(err: Error) -> Self {
-    ActionError::IO(err.to_string())
+    IO(err.to_string())
   }
 }
 
@@ -76,7 +76,6 @@ fn get_next_action_id() -> u32 {
 pub struct RunGitActionOptions<'a, const N: usize> {
   pub commands: [Vec<&'a str>; N],
   pub repo_path: &'a str,
-  pub git_version: GitVersion,
 }
 
 pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
@@ -86,9 +85,10 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
 
   let RunGitActionOptions {
     commands,
-    git_version,
     repo_path,
   } = options;
+
+  let git_version = GIT_VERSION.get().unwrap_or_else(GitVersion::new);
 
   let git_commands: Vec<Vec<String>> = commands
     .iter()
@@ -133,7 +133,7 @@ pub fn poll_action(options: &PollOptions) -> Option<Result<ActionOutput, ActionE
     ))));
   }
 
-  let result = ACTIONS.get_by_key(&action_id)?;
+  let result = ACTIONS.get_by_key(action_id)?;
 
   if result.is_some() {
     ACTIONS.remove(&options.action_id);
@@ -166,7 +166,7 @@ pub fn run_git_action_inner(
   let stderr = cmd
     .stderr
     .as_mut()
-    .ok_or_else(|| ActionError::IO("Failed to get stdout as mut".to_string()))?;
+    .ok_or_else(|| IO("Failed to get stdout as mut".to_string()))?;
 
   let stdout_reader = BufReader::new(stderr);
   let stdout_lines = stdout_reader.lines();

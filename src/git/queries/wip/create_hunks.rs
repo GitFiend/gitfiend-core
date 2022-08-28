@@ -61,10 +61,10 @@ pub fn convert_lines_to_hunks(lines: Vec<HunkLine>) -> (Vec<Hunk>, u32) {
   (hunks, patch_size)
 }
 
-fn set_line_ranges(hunk: &mut Hunk) -> () {
+fn set_line_ranges(hunk: &mut Hunk) {
   let Hunk { lines, .. } = hunk;
 
-  if lines.len() == 0 {
+  if lines.is_empty() {
     return;
   }
 
@@ -87,7 +87,7 @@ fn set_line_ranges(hunk: &mut Hunk) -> () {
   };
 }
 
-fn set_indices(hunks: &mut Vec<Hunk>) -> () {
+fn set_indices(hunks: &mut Vec<Hunk>) {
   for i in 0..hunks.len() {
     hunks[i].index = i as i32;
 

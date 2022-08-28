@@ -10,7 +10,7 @@ pub(crate) mod ref_diffs;
 const REF_NAME_PARSER: Parser<String> =
   take_char_while!(|c: char| { !c.is_whitespace() && c != ',' && c != '(' && c != ')' });
 
-const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: String| {
+pub const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: String| {
   let cleaned = result.replace("^{}", "");
   let parts: Vec<&str> = cleaned.split('/').collect();
   let ref_type = get_type_from_name(&parts);

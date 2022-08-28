@@ -10,6 +10,7 @@
 // use crate::server::git_request::ReqOptions;
 
 pub(crate) mod actions;
+pub(crate) mod conflicts;
 pub(crate) mod git_settings;
 pub(crate) mod git_types;
 pub(crate) mod git_types_extra_impl;

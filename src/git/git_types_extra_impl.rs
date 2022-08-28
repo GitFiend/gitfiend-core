@@ -1,8 +1,9 @@
-use crate::git::git_types::{Hunk, HunkRange, PatchType, WipPatchType};
+use crate::git::git_types::{Hunk, HunkRange, PatchType, RefLocation, WipPatchType};
 use std::fmt;
+use std::fmt::Formatter;
 
 impl fmt::Display for PatchType {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match *self {
       PatchType::A => write!(f, "A"),
       PatchType::B => write!(f, "B"),
@@ -18,7 +19,7 @@ impl fmt::Display for PatchType {
 }
 
 impl fmt::Display for WipPatchType {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match *self {
       WipPatchType::Question => write!(f, "?"),
       WipPatchType::Empty => write!(f, " "),
@@ -28,6 +29,15 @@ impl fmt::Display for WipPatchType {
       WipPatchType::M => write!(f, "M"),
       WipPatchType::R => write!(f, "R"),
       WipPatchType::U => write!(f, "U"),
+    }
+  }
+}
+
+impl fmt::Display for RefLocation {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match *self {
+      RefLocation::Local => write!(f, "Local"),
+      RefLocation::Remote => write!(f, "Remote"),
     }
   }
 }

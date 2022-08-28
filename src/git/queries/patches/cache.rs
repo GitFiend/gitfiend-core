@@ -91,6 +91,7 @@ fn read_patches_from_file<P: AsRef<Path>>(
   path: P,
 ) -> Result<HashMap<String, Vec<Patch>>, Box<dyn Error>> {
   let now = Instant::now();
+
   let file = File::open(&path)?;
 
   let mut reader = BufReader::new(file);

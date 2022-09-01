@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::fmt::Formatter;
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, PartialEq, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ConflictedFile {
@@ -28,7 +28,7 @@ impl ConflictedFile {
   }
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, PartialEq, Clone, Serialize, TS)]
 #[ts(export)]
 pub struct ConflictedFileLine {
   pub text: Option<String>,
@@ -36,7 +36,7 @@ pub struct ConflictedFileLine {
   pub index: usize,
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, PartialEq, Clone, Serialize, TS)]
 #[ts(export)]
 pub struct ConflictedSection {
   pub left: Vec<ConflictedLine>,
@@ -59,7 +59,7 @@ impl ConflictedSection {
   }
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, PartialEq, Clone, Serialize, TS)]
 #[ts(export)]
 pub enum ConflictedSide {
   Left,
@@ -75,7 +75,7 @@ impl fmt::Display for ConflictedSide {
   }
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, PartialEq, Clone, Serialize, TS)]
 #[ts(export)]
 pub struct ConflictedLine {
   pub text: String,

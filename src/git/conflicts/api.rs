@@ -149,3 +149,119 @@ fn balance_section_with_blanks(file: &mut ConflictedFile, section: usize) {
     })
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use crate::git::conflicts::api::conflicted_lines;
+  use crate::git::conflicts::conflicted_file::{
+    ConflictedFile, ConflictedFileLine, ConflictedLine, ConflictedSection, ConflictedSide,
+  };
+
+  #[test]
+  fn test_conflicted_file() {
+    let str_lines = vec![
+      "<<<<<<< HEAD",
+      "abc",
+      "=======",
+      "cba",
+      ">>>>>>> refs/heads/B",
+    ];
+
+    let res = conflicted_lines(str_lines);
+
+    println!("{:?}", res);
+
+    let expected = ConflictedFile {
+      lines: vec![ConflictedFileLine {
+        text: None,
+        section: Some(0),
+        index: 0,
+      }],
+      sections: vec![ConflictedSection {
+        left: vec![ConflictedLine {
+          text: String::from("abc"),
+          blank: false,
+          side: ConflictedSide::Left,
+          section: 0,
+          conflicted: true,
+          key: Some(String::from("Left-0-0")),
+        }],
+        right: vec![ConflictedLine {
+          text: String::from("cba"),
+          blank: false,
+          side: ConflictedSide::Right,
+          section: 0,
+          conflicted: true,
+          key: Some(String::from("Right-0-0")),
+        }],
+      }],
+      ref_name_top: String::from("HEAD"),
+      ref_name_bottom: String::from("Local/B"),
+      line_ending: String::from("\n"),
+      max_line_length: 3,
+    };
+
+    assert_eq!(res, expected);
+  }
+
+  #[test]
+  fn test_conflicted_file2() {
+    let str_lines = vec![
+      "before",
+      "<<<<<<< HEAD",
+      "abc",
+      "=======",
+      "cba",
+      ">>>>>>> refs/heads/B",
+      "after",
+    ];
+
+    let res = conflicted_lines(str_lines);
+
+    println!("{:?}", res);
+
+    let expected = ConflictedFile {
+      lines: vec![
+        ConflictedFileLine {
+          text: Some(String::from("before")),
+          section: None,
+          index: 0,
+        },
+        ConflictedFileLine {
+          text: None,
+          section: Some(0),
+          index: 0,
+        },
+        ConflictedFileLine {
+          text: Some(String::from("after")),
+          section: None,
+          index: 2,
+        },
+      ],
+      sections: vec![ConflictedSection {
+        left: vec![ConflictedLine {
+          text: String::from("abc"),
+          blank: false,
+          side: ConflictedSide::Left,
+          section: 0,
+          conflicted: true,
+          key: Some(String::from("Left-0-0")),
+        }],
+        right: vec![ConflictedLine {
+          text: String::from("cba"),
+          blank: false,
+          side: ConflictedSide::Right,
+          section: 0,
+          conflicted: true,
+          key: Some(String::from("Right-0-0")),
+        }],
+      }],
+      ref_name_top: String::from("HEAD"),
+      ref_name_bottom: String::from("Local/B"),
+      line_ending: String::from("\n"),
+      max_line_length: 6,
+    };
+
+    assert_eq!(res, expected);
+  }
+}

@@ -12,8 +12,6 @@ pub fn load_git_version() {
     repo_path: ".",
     args: ["--version"],
   }) {
-    // eprintln!("Found Git version {}", version_str);
-
     if let Some(version) = parse_version(&version_str) {
       GIT_VERSION.set(version);
     }
@@ -72,9 +70,21 @@ const P_VERSION: Parser<Option<GitVersion>> =
     let (_, nums) = res;
 
     Some(GitVersion {
-      major: nums.get(0)?.parse().ok()?,
-      minor: nums.get(1)?.parse().ok()?,
-      patch: nums.get(2)?.parse().ok()?,
+      major: nums
+        .get(0)
+        .unwrap_or(&String::from(""))
+        .parse()
+        .unwrap_or(0),
+      minor: nums
+        .get(1)
+        .unwrap_or(&String::from(""))
+        .parse()
+        .unwrap_or(0),
+      patch: nums
+        .get(2)
+        .unwrap_or(&String::from(""))
+        .parse()
+        .unwrap_or(0),
     })
   });
 
@@ -109,6 +119,54 @@ mod tests {
         major: 2,
         minor: 32,
         patch: 0
+      }
+    );
+  }
+
+  #[test]
+  fn test_p_short_version() {
+    let result = parse_version("git version 2.32");
+
+    assert!(result.is_some());
+
+    assert_eq!(
+      result.unwrap(),
+      GitVersion {
+        major: 2,
+        minor: 32,
+        patch: 0
+      }
+    );
+  }
+
+  #[test]
+  fn test_p_mac_version() {
+    let result = parse_version("git version 2.32.1 (Apple Git-133)");
+
+    assert!(result.is_some());
+
+    assert_eq!(
+      result.unwrap(),
+      GitVersion {
+        major: 2,
+        minor: 32,
+        patch: 1
+      }
+    );
+  }
+
+  #[test]
+  fn test_p_windows_version() {
+    let result = parse_version("git version 2.37.3.windows.1");
+
+    assert!(result.is_some());
+
+    assert_eq!(
+      result.unwrap(),
+      GitVersion {
+        major: 2,
+        minor: 37,
+        patch: 3
       }
     );
   }

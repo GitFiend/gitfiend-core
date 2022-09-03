@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::fs;
 use std::path::Path;
 
@@ -114,17 +115,23 @@ fn parse_ref_name(line: &str) -> String {
 fn balance_section_with_blanks(file: &mut ConflictedFile, section: usize) {
   let CFSection { left, right } = &mut file.sections[section];
 
-  let left_blanks = right.len() - left.len();
+  match right.len().cmp(&left.len()) {
+    Ordering::Greater => {
+      let left_blanks = right.len() - left.len();
 
-  for _ in 0..left_blanks {
-    left.push(CFSectionLine::Blank(BlankLine { section }));
-  }
+      for _ in 0..left_blanks {
+        left.push(CFSectionLine::Blank(BlankLine { section }));
+      }
+    }
+    Ordering::Less => {
+      let right_blanks = left.len() - right.len();
 
-  let right_blanks = left.len() - right.len();
-
-  for _ in 0..right_blanks {
-    right.push(CFSectionLine::Blank(BlankLine { section }));
-  }
+      for _ in 0..right_blanks {
+        right.push(CFSectionLine::Blank(BlankLine { section }));
+      }
+    }
+    Ordering::Equal => {}
+  };
 
   for i in 0..right.len() {
     file

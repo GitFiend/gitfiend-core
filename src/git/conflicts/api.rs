@@ -5,7 +5,7 @@ use serde::Deserialize;
 use ts_rs::TS;
 
 use crate::git::conflicts::conflicted_file::{
-  ConflictedFile, ConflictedFileLine, ConflictedLine, ConflictedSection, ConflictedSide,
+  CFSection, CFSide, ConflictedFile, ConflictedFileLine, ConflictedLine,
 };
 use crate::git::git_types::WipPatch;
 use crate::git::queries::refs::P_REF_NAME;
@@ -39,18 +39,18 @@ fn conflicted_lines(lines: Vec<&str>) -> ConflictedFile {
 
   let mut in_section = false;
   let mut section: usize = 0;
-  let mut side = ConflictedSide::Left;
+  let mut side = CFSide::Left;
 
   for str_line in lines {
     if str_line.starts_with(CONFLICT_START) {
       in_section = true;
-      side = ConflictedSide::Left;
+      side = CFSide::Left;
 
       if file.ref_name_top.is_empty() {
         file.ref_name_top = parse_ref_name(str_line);
       }
     } else if str_line.starts_with(CONFLICT_MIDDLE) {
-      side = ConflictedSide::Right;
+      side = CFSide::Right;
     } else if str_line.starts_with(CONFLICT_END) {
       in_section = false;
 
@@ -67,7 +67,7 @@ fn conflicted_lines(lines: Vec<&str>) -> ConflictedFile {
 
       if in_section {
         if file.sections.get(section).is_none() {
-          file.sections.push(ConflictedSection {
+          file.sections.push(CFSection {
             left: vec![],
             right: vec![],
           });
@@ -81,7 +81,7 @@ fn conflicted_lines(lines: Vec<&str>) -> ConflictedFile {
           side: side.clone(),
           section,
           conflicted: true,
-          key: Some(format!("{}-{}-{}", side, section, index_in_section)),
+          key: format!("{}-{}-{}", side, section, index_in_section),
         })
       } else {
         file.lines.push(ConflictedFileLine {
@@ -113,31 +113,31 @@ fn parse_ref_name(line: &str) -> String {
 }
 
 fn balance_section_with_blanks(file: &mut ConflictedFile, section: usize) {
-  let ConflictedSection { left, right } = &mut file.sections[section];
+  let CFSection { left, right } = &mut file.sections[section];
 
   let left_blanks = right.len() - left.len();
 
-  for _ in 0..left_blanks {
+  for index in 0..left_blanks {
     left.push(ConflictedLine {
       text: String::new(),
       blank: true,
-      side: ConflictedSide::Left,
+      side: CFSide::Left,
       section,
       conflicted: false,
-      key: None,
+      key: format!("{}-{}-{}", CFSide::Left, section, index),
     });
   }
 
   let right_blanks = left.len() - right.len();
 
-  for _ in 0..right_blanks {
+  for index in 0..right_blanks {
     right.push(ConflictedLine {
       text: String::new(),
       blank: true,
-      side: ConflictedSide::Right,
+      side: CFSide::Right,
       section,
       conflicted: false,
-      key: None,
+      key: format!("{}-{}-{}", CFSide::Right, section, index),
     });
   }
 
@@ -154,7 +154,7 @@ fn balance_section_with_blanks(file: &mut ConflictedFile, section: usize) {
 mod tests {
   use crate::git::conflicts::api::conflicted_lines;
   use crate::git::conflicts::conflicted_file::{
-    ConflictedFile, ConflictedFileLine, ConflictedLine, ConflictedSection, ConflictedSide,
+    CFSection, CFSide, ConflictedFile, ConflictedFileLine, ConflictedLine,
   };
 
   #[test]
@@ -177,22 +177,22 @@ mod tests {
         section: Some(0),
         index: 0,
       }],
-      sections: vec![ConflictedSection {
+      sections: vec![CFSection {
         left: vec![ConflictedLine {
           text: String::from("abc"),
           blank: false,
-          side: ConflictedSide::Left,
+          side: CFSide::Left,
           section: 0,
           conflicted: true,
-          key: Some(String::from("Left-0-0")),
+          key: String::from("Left-0-0"),
         }],
         right: vec![ConflictedLine {
           text: String::from("cba"),
           blank: false,
-          side: ConflictedSide::Right,
+          side: CFSide::Right,
           section: 0,
           conflicted: true,
-          key: Some(String::from("Right-0-0")),
+          key: String::from("Right-0-0"),
         }],
       }],
       ref_name_top: String::from("HEAD"),
@@ -238,22 +238,22 @@ mod tests {
           index: 2,
         },
       ],
-      sections: vec![ConflictedSection {
+      sections: vec![CFSection {
         left: vec![ConflictedLine {
           text: String::from("abc"),
           blank: false,
-          side: ConflictedSide::Left,
+          side: CFSide::Left,
           section: 0,
           conflicted: true,
-          key: Some(String::from("Left-0-0")),
+          key: String::from("Left-0-0"),
         }],
         right: vec![ConflictedLine {
           text: String::from("cba"),
           blank: false,
-          side: ConflictedSide::Right,
+          side: CFSide::Right,
           section: 0,
           conflicted: true,
-          key: Some(String::from("Right-0-0")),
+          key: String::from("Right-0-0"),
         }],
       }],
       ref_name_top: String::from("HEAD"),

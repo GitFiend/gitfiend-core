@@ -7,7 +7,7 @@ use ts_rs::TS;
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ConflictedFile {
-  pub lines: Vec<ConflictedFileLine>,
+  pub lines: Vec<CFLine>,
   pub sections: Vec<CFSection>,
   pub ref_name_top: String,
   pub ref_name_bottom: String,
@@ -20,35 +20,37 @@ pub struct ConflictedFile {
 #[ts(export)]
 pub enum CFLine {
   Ok(OkLine),
-  Blank(BlankLine),
   Slot(SlotLine),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub enum CFSectionLine {
+  Blank(BlankLine),
   Conflict(ConflictLine),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct OkLine {
-  text: String,
+  pub text: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct BlankLine {
-  section: usize,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct SlotLine {
-  section: usize,
-  index: usize,
+  pub section: usize,
+  pub index: usize,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct BlankLine {
+  pub section: usize,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
 #[ts(export)]
 pub struct ConflictLine {
   pub text: String,
@@ -72,40 +74,20 @@ impl ConflictedFile {
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
 #[ts(export)]
-pub struct ConflictedLine {
-  pub text: String,
-  pub blank: bool,
-  pub side: CFSide,
-  pub section: usize,
-  pub conflicted: bool,
-  pub key: String,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
-#[ts(export)]
-pub struct ConflictedFileLine {
-  pub text: Option<String>,
-  // conflicted if section is some.
-  pub section: Option<usize>,
-  pub index: usize,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
-#[ts(export)]
 pub struct CFSection {
-  pub left: Vec<ConflictedLine>,
-  pub right: Vec<ConflictedLine>,
+  pub left: Vec<CFSectionLine>,
+  pub right: Vec<CFSectionLine>,
 }
 
 impl CFSection {
-  pub fn get(&self, side: &CFSide) -> &Vec<ConflictedLine> {
+  pub fn get(&self, side: &CFSide) -> &Vec<CFSectionLine> {
     match side {
       CFSide::Left => &self.left,
       CFSide::Right => &self.right,
     }
   }
 
-  pub fn get_mut(&mut self, side: &CFSide) -> &mut Vec<ConflictedLine> {
+  pub fn get_mut(&mut self, side: &CFSide) -> &mut Vec<CFSectionLine> {
     match side {
       CFSide::Left => &mut self.left,
       CFSide::Right => &mut self.right,
@@ -114,6 +96,7 @@ impl CFSection {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub enum CFSide {
   Left,

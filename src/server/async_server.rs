@@ -14,7 +14,8 @@ use crate::git::queries::commits::{
   load_head_commit, load_top_commit_for_branch,
 };
 use crate::git::queries::config::load_full_config;
-use crate::git::queries::hunks::hunks::load_hunks;
+use crate::git::queries::hunks::images::load_commit_image;
+use crate::git::queries::hunks::load_hunks::load_hunks;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::patches::patches_for_commit::load_patches_for_commit;
 use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
@@ -133,6 +134,7 @@ pub fn start_async_server() {
       search_commits,
       commit_is_ancestor,
       load_conflicted_file,
+      load_commit_image,
 
       // Core messages
       clear_cache,

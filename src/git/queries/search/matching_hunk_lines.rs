@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
-use crate::git::queries::hunks::hunks::load_hunks_args;
+use crate::git::queries::hunks::load_hunks::load_hunks_args;
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::global;

@@ -39,6 +39,29 @@ where
   None
 }
 
+pub fn run_git_buffer<I, S>(options: RunGitOptions<I, S>) -> Option<Vec<u8>>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
+  let result = Command::new(Path::new(GIT_PATH.as_path()))
+    .args(options.args)
+    .current_dir(options.repo_path)
+    .output();
+
+  if let Ok(out) = result {
+    let Output { stdout, stderr, .. } = out;
+
+    if !stdout.is_empty() {
+      return Some(stdout);
+    } else if !stderr.is_empty() {
+      dprintln!("StdErr: {:?}", String::from_utf8_lossy(&stderr).to_string());
+    }
+  }
+
+  None
+}
+
 #[cfg(test)]
 mod tests {
   use std::path::Path;

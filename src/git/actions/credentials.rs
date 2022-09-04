@@ -5,18 +5,14 @@ use crate::dprintln;
 use serde::Deserialize;
 use ts_rs::TS;
 
-#[derive(Clone, Debug, PartialEq, Deserialize, TS)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, TS)]
 #[ts(export)]
 pub struct Credentials {
   pub username: String,
   pub password: String,
 }
 
-// static CREDENTIALS: Global<Option<Credentials>> = global!(None);
-
 pub fn set_credentials(credentials: &Credentials) -> Option<()> {
-  // CREDENTIALS.set(Some(credentials.clone()))
-
   env::set_var("GITFIEND_USERNAME", &credentials.username);
   env::set_var("GITFIEND_PASSWORD", &credentials.password);
 
@@ -51,5 +47,5 @@ pub fn get_ask_pass_path() -> Option<PathBuf> {
   );
 
   #[cfg(not(debug_assertions))]
-  return Some(dir.join(name));
+  return Some(dir.parent()?.join("ask-pass").join(name));
 }

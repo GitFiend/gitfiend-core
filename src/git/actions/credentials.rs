@@ -47,5 +47,12 @@ pub fn get_ask_pass_path() -> Option<PathBuf> {
   );
 
   #[cfg(not(debug_assertions))]
-  return Some(dir.parent()?.join("ask-pass").join(name));
+  Some(
+    env::current_exe()
+      .ok()?
+      .parent()?
+      .parent()?
+      .join("ask-pass")
+      .join(name),
+  )
 }

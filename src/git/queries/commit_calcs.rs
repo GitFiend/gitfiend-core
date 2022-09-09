@@ -1,6 +1,10 @@
+use std::time::Instant;
+
 use ahash::{AHashMap, AHashSet};
 
+use crate::dprintln;
 use crate::git::git_types::Commit;
+use crate::git::run_git::{run_git, RunGitOptions};
 use crate::git::store::REF_DIFFS;
 use crate::util::global::Global;
 
@@ -119,6 +123,23 @@ fn get_commit_ids_between_commits(
   }
 
   ids
+}
+
+pub fn count_commits_between_fallback(repo_path: &str, commit_id1: &str, commit_id2: &str) -> u32 {
+  let out = run_git(RunGitOptions {
+    args: [
+      "rev-list",
+      &format!("{}..{}", commit_id1, commit_id2),
+      "--count",
+    ],
+    repo_path,
+  });
+
+  if let Some(out) = out {
+    return out.trim().parse::<u32>().ok().unwrap_or(0);
+  }
+
+  0
 }
 
 #[cfg(test)]

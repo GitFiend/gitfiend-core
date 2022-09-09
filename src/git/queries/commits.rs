@@ -205,20 +205,20 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String
     }
   }
 
-  commit_ids_between_commits_fallback(repo_path.clone(), commit_id1.clone(), commit_id2.clone())
+  commit_ids_between_commits_fallback(repo_path, commit_id1, commit_id2)
 }
 
 // We use this when commit ids are outside our loaded range (not in COMMITS).
-fn commit_ids_between_commits_fallback(
-  repo_path: String,
-  commit_id1: String,
-  commit_id2: String,
+pub fn commit_ids_between_commits_fallback(
+  repo_path: &str,
+  commit_id1: &str,
+  commit_id2: &str,
 ) -> Option<Vec<String>> {
   let now = Instant::now();
 
   let out = run_git(RunGitOptions {
     args: ["rev-list", &format!("{}..{}", commit_id1, commit_id2)],
-    repo_path: &repo_path,
+    repo_path,
   })?;
 
   dprintln!("Took {}ms to request ids", now.elapsed().as_millis());

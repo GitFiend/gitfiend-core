@@ -19,7 +19,7 @@ impl GitConfig {
   }
 
   // We take short_name because this is the same between remote and local refs.
-  pub fn get_remote_for_branch(&self, short_name: &String) -> String {
+  pub fn get_remote_for_branch(&self, short_name: &str) -> String {
     let GitConfig { entries, .. } = self;
 
     if let Some(push_remote) = entries.get(&format!("branch.{}.pushremote", short_name)) {
@@ -35,6 +35,12 @@ impl GitConfig {
     }
 
     String::from("origin")
+  }
+
+  pub fn get_tracking_branch_name(&self, local_branch: &str) -> String {
+    let remote = self.get_remote_for_branch(local_branch);
+
+    format!("refs/remotes/{}/{}", remote, local_branch)
   }
 }
 
@@ -178,6 +184,6 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
       remotes: HashMap::new(),
     };
 
-    assert_eq!(config.get_remote_for_branch(&String::from("a")), "origin2");
+    assert_eq!(config.get_remote_for_branch("a"), "origin2");
   }
 }

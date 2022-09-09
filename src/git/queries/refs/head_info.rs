@@ -1,6 +1,9 @@
-use crate::git::git_types::{Commit, RefInfo};
+use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation};
+use crate::git::queries::commits::{
+  load_head_commit, load_top_commit_for_branch, TopCommitOptions,
+};
 use crate::git::queries::refs::ref_diffs::{calc_remote_ref_diffs, get_ref_info_map_from_commits};
-use crate::git::store::COMMITS;
+use crate::git::store::{COMMITS, CONFIG};
 use crate::server::git_request::ReqOptions;
 use ahash::AHashMap;
 use serde::Serialize;
@@ -21,19 +24,26 @@ pub struct HeadInfo {
 pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
   let ReqOptions { repo_path } = options;
 
-  calc_head_info_from_commits(repo_path.to_string());
+  let commits = COMMITS.get_by_key(repo_path)?;
+
+  if commits.is_empty() {
+    return None;
+  }
+
+  let head_info = calc_head_info_from_commits(commits);
+
+  if (head_info.is_none()) {
+    if let Some((head_commit, head_ref)) = calc_head_fallback(repo_path) {
+      //
+    }
+  }
 
   None
 }
 
 // Note: This depends on COMMITS and REF_DIFFS already being loaded.
 // Change this to just take commits? Better to have calls to COMMITS at api level.
-fn calc_head_info_from_commits(repo_path: String) -> Option<HeadInfo> {
-  let commits = COMMITS.get_by_key(&repo_path)?;
-  if commits.is_empty() {
-    return None;
-  }
-
+fn calc_head_info_from_commits(commits: Vec<Commit>) -> Option<HeadInfo> {
   let all_refs = get_ref_info_map_from_commits(&commits);
 
   let commit_map = commits
@@ -66,7 +76,7 @@ fn calc_head_info_from_commits(repo_path: String) -> Option<HeadInfo> {
           let diffs_map = calc_remote_ref_diffs(&commit.id, &all_refs, &commit_map);
 
           if let Some(diffs) = diffs_map.get(&remote_ref.id) {
-            remote_ahead = diffs.ahead_of_head; //
+            remote_ahead = diffs.ahead_of_head;
             remote_behind = diffs.behind_head;
           }
         }
@@ -84,4 +94,35 @@ fn calc_head_info_from_commits(repo_path: String) -> Option<HeadInfo> {
   }
 
   None
+}
+
+fn calc_head_fallback(repo_path: &str) -> Option<(RefInfo, Commit)> {
+  if let Some(commit) = load_head_commit(&ReqOptions {
+    repo_path: repo_path.to_string(),
+  }) {
+    if let Some(info) = commit.refs.iter().find(|r| r.head) {
+      return Some((info.clone(), commit.clone()));
+    }
+  }
+
+  None
+}
+
+fn calc_remote_fallback(repo_path: &str, head_ref: &RefInfo) {
+  let config = CONFIG.get().unwrap_or_else(GitConfig::new);
+
+  let remote_tracking_branch = config.get_tracking_branch_name(&head_ref.short_name);
+
+  if let Some(remote_commit) = load_top_commit_for_branch(&TopCommitOptions {
+    repo_path: repo_path.to_string(),
+    branch_name: remote_tracking_branch,
+  }) {
+    if let Some(remote_ref) = remote_commit
+      .refs
+      .iter()
+      .find(|r| r.short_name == head_ref.short_name && r.location == RefLocation::Remote)
+    {
+      // TODO
+    }
+  }
 }

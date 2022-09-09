@@ -143,19 +143,18 @@ fn calc_remote_fallback(
 
   let remote_tracking_branch = config.get_tracking_branch_name(&head_ref.short_name);
 
-  if let Some(remote_commit) = load_top_commit_for_branch(&TopCommitOptions {
+  if let Some(mut remote_commit) = load_top_commit_for_branch(&TopCommitOptions {
     repo_path: repo_path.to_string(),
     branch_name: remote_tracking_branch,
   }) {
     if let Some(remote_ref) = remote_commit
       .refs
-      .iter()
+      .iter_mut()
       .find(|r| r.short_name == head_ref.short_name && r.location == RefLocation::Remote)
     {
-      let remote_ref = RefInfo {
-        sibling_id: Some(head_ref.id.to_string()),
-        ..remote_ref.clone()
-      };
+      remote_ref.sibling_id = Some(head_ref.id.to_string());
+
+      let remote_ref = remote_ref.clone();
 
       let remote_ahead =
         count_commits_between_fallback(repo_path, &head_ref.full_name, &remote_ref.full_name);

@@ -70,7 +70,7 @@ pub fn calc_ref_diffs_inner(
   (local_ref_diffs, remote_ref_diffs)
 }
 
-fn calc_remote_ref_diffs(
+pub fn calc_remote_ref_diffs(
   head_commit_id: &String,
   refs: &AHashMap<String, RefInfo>,
   commits: &AHashMap<String, Commit>,

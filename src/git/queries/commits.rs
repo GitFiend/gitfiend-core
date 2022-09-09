@@ -30,7 +30,7 @@ pub struct TopCommitOptions {
 }
 
 pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<Commit> {
-  let now = Instant::now();
+  let _now = Instant::now();
 
   let out = run_git(RunGitOptions {
     args: [
@@ -46,7 +46,7 @@ pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<Commit> 
 
   dprintln!(
     "Took {}ms to request top commit from Git",
-    now.elapsed().as_millis()
+    _now.elapsed().as_millis()
   );
 
   parse_all(P_COMMIT_ROW, out?.as_str())

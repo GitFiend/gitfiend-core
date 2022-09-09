@@ -5,6 +5,7 @@ use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
 
+pub(crate) mod head_info;
 pub(crate) mod ref_diffs;
 
 const REF_NAME_PARSER: Parser<String> =

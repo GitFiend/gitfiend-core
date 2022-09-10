@@ -30,7 +30,7 @@ impl GitConfig {
       return push_default.clone();
     }
 
-    if let Some(remote) = entries.get(&format!("branch.${}.remote", short_name)) {
+    if let Some(remote) = entries.get(&format!("branch.{}.remote", short_name)) {
       return remote.clone();
     }
 
@@ -88,11 +88,6 @@ pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
   }
 
   let config = GitConfig { entries, remotes };
-
-  // store_config(&config);
-  // if let Ok(mut store) = store_lock.write() {
-  //   (*store).config = config.clone();
-  // }
 
   CONFIG.set(config.clone());
 

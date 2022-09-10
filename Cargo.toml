@@ -34,7 +34,7 @@ codegen-units = 1
 [profile.dev.package."*"]
 opt-level = 3
 
-[features]
-# cargo build --features internal-git
-internal-git = []
+#[features]
+## cargo build --features internal-git
+#internal-git = []
 

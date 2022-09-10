@@ -5,14 +5,14 @@ use std::path::{Path, PathBuf};
 pub static GIT_PATH: Lazy<PathBuf> = Lazy::new(get_git_path);
 
 fn get_git_path() -> PathBuf {
-  #[cfg(feature = "internal-git")]
-  if let Some(dir) = get_internal_git_dir() {
-    return if env::consts::OS == "windows" {
-      dir.join("cmd").join("git.exe")
-    } else {
-      dir.join("bin").join("git")
-    };
-  }
+  // #[cfg(feature = "internal-git")]
+  // if let Some(dir) = get_internal_git_dir() {
+  //   return if env::consts::OS == "windows" {
+  //     dir.join("cmd").join("git.exe")
+  //   } else {
+  //     dir.join("bin").join("git")
+  //   };
+  // }
 
   PathBuf::from("git")
 }
@@ -47,8 +47,8 @@ fn get_git_exec_location(git_dir: &Path) -> PathBuf {
 }
 
 pub fn set_git_env() {
-  #[cfg(feature = "internal-git")]
-  env::set_var("GIT_EXEC_PATH", get_git_exec_location(GIT_PATH.as_path()));
+  // #[cfg(feature = "internal-git")]
+  // env::set_var("GIT_EXEC_PATH", get_git_exec_location(GIT_PATH.as_path()));
 
   // We don't want any prompts in the terminal (e.g for password).
   env::set_var("GIT_TERMINAL_PROMPT", "0");

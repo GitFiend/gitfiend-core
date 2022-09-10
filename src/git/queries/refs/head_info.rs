@@ -35,10 +35,10 @@ pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
 
   let head_info = calc_head_info_from_commits(commits);
 
-  if let Some(head_info) = &head_info {
+  if let Some(mut head_info) = head_info.clone() {
     if head_info.remote_ref.is_none() {
       if let Some((remote_ahead, remote_commit, remote_behind, remote_ref)) =
-        calc_remote_fallback(repo_path, &head_info.ref_info)
+        calc_remote_fallback(repo_path, &mut head_info.ref_info)
       {
         return Some(HeadInfo {
           ref_info: head_info.ref_info.clone(),
@@ -50,12 +50,14 @@ pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
         });
       }
     }
-  } else if let Some((head_ref, head_commit)) = calc_head_fallback(repo_path) {
+  } else if let Some((mut head_commit, i)) = calc_head_fallback(repo_path) {
+    let head_ref = &mut head_commit.refs[i];
+
     if let Some((remote_ahead, remote_commit, remote_behind, remote_ref)) =
-      calc_remote_fallback(repo_path, &head_ref)
+      calc_remote_fallback(repo_path, head_ref)
     {
       return Some(HeadInfo {
-        ref_info: head_ref,
+        ref_info: head_ref.clone(),
         commit: head_commit,
         remote_ref: Some(remote_ref),
         remote_commit: Some(remote_commit),
@@ -123,12 +125,14 @@ fn calc_head_info_from_commits(commits: Vec<Commit>) -> Option<HeadInfo> {
   None
 }
 
-fn calc_head_fallback(repo_path: &str) -> Option<(RefInfo, Commit)> {
+// We return an index to the ref in the commit. This is so we can
+// set sibling id later and not have separate instances of the same RefInfo
+fn calc_head_fallback(repo_path: &str) -> Option<(Commit, usize)> {
   if let Some(commit) = load_head_commit(&ReqOptions {
     repo_path: repo_path.to_string(),
   }) {
-    if let Some(info) = commit.refs.iter().find(|r| r.head) {
-      return Some((info.clone(), commit.clone()));
+    if let Some(i) = commit.refs.iter().position(|r| r.head) {
+      return Some((commit, i));
     }
   }
 
@@ -137,7 +141,7 @@ fn calc_head_fallback(repo_path: &str) -> Option<(RefInfo, Commit)> {
 
 fn calc_remote_fallback(
   repo_path: &str,
-  head_ref: &RefInfo,
+  head_ref: &mut RefInfo,
 ) -> Option<(u32, Commit, u32, RefInfo)> {
   let config = CONFIG.get().unwrap_or_else(GitConfig::new);
 
@@ -152,6 +156,7 @@ fn calc_remote_fallback(
       .iter_mut()
       .find(|r| r.short_name == head_ref.short_name && r.location == RefLocation::Remote)
     {
+      head_ref.sibling_id = Some(remote_ref.id.to_string());
       remote_ref.sibling_id = Some(head_ref.id.to_string());
 
       let remote_ref = remote_ref.clone();

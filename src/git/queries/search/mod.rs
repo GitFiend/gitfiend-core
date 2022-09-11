@@ -133,10 +133,15 @@ pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<Str
     ..
   } = options;
 
+  let commits = COMMITS.get_by_key(repo_path)?;
+  let first_commit_id = &commits.first()?.id;
+  let last_commit_id = &commits.last()?.id;
+
   let mut child = Command::new(GIT_PATH.as_path())
     .args([
       "log",
-      "-G",
+      &format!("{}..{}", last_commit_id, first_commit_id),
+      "-S",
       search_text,
       "--name-status",
       "--branches",

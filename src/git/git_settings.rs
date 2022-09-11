@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub static GIT_PATH: Lazy<PathBuf> = Lazy::new(get_git_path);
 
@@ -17,34 +17,34 @@ fn get_git_path() -> PathBuf {
   PathBuf::from("git")
 }
 
-fn get_internal_git_dir() -> Option<PathBuf> {
-  if let Ok(dir) = env::current_dir() {
-    // Start from /gitfiend-seed/rust-server in dev mode
-    #[cfg(debug_assertions)]
-    return Some(
-      dir
-        .parent()?
-        .join("git-fiend")
-        .join("node_modules")
-        .join("dugite")
-        .join("git"),
-    );
+// fn get_internal_git_dir() -> Option<PathBuf> {
+//   if let Ok(dir) = env::current_dir() {
+//     // Start from /gitfiend-seed/rust-server in dev mode
+//     #[cfg(debug_assertions)]
+//     return Some(
+//       dir
+//         .parent()?
+//         .join("git-fiend")
+//         .join("node_modules")
+//         .join("dugite")
+//         .join("git"),
+//     );
+//
+//     // Start from /app.asar.unpacked/output-code/core in release mode.
+//     #[cfg(not(debug_assertions))]
+//     return Some(dir.parent()?.join("git"));
+//   }
+//
+//   None
+// }
 
-    // Start from /app.asar.unpacked/output-code/core in release mode.
-    #[cfg(not(debug_assertions))]
-    return Some(dir.parent()?.join("git"));
-  }
-
-  None
-}
-
-fn get_git_exec_location(git_dir: &Path) -> PathBuf {
-  if env::consts::OS == "windows" {
-    git_dir.join("mingw64").join("libexec").join("git-core")
-  } else {
-    git_dir.join("libexec").join("git-core")
-  }
-}
+// fn get_git_exec_location(git_dir: &Path) -> PathBuf {
+//   if env::consts::OS == "windows" {
+//     git_dir.join("mingw64").join("libexec").join("git-core")
+//   } else {
+//     git_dir.join("libexec").join("git-core")
+//   }
+// }
 
 pub fn set_git_env() {
   // #[cfg(feature = "internal-git")]

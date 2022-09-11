@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
-use std::io::{BufRead, BufReader, Error, Read};
-use std::process::{Command, Stdio};
+use std::io::{Error, Read};
+use std::process::{ChildStderr, Command, Stdio};
 use std::{env, thread};
 
 use ahash::AHashMap;
@@ -100,7 +100,7 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
     let mut output = ActionOutput::new();
 
     for c in git_commands {
-      let result = run_git_action_inner(repo_path.clone(), git_version.clone(), c);
+      let result = run_git_action_inner2(repo_path.clone(), git_version.clone(), c);
 
       if let Ok(result) = result {
         output.stdout.push_str(&result.stdout);
@@ -142,14 +142,78 @@ pub fn poll_action(options: &PollOptions) -> Option<Result<ActionOutput, ActionE
   result
 }
 
-pub fn run_git_action_inner(
+// pub fn run_git_action_inner(
+//   repo_path: String,
+//   git_version: GitVersion,
+//   args: Vec<String>,
+// ) -> Result<ActionOutput, ActionError> {
+//   // dprintln!("GIT_TERMINAL_PROMPT: {:?}", env::var("GIT_TERMINAL_PROMPT"));
+//
+//   // let mut cmd: Child = Command::new(_fake_action_script_path().expect("Fake action script path"))
+//   //   .stdout(Stdio::piped())
+//   //   .stderr(Stdio::piped())
+//   //   .spawn()?;
+//
+//   let mut cmd = Command::new(GIT_PATH.as_path())
+//     .args(args_with_config(args, git_version))
+//     .current_dir(repo_path)
+//     .stderr(Stdio::piped())
+//     .stdout(Stdio::piped())
+//     .spawn()?;
+//
+//   let stderr: &mut ChildStderr = cmd
+//     .stderr
+//     .as_mut()
+//     .ok_or_else(|| IO("Failed to get stderr as mut".to_string()))?;
+//
+//   let mut stderr_lines: Vec<String> = Vec::new();
+//   let stderr_reader = BufReader::new(stderr);
+//
+//   // stderr_reader.read()
+//   let stdout_reader_lines = stderr_reader.lines();
+//
+//   for line in stdout_reader_lines.flatten() {
+//     println!("Line: {}", line);
+//     ACTION_LOGS.push(ActionProgress::Err(format!("{}\n", line)));
+//
+//     stderr_lines.push(line);
+//   }
+//
+//   let status = cmd.wait()?;
+//
+//   let mut stdout = String::new();
+//
+//   if let Some(mut out) = cmd.stdout.take() {
+//     if let Ok(len) = out.read_to_string(&mut stdout) {
+//       if len > 0 {
+//         ACTION_LOGS.push(ActionProgress::Out(stdout.clone()));
+//       }
+//     }
+//   }
+//
+//   if !status.success() {
+//     return if has_credential_error(&stderr_lines.join("\n")) {
+//       Err(Credential)
+//     } else {
+//       Err(ActionError::Git {
+//         stdout,
+//         stderr: stderr_lines.join("\n"),
+//       })
+//     };
+//   }
+//
+//   Ok(ActionOutput {
+//     stdout,
+//     stderr: stderr_lines.join("\n"),
+//   })
+// }
+
+pub fn run_git_action_inner2(
   repo_path: String,
   git_version: GitVersion,
   args: Vec<String>,
 ) -> Result<ActionOutput, ActionError> {
-  dprintln!("GIT_TERMINAL_PROMPT: {:?}", env::var("GIT_TERMINAL_PROMPT"));
-
-  // let mut cmd = Command::new(script_path().expect("Fake action script path"))
+  // let mut cmd: Child = Command::new(_fake_action_script_path().expect("Fake action script path"))
   //   .stdout(Stdio::piped())
   //   .stderr(Stdio::piped())
   //   .spawn()?;
@@ -163,19 +227,14 @@ pub fn run_git_action_inner(
 
   let mut stderr_lines: Vec<String> = Vec::new();
 
-  let stderr = cmd
-    .stderr
-    .as_mut()
-    .ok_or_else(|| IO("Failed to get stdout as mut".to_string()))?;
+  while let Ok(None) = cmd.try_wait() {
+    if let Some(stderr) = cmd.stderr.as_mut() {
+      let text = read_all(stderr);
 
-  let stdout_reader = BufReader::new(stderr);
-  let stdout_lines = stdout_reader.lines();
-
-  for line in stdout_lines.flatten() {
-    ACTION_LOGS.push(ActionProgress::Err(line.clone()));
-    dprintln!("Line: {}", line);
-
-    stderr_lines.push(line);
+      // println!("Line: {}", text);
+      ACTION_LOGS.push(ActionProgress::Err(text.clone()));
+      stderr_lines.push(text);
+    }
   }
 
   let status = cmd.wait()?;
@@ -205,6 +264,28 @@ pub fn run_git_action_inner(
     stdout,
     stderr: stderr_lines.join("\n"),
   })
+}
+
+fn read_all(stderr: &mut ChildStderr) -> String {
+  const BUFFER_SIZE: usize = 100;
+
+  let mut all_data: Vec<u8> = Vec::with_capacity(BUFFER_SIZE);
+
+  loop {
+    let mut buffer = [0; BUFFER_SIZE];
+
+    if let Ok(size) = stderr.read(&mut buffer) {
+      all_data.extend(&buffer[..size]);
+
+      if size == BUFFER_SIZE {
+        continue;
+      }
+    }
+
+    break;
+  }
+
+  String::from_utf8_lossy(&all_data).to_string()
 }
 
 pub fn args_with_config<I, S>(args: I, git_version: GitVersion) -> Vec<String>

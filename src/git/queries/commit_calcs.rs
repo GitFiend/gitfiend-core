@@ -1,8 +1,5 @@
-use std::time::Instant;
-
 use ahash::{AHashMap, AHashSet};
 
-use crate::dprintln;
 use crate::git::git_types::Commit;
 use crate::git::run_git::{run_git, RunGitOptions};
 use crate::git::store::REF_DIFFS;

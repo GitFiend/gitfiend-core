@@ -231,9 +231,10 @@ pub fn run_git_action_inner2(
     if let Some(stderr) = cmd.stderr.as_mut() {
       let text = read_all(stderr);
 
-      // println!("Line: {}", text);
-      ACTION_LOGS.push(ActionProgress::Err(text.clone()));
-      stderr_lines.push(text);
+      if !text.is_empty() {
+        ACTION_LOGS.push(ActionProgress::Err(text.clone()));
+        stderr_lines.push(text);
+      }
     }
   }
 

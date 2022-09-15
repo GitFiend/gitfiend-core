@@ -1,23 +1,18 @@
-use std::process::{Output, Stdio};
-use std::{thread, time};
-
-use crate::git::git_settings::GIT_PATH;
-use async_process::Command;
-use futures::executor;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::git::git_types::{HunkLine, Patch};
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
+use crate::git::queries::search::search_code::search_diffs_inner2;
 use crate::git::store::COMMITS;
 use crate::parser::parse_all;
 use crate::util::global::Global;
 use crate::{dprintln, global};
 
-mod commit_search;
 pub(crate) mod matching_hunk_lines;
-pub(crate) mod search;
+mod search_code;
+pub(crate) mod search_commits;
 pub(crate) mod search_request;
 
 #[derive(Debug, Clone, Deserialize, TS)]
@@ -51,14 +46,6 @@ fn search_cancelled(search_id: u32) -> bool {
   }
 }
 
-// TODO: Deprecate this.
-pub fn _search_diffs(options: &SearchOptions) -> Option<Vec<(String, Vec<Patch>)>> {
-  let search_id = get_next_search_id();
-  let result = search_diffs_inner(options, search_id)?;
-
-  parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
-}
-
 // // None result means either no results or cancelled.
 // pub fn search_diffs_with_id(
 //   options: &SearchOptions,
@@ -81,7 +68,7 @@ pub fn search_diffs_with_id2(
   options: &SearchOptions,
   search_id: u32,
 ) -> Option<Vec<(String, Vec<FileMatch>)>> {
-  let result = search_diffs_inner(options, search_id)?;
+  let result = search_diffs_inner2(options, search_id)?;
 
   let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)?;
 
@@ -117,87 +104,90 @@ pub fn search_diffs_with_id2(
   )
 }
 
-// TODO: Rename this.
-pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<String> {
-  dprintln!(
-    "Search for text: {}, id: {}, num: {}",
-    options.search_text,
-    search_id,
-    options.num_results
-  );
-
-  let SearchOptions {
-    repo_path,
-    search_text,
-    num_results,
-    ..
-  } = options;
-
-  let commits = COMMITS.get_by_key(repo_path)?;
-  let first_commit_id = &commits.first()?.id;
-  let last_commit_id = &commits.last()?.id;
-
-  let mut child = Command::new(GIT_PATH.as_path())
-    .args([
-      "log",
-      &format!("{}..{}", last_commit_id, first_commit_id),
-      "-S",
-      search_text,
-      "--name-status",
-      "--branches",
-      "--remotes",
-      "--pretty=format:%H,",
-      &format!("-n{}", num_results),
-      "-z",
-    ])
-    .stdout(Stdio::piped())
-    .current_dir(repo_path)
-    .spawn()
-    .ok()?;
-
-  loop {
-    thread::sleep(time::Duration::from_millis(50));
-
-    if search_cancelled(search_id) {
-      dprintln!("Killing search {search_id} \"{search_text}\"");
-
-      if let Err(e) = child.kill() {
-        dprintln!("{}", e);
-      }
-      break;
-    }
-
-    if let Ok(exit_status) = child.try_status() {
-      if exit_status.is_some() {
-        if let Ok(result) = executor::block_on(child.output()) {
-          let Output { stdout, stderr, .. } = &result;
-
-          if !stdout.is_empty() {
-            return Some(String::from_utf8_lossy(stdout).to_string());
-          } else {
-            dprintln!(
-              "Git Command stderr: {:?}",
-              String::from_utf8_lossy(stderr).to_string()
-            );
-          }
-        }
-
-        break;
-      }
-    } else {
-      break;
-    }
-  }
-
-  None
-}
+// pub fn search_diffs_inner(options: &SearchOptions, search_id: u32) -> Option<String> {
+//   dprintln!(
+//     "Search for text: {}, id: {}, num: {}",
+//     options.search_text,
+//     search_id,
+//     options.num_results
+//   );
+//
+//   let SearchOptions {
+//     repo_path,
+//     search_text,
+//     num_results,
+//     ..
+//   } = options;
+//
+//   let commits = COMMITS.get_by_key(repo_path)?;
+//   let first_commit_id = &commits.first()?.id;
+//   let last_commit_id = &commits.last()?.id;
+//
+//   let mut child = Command::new(GIT_PATH.as_path())
+//     .args([
+//       "log",
+//       &format!("{}..{}", last_commit_id, first_commit_id),
+//       "-S",
+//       search_text,
+//       "--name-status",
+//       "--branches",
+//       "--remotes",
+//       "--pretty=format:%H,",
+//       &format!("-n{}", num_results),
+//       "-z",
+//     ])
+//     .stdout(Stdio::piped())
+//     .current_dir(repo_path)
+//     .spawn()
+//     .ok()?;
+//
+//   loop {
+//     thread::sleep(time::Duration::from_millis(50));
+//
+//     if search_cancelled(search_id) {
+//       dprintln!("Killing search {search_id} \"{search_text}\"");
+//
+//       if let Err(e) = child.kill() {
+//         dprintln!("{}", e);
+//       }
+//       break;
+//     }
+//
+//     if let Ok(exit_status) = child.try_status() {
+//       if exit_status.is_some() {
+//         if let Ok(result) = executor::block_on(child.output()) {
+//           let Output { stdout, stderr, .. } = &result;
+//
+//           if !stdout.is_empty() {
+//             return Some(String::from_utf8_lossy(stdout).to_string());
+//           } else {
+//             dprintln!(
+//               "Git Command stderr: {:?}",
+//               String::from_utf8_lossy(stderr).to_string()
+//             );
+//           }
+//         }
+//
+//         break;
+//       }
+//     } else {
+//       break;
+//     }
+//   }
+//
+//   None
+// }
 
 #[cfg(test)]
 mod tests {
+  use crate::git::git_types::Patch;
+  use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
   use std::time::{Duration, Instant};
   use std::{assert_eq, println, thread};
 
-  use crate::git::queries::search::{get_next_search_id, SearchOptions, _search_diffs};
+  use crate::git::queries::search::search_code::search_diffs_inner2;
+  use crate::git::queries::search::{get_next_search_id, SearchOptions};
+  use crate::parser::parse_all;
 
   #[test]
   fn test_get_next_search_id() {
@@ -216,7 +206,7 @@ mod tests {
   #[test]
   fn test_thing() {
     let t1 = thread::spawn(move || {
-      _search_diffs(&SearchOptions {
+      search_diffs(&SearchOptions {
         num_results: 500,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
@@ -226,7 +216,7 @@ mod tests {
     thread::sleep(Duration::from_millis(10));
 
     let t2 = thread::spawn(move || {
-      _search_diffs(&SearchOptions {
+      search_diffs(&SearchOptions {
         num_results: 500,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
@@ -236,7 +226,7 @@ mod tests {
     thread::sleep(Duration::from_millis(10));
 
     let t3 = thread::spawn(move || {
-      _search_diffs(&SearchOptions {
+      search_diffs(&SearchOptions {
         num_results: 5,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
@@ -252,5 +242,12 @@ mod tests {
     assert!(r1.is_none());
     assert!(r2.is_none());
     assert!(r3.is_some());
+  }
+
+  pub fn search_diffs(options: &SearchOptions) -> Option<Vec<(String, Vec<Patch>)>> {
+    let search_id = get_next_search_id();
+    let result = search_diffs_inner2(options, search_id)?;
+
+    parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result)
   }
 }

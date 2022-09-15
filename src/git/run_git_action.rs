@@ -1,7 +1,8 @@
 use std::ffi::OsStr;
 use std::io::{Error, Read};
-use std::process::{ChildStderr, Command, Stdio};
-use std::{env, thread};
+use std::process::{Command, Stdio};
+use std::{env, thread, time};
+use time::Duration;
 
 use ahash::AHashMap;
 use serde::Deserialize;
@@ -163,13 +164,15 @@ pub fn run_git_action_inner(
 
   while let Ok(None) = cmd.try_wait() {
     if let Some(stderr) = cmd.stderr.as_mut() {
-      let text = read_all(stderr);
+      let text = read_available_string_data(stderr);
 
       if !text.is_empty() {
         ACTION_LOGS.push(ActionProgress::Err(text.clone()));
         stderr_lines.push(text);
       }
     }
+
+    thread::sleep(Duration::from_millis(50));
   }
 
   let status = cmd.wait()?;
@@ -201,7 +204,10 @@ pub fn run_git_action_inner(
   })
 }
 
-fn read_all(stderr: &mut ChildStderr) -> String {
+fn read_available_string_data<T>(readable: &mut T) -> String
+where
+  T: Read,
+{
   const BUFFER_SIZE: usize = 100;
 
   let mut all_data: Vec<u8> = Vec::with_capacity(BUFFER_SIZE);
@@ -209,7 +215,7 @@ fn read_all(stderr: &mut ChildStderr) -> String {
   loop {
     let mut buffer = [0; BUFFER_SIZE];
 
-    if let Ok(size) = stderr.read(&mut buffer) {
+    if let Ok(size) = readable.read(&mut buffer) {
       all_data.extend(&buffer[..size]);
 
       if size == BUFFER_SIZE {

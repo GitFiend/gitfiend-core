@@ -22,7 +22,7 @@ use crate::git::queries::refs::head_info::calc_head_info;
 use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
 use crate::git::queries::run::run;
 use crate::git::queries::scan_workspace::scan_workspace;
-use crate::git::queries::search::search::search_commits;
+use crate::git::queries::search::search_commits::search_commits;
 use crate::git::queries::search::search_request::{poll_diff_search, start_diff_search};
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};

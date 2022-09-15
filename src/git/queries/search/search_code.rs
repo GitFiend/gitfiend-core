@@ -1,13 +1,66 @@
 use crate::dprintln;
 use crate::git::git_settings::GIT_PATH;
+use crate::git::git_types::{HunkLine, Patch};
+use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
+use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
 use crate::git::queries::search::{search_cancelled, SearchOptions};
 use crate::git::store::COMMITS;
+use crate::parser::parse_all;
+use serde::Serialize;
 use std::io::Read;
 use std::process::{Command, Stdio};
 use std::thread;
 use std::time::Duration;
+use ts_rs::TS;
 
-pub fn search_diffs_inner2(options: &SearchOptions, search_id: u32) -> Option<String> {
+#[derive(Debug, Clone, Serialize, Eq, PartialEq, TS)]
+#[ts(export)]
+pub struct FileMatch {
+  patch: Patch,
+  lines: Vec<HunkLine>,
+}
+
+// None result means either no results or cancelled.
+pub fn search_commits_for_code(
+  options: &SearchOptions,
+  search_id: u32,
+) -> Option<Vec<(String, Vec<FileMatch>)>> {
+  let result_text = search_code_command(options, search_id)?;
+
+  let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result_text)?;
+
+  let SearchOptions {
+    repo_path,
+    search_text,
+    ..
+  } = options;
+
+  let commits = COMMITS.get_by_key(repo_path)?;
+
+  Some(
+    commit_patches
+      .into_iter()
+      .flat_map(|(id, patches)| {
+        let commit = commits.iter().find(|c| c.id == id)?;
+
+        let matches = patches
+          .into_iter()
+          .flat_map(|patch| {
+            Some(FileMatch {
+              lines: get_matching_hunk_lines(repo_path, commit, &patch, search_text)?,
+              patch,
+            })
+          })
+          .collect::<Vec<FileMatch>>();
+
+        Some((commit.id.clone(), matches))
+      })
+      .collect::<Vec<(String, Vec<FileMatch>)>>(),
+  )
+}
+
+// Just returns the raw text result from Git.
+pub fn search_code_command(options: &SearchOptions, search_id: u32) -> Option<String> {
   dprintln!(
     "Search for text: {}, id: {}, num: {}",
     options.search_text,
@@ -57,17 +110,13 @@ pub fn search_diffs_inner2(options: &SearchOptions, search_id: u32) -> Option<St
     thread::sleep(Duration::from_millis(50));
   }
 
-  let status = cmd.wait().ok()?;
-
-  if status.success() {
+  if cmd.wait().ok()?.success() {
     let mut text = String::new();
 
-    if let Some(mut out) = cmd.stdout {
-      if let Ok(len) = out.read_to_string(&mut text) {
-        if len > 0 {
-          return Some(text);
-        }
-      }
+    let len = cmd.stdout?.read_to_string(&mut text).ok()?;
+
+    if len > 0 {
+      return Some(text);
     }
   }
 

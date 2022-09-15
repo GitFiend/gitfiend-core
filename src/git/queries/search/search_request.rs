@@ -5,9 +5,8 @@ use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::git::queries::search::{
-  get_next_search_id, search_diffs_with_id2, FileMatch, SearchOptions,
-};
+use crate::git::queries::search::search_code::{search_commits_for_code, FileMatch};
+use crate::git::queries::search::{get_next_search_id, SearchOptions};
 use crate::global;
 use crate::util::global::Global;
 
@@ -54,7 +53,7 @@ pub fn start_diff_search(options: &SearchOptions) -> u32 {
   let o = options.clone();
 
   thread::spawn(move || {
-    let result = search_diffs_with_id2(&o, search.search_id);
+    let result = search_commits_for_code(&o, search.search_id);
 
     if let Some(searches) = DIFF_SEARCHES.get() {
       if let Some(initial_search) = searches.get(&search.search_id) {

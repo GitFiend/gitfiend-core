@@ -3,15 +3,26 @@ use crate::git::git_settings::GIT_PATH;
 use crate::git::git_types::{HunkLine, Patch};
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
-use crate::git::queries::search::{search_cancelled, SearchOptions};
+use crate::git::queries::search::search_cancelled;
 use crate::git::store::COMMITS;
 use crate::parser::parse_all;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::process::{Command, Stdio};
 use std::thread;
 use std::time::Duration;
 use ts_rs::TS;
+
+#[derive(Debug, Clone, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CodeSearchOpts {
+  pub repo_path: String,
+  pub search_text: String,
+  pub num_results: usize,
+  // First and last commit ids.
+  pub commit_range: [String; 2],
+}
 
 #[derive(Debug, Clone, Serialize, Eq, PartialEq, TS)]
 #[ts(export)]
@@ -22,14 +33,14 @@ pub struct FileMatch {
 
 // None result means either no results or cancelled.
 pub fn search_commits_for_code(
-  options: &SearchOptions,
+  options: &CodeSearchOpts,
   search_id: u32,
 ) -> Option<Vec<(String, Vec<FileMatch>)>> {
   let result_text = search_code_command(options, search_id)?;
 
   let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &result_text)?;
 
-  let SearchOptions {
+  let CodeSearchOpts {
     repo_path,
     search_text,
     ..
@@ -60,7 +71,7 @@ pub fn search_commits_for_code(
 }
 
 // Just returns the raw text result from Git.
-pub fn search_code_command(options: &SearchOptions, search_id: u32) -> Option<String> {
+pub fn search_code_command(options: &CodeSearchOpts, search_id: u32) -> Option<String> {
   dprintln!(
     "Search for text: {}, id: {}, num: {}",
     options.search_text,
@@ -68,16 +79,17 @@ pub fn search_code_command(options: &SearchOptions, search_id: u32) -> Option<St
     options.num_results
   );
 
-  let SearchOptions {
+  let CodeSearchOpts {
     repo_path,
     search_text,
     num_results,
-    ..
+    commit_range,
   } = options;
 
-  let commits = COMMITS.get_by_key(repo_path)?;
-  let first_commit_id = &commits.first()?.id;
-  let last_commit_id = &commits.last()?.id;
+  let [first_commit_id, last_commit_id] = commit_range;
+  // let commits = COMMITS.get_by_key(repo_path)?;
+  // let first_commit_id = &commits.first()?.id;
+  // let last_commit_id = &commits.last()?.id;
 
   let mut cmd = Command::new(GIT_PATH.as_path())
     .args([

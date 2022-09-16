@@ -5,8 +5,10 @@ use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::git::queries::search::search_code::{search_commits_for_code, FileMatch};
-use crate::git::queries::search::{get_next_search_id, SearchOptions};
+use crate::git::queries::search::get_next_search_id;
+use crate::git::queries::search::search_code::{
+  search_commits_for_code, CodeSearchOpts, FileMatch,
+};
 use crate::global;
 use crate::util::global::Global;
 
@@ -39,8 +41,8 @@ static DIFF_SEARCHES: Global<AHashMap<u32, DiffSearch>> = global!(AHashMap::new(
 This begins a search and returns the search_id. We return before completing so
 we don't block the server, and new searches can cancel the stale ones.
  */
-pub fn start_diff_search(options: &SearchOptions) -> u32 {
-  let SearchOptions {
+pub fn start_diff_search(options: &CodeSearchOpts) -> u32 {
+  let CodeSearchOpts {
     repo_path,
     search_text,
     ..

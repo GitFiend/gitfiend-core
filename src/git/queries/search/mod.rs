@@ -46,8 +46,8 @@ mod tests {
   use std::time::{Duration, Instant};
   use std::{assert_eq, println, thread};
 
-  use crate::git::queries::search::search_code::search_code_command;
-  use crate::git::queries::search::{get_next_search_id, SearchOptions};
+  use crate::git::queries::search::get_next_search_id;
+  use crate::git::queries::search::search_code::{search_code_command, CodeSearchOpts};
   use crate::parser::parse_all;
 
   #[test]
@@ -75,30 +75,33 @@ mod tests {
   #[test]
   fn test_thing() {
     let t1 = thread::spawn(move || {
-      search_diffs(&SearchOptions {
+      search_diffs(&CodeSearchOpts {
         num_results: 500,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
+        commit_range: [String::new(), String::new()],
       })
     });
 
     thread::sleep(Duration::from_millis(10));
 
     let t2 = thread::spawn(move || {
-      search_diffs(&SearchOptions {
+      search_diffs(&CodeSearchOpts {
         num_results: 500,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
+        commit_range: [String::new(), String::new()],
       })
     });
 
     thread::sleep(Duration::from_millis(10));
 
     let t3 = thread::spawn(move || {
-      search_diffs(&SearchOptions {
+      search_diffs(&CodeSearchOpts {
         num_results: 5,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
+        commit_range: [String::new(), String::new()],
       })
     });
 
@@ -113,7 +116,7 @@ mod tests {
     assert!(r3.is_some());
   }
 
-  pub fn search_diffs(options: &SearchOptions) -> Option<Vec<(String, Vec<Patch>)>> {
+  pub fn search_diffs(options: &CodeSearchOpts) -> Option<Vec<(String, Vec<Patch>)>> {
     let search_id = get_next_search_id();
     let result = search_code_command(options, search_id)?;
 

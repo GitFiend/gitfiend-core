@@ -79,7 +79,7 @@ mod tests {
         num_results: 500,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
-        commit_range: [String::new(), String::new()],
+        start_commit_index: 0,
       })
     });
 
@@ -90,7 +90,7 @@ mod tests {
         num_results: 500,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
-        commit_range: [String::new(), String::new()],
+        start_commit_index: 0,
       })
     });
 
@@ -101,7 +101,7 @@ mod tests {
         num_results: 5,
         search_text: "this".to_string(),
         repo_path: ".".to_string(),
-        commit_range: [String::new(), String::new()],
+        start_commit_index: 0,
       })
     });
 

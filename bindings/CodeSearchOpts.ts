@@ -4,5 +4,5 @@ export interface CodeSearchOpts {
   repoPath: string;
   searchText: string;
   numResults: number;
-  commitRange: Array<string>;
+  startCommitIndex: number;
 }

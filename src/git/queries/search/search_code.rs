@@ -20,8 +20,7 @@ pub struct CodeSearchOpts {
   pub repo_path: String,
   pub search_text: String,
   pub num_results: usize,
-  // First and last commit ids.
-  pub commit_range: [String; 2],
+  pub start_commit_index: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Eq, PartialEq, TS)]
@@ -83,18 +82,15 @@ pub fn search_code_command(options: &CodeSearchOpts, search_id: u32) -> Option<S
     repo_path,
     search_text,
     num_results,
-    commit_range,
+    start_commit_index,
   } = options;
-
-  let [first_commit_id, last_commit_id] = commit_range;
-  // let commits = COMMITS.get_by_key(repo_path)?;
-  // let first_commit_id = &commits.first()?.id;
-  // let last_commit_id = &commits.last()?.id;
 
   let mut cmd = Command::new(GIT_PATH.as_path())
     .args([
       "log",
-      &format!("{}..{}", last_commit_id, first_commit_id),
+      // &format!("{}..{}", last_commit_id, first_commit_id),
+      &format!("--skip={}", start_commit_index),
+      // &format!("-S\"{}\"", search_text),
       "-S",
       search_text,
       "--name-status",

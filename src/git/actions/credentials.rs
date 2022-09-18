@@ -42,7 +42,7 @@ pub fn get_ask_pass_path() -> Option<PathBuf> {
       .join("src")
       .join("ask-pass")
       .join("target")
-      .join("debug")
+      .join("release") // Use release version as we typically have no reason to build debug.
       .join(name),
   );
 

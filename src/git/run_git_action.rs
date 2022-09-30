@@ -40,6 +40,7 @@ impl ActionOutput {
 pub enum ActionProgress {
   Out(String),
   Err(String),
+  Error,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -191,6 +192,7 @@ pub fn run_git_action_inner(
     return if has_credential_error(&stderr_lines.join("\n")) {
       Err(Credential)
     } else {
+      ACTION_LOGS.push(ActionProgress::Error);
       Err(ActionError::Git {
         stdout,
         stderr: stderr_lines.join("\n"),

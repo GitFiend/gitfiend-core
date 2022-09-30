@@ -206,7 +206,7 @@ pub fn run_git_action_inner(
   })
 }
 
-fn read_available_string_data<T>(readable: &mut T) -> String
+pub fn read_available_string_data<T>(readable: &mut T) -> String
 where
   T: Read,
 {

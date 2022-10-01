@@ -289,7 +289,16 @@ error: Could not fetch origin
 (These are printed to stderr and failure status code returned)
  */
 
+/*
+GitHub error message:
+
+remote: Support for password authentication was removed on August 13, 2021.
+remote: Please see https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories#cloning-with-https-urls for information on currently recommended modes of authentication.
+fatal: Authentication failed for 'https://github.com/....git/'
+ */
 // TODO: This seems brittle.
 pub fn has_credential_error(stderr: &str) -> bool {
-  stderr.contains("could not read Username") || stderr.contains("Invalid username or password")
+  stderr.contains("could not read Username")
+    || stderr.contains("Invalid username or password")
+    || stderr.contains("Authentication failed for")
 }

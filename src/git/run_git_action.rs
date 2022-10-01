@@ -149,7 +149,7 @@ pub fn run_git_action_inner(
   git_version: GitVersion,
   args: Vec<String>,
 ) -> Result<ActionOutput, ActionError> {
-  // let mut cmd: Child = Command::new(_fake_action_script_path().expect("Fake action script path"))
+  // let mut cmd = Command::new(_fake_action_script_path().expect("Fake action script path"))
   //   .stdout(Stdio::piped())
   //   .stderr(Stdio::piped())
   //   .spawn()?;

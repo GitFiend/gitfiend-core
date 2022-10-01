@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use std::fs::create_dir_all;
 use ts_rs::TS;
 
 use crate::dprintln;
@@ -14,6 +15,10 @@ pub struct CloneOptions {
 }
 
 pub fn clone_repo(options: &CloneOptions) -> u32 {
+  if create_dir_all(&options.repo_path).is_err() {
+    return 0;
+  }
+
   let out = run_git_action(RunGitActionOptions {
     repo_path: &options.repo_path,
     commands: [vec!["clone", "--progress", &options.url]],

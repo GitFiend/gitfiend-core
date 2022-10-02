@@ -49,11 +49,11 @@ macro_rules! handle_request {
 }
 
 #[macro_export]
-macro_rules! async_requests {
+macro_rules! handle_function_request {
   ($request:expr, $($handler:ident),*) => {{
     match $request.url() {
       $(
-      concat!("/", stringify!($handler)) => {
+      concat!("/f/", stringify!($handler)) => {
         $crate::handle_request!($request, $handler);
       },
       )*

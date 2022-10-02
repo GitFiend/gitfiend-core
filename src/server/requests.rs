@@ -1,4 +1,4 @@
-use crate::{async_requests, dprintln};
+use crate::{dprintln, handle_function_request};
 use tiny_http::{Response, Server};
 
 use crate::git::actions::clone::clone_repo;
@@ -29,6 +29,7 @@ use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::run_git_action::{clear_action_logs, get_action_logs, poll_action};
 use crate::git::store::{clear_cache, override_git_home};
+use crate::server::static_files::handle_resource_request;
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -43,51 +44,63 @@ pub fn start_async_server() {
   print_port(server.server_addr().port());
 
   for mut request in server.incoming_requests() {
-    async_requests! {
-      request,
+    println!("{}", request.url());
 
-      // Queries
-      run,
-      load_commits_and_stashes,
-      load_full_config,
-      load_head_commit,
-      load_top_commit_for_branch,
-      commit_ids_between_commits,
-      load_patches,
-      load_hunks,
-      is_merge_in_progress,
-      load_wip_patches,
-      get_un_pushed_commits,
-      load_wip_hunks,
-      load_wip_hunk_lines,
-      git_version,
-      scan_workspace,
-      calc_ref_diffs,
-      start_diff_search,
-      poll_diff_search,
-      load_patches_for_commit,
-      search_commits,
-      commit_is_ancestor,
-      load_conflicted_file,
-      load_commit_image,
-      calc_head_info,
+    match &request.url()[..3] {
+      "/r/" => {
+        handle_resource_request(request);
+      }
+      "/f/" => {
+        handle_function_request! {
+          request,
 
-      // Core messages
-      clear_cache,
-      get_action_logs,
-      clear_action_logs,
-      set_credentials,
-      poll_action,
-      override_git_home,
+          // Queries
+          run,
+          load_commits_and_stashes,
+          load_full_config,
+          load_head_commit,
+          load_top_commit_for_branch,
+          commit_ids_between_commits,
+          load_patches,
+          load_hunks,
+          is_merge_in_progress,
+          load_wip_patches,
+          get_un_pushed_commits,
+          load_wip_hunks,
+          load_wip_hunk_lines,
+          git_version,
+          scan_workspace,
+          calc_ref_diffs,
+          start_diff_search,
+          poll_diff_search,
+          load_patches_for_commit,
+          search_commits,
+          commit_is_ancestor,
+          load_conflicted_file,
+          load_commit_image,
+          calc_head_info,
 
-      // Actions
-      command,
-      stash_changes,
-      fetch_all,
-      clone_repo,
-      create_repo,
-      stash_staged
-    };
+          // Core messages
+          clear_cache,
+          get_action_logs,
+          clear_action_logs,
+          set_credentials,
+          poll_action,
+          override_git_home,
+
+          // Actions
+          command,
+          stash_changes,
+          fetch_all,
+          clone_repo,
+          create_repo,
+          stash_staged
+        }
+      }
+      _ => {
+        dprintln!("Unhandled url {}", request.url());
+      }
+    }
   }
 }
 

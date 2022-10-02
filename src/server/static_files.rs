@@ -9,7 +9,10 @@ use crate::dprintln;
 
 pub fn handle_resource_request(request: Request) -> Option<()> {
   let dir = get_server_dir()?;
-  let file_path = dir.join(&request.url()[3..]);
+
+  // Remove any extra query part.
+  let url = request.url().split('?').next()?;
+  let file_path = dir.join(&url[3..]);
 
   dprintln!("file_path {:?}", file_path);
 

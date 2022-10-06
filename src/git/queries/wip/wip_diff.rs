@@ -4,7 +4,7 @@ use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
-use crate::{and, dprintln, or, rep_parser_sep, until_parser_keep};
+use crate::{and, dprintln, or, rep_parser_sep, until_parser_keep_happy};
 use serde::Deserialize;
 use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;
@@ -78,6 +78,13 @@ fn load_file(repo_path: &String, file_path: &String) -> Option<FileInfo> {
     Ok(text) => {
       let line_ending = detect_new_line(&text);
 
+      if !text.ends_with(&line_ending) {
+        return Some(FileInfo {
+          text: text.add(&line_ending),
+          line_ending,
+        });
+      }
+
       return Some(FileInfo { text, line_ending });
     }
     Err(e) => {
@@ -104,10 +111,10 @@ fn detect_new_line(text: &str) -> String {
 }
 
 const LINE_PARSER: Parser<(String, &str)> =
-  and!(until_parser_keep!(LINE_END), or!(LINE_END, WS_STR));
+  and!(until_parser_keep_happy!(LINE_END), or!(LINE_END, WS_STR));
 
 const LINES_PARSER: Parser<Vec<String>> =
-  rep_parser_sep!(until_parser_keep!(LINE_END), or!(LINE_END, WS_STR));
+  rep_parser_sep!(until_parser_keep_happy!(LINE_END), or!(LINE_END, WS_STR));
 
 // const MANY_LINE_PARSER: Parser<Vec<(String, &str)>> = many!(LINE_PARSER);
 
@@ -248,6 +255,7 @@ export interface AnimationTime {
     let res = parse_all(LINES_PARSER, "asdf\nasdf");
 
     assert!(res.is_some());
+    assert_eq!(res.unwrap().len(), 2);
 
     let res = parse_all(LINES_PARSER, "asdf\nasdf\n");
 

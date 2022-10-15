@@ -41,5 +41,5 @@ fn get_server_dir() -> Option<PathBuf> {
 
   // TODO: Sort this out. May need to unpack all from asar.
   #[cfg(not(debug_assertions))]
-  Some(env::current_exe().ok()?.parent()?.parent()?)
+  Some(env::current_exe().ok()?.parent()?.parent()?.to_path_buf())
 }

@@ -9,6 +9,10 @@ use serde::Deserialize;
 use serde::Serialize;
 use ts_rs::TS;
 
+use crate::git::action_state::{
+  add_stderr_log, add_stdout_log, set_action_done, set_action_error, start_action, ActionState,
+  ACTIONS2,
+};
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::{Credential, IO};
@@ -48,6 +52,7 @@ pub enum ActionProgress {
 #[ts(export)]
 pub enum ActionError {
   Credential,
+  // TODO: This no longer makes sense now that we have ActionState.
   Git { stdout: String, stderr: String },
   IO(String),
 }
@@ -84,6 +89,7 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
   let id = get_next_action_id();
 
   ACTIONS.insert(id, None);
+  start_action(id);
 
   let RunGitActionOptions {
     commands,
@@ -102,7 +108,7 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
     let mut output = ActionOutput::new();
 
     for c in git_commands {
-      let result = run_git_action_inner(repo_path.clone(), git_version.clone(), c);
+      let result = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c);
 
       if let Ok(result) = result {
         output.stdout.push_str(&result.stdout);
@@ -144,7 +150,24 @@ pub fn poll_action(options: &PollOptions) -> Option<Result<ActionOutput, ActionE
   result
 }
 
+// None result means the action doesn't exist.
+pub fn poll_action2(options: &PollOptions) -> Option<ActionState> {
+  let PollOptions { action_id } = options;
+
+  if *action_id == 0 {
+    eprintln!("poll_action2: Requested action id of 0");
+    return None;
+  }
+
+  ACTIONS2.get_by_key(action_id)
+}
+
+pub fn get_action_logs(_: &ReqOptions) -> Vec<ActionProgress> {
+  ACTION_LOGS.get().unwrap_or_default()
+}
+
 pub fn run_git_action_inner(
+  id: u32,
   repo_path: String,
   git_version: GitVersion,
   args: Vec<String>,
@@ -169,6 +192,8 @@ pub fn run_git_action_inner(
 
       if !text.is_empty() {
         ACTION_LOGS.push(ActionProgress::Err(text.clone()));
+        add_stderr_log(id, &text);
+
         stderr_lines.push(text);
       }
     }
@@ -183,6 +208,7 @@ pub fn run_git_action_inner(
   if let Some(mut out) = cmd.stdout.take() {
     if let Ok(len) = out.read_to_string(&mut stdout) {
       if len > 0 {
+        add_stdout_log(id, &stdout);
         ACTION_LOGS.push(ActionProgress::Out(stdout.clone()));
       }
     }
@@ -190,15 +216,29 @@ pub fn run_git_action_inner(
 
   if !status.success() {
     return if has_credential_error(&stderr_lines.join("\n")) {
+      set_action_error(id, Credential);
+
       Err(Credential)
     } else {
       ACTION_LOGS.push(ActionProgress::Error);
+
+      set_action_error(
+        id,
+        ActionError::Git {
+          stdout: stdout.clone(),
+          stderr: stderr_lines.join("\n"),
+        },
+      );
+
       Err(ActionError::Git {
         stdout,
         stderr: stderr_lines.join("\n"),
       })
     };
   }
+
+  // We shouldn't need to add logs to ACTIONS2 here?
+  set_action_done(id);
 
   Ok(ActionOutput {
     stdout,
@@ -269,10 +309,6 @@ fn config_override_arg(git_version: GitVersion) -> Option<[String; 2]> {
     "linux" => Some([String::from("-c"), String::from("credential.helper=store")]),
     _ => None,
   }
-}
-
-pub fn get_action_logs(_: &ReqOptions) -> Vec<ActionProgress> {
-  ACTION_LOGS.get().unwrap_or_default()
 }
 
 pub fn clear_action_logs(_: &ReqOptions) -> Option<()> {

@@ -118,6 +118,8 @@ pub fn run_git_action_inner(
   let mut stderr_lines: Vec<String> = Vec::new();
 
   while let Ok(None) = cmd.try_wait() {
+    thread::sleep(Duration::from_millis(50));
+
     if let Some(stderr) = cmd.stderr.as_mut() {
       let text = read_available_string_data(stderr);
 
@@ -127,8 +129,6 @@ pub fn run_git_action_inner(
         stderr_lines.push(text);
       }
     }
-
-    thread::sleep(Duration::from_millis(50));
   }
 
   let status = cmd.wait()?;

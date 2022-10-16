@@ -116,7 +116,6 @@ pub fn run_git_action_inner(
     .spawn()
   {
     let mut stderr_lines: Vec<String> = Vec::new();
-    let mut stdout_lines: Vec<String> = Vec::new();
 
     while let Ok(None) = cmd.try_wait() {
       thread::sleep(Duration::from_millis(50));
@@ -136,23 +135,11 @@ pub fn run_git_action_inner(
 
         if !text.is_empty() {
           add_stdout_log(id, &text);
-
-          stdout_lines.push(text);
         }
       }
     }
 
     if let Ok(status) = cmd.wait() {
-      let mut stdout = String::new();
-
-      if let Some(mut out) = cmd.stdout.take() {
-        if let Ok(len) = out.read_to_string(&mut stdout) {
-          if len > 0 {
-            add_stdout_log(id, &stdout);
-          }
-        }
-      }
-
       if !status.success() {
         if has_credential_error(&stderr_lines.join("\n")) {
           set_action_error(id, Credential);

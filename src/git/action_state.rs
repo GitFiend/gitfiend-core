@@ -27,11 +27,28 @@ impl ActionState {
   }
 }
 
+// 0 will be treated as an error.
+static ACTION_IDS: Global<u32> = global!(1);
+
+fn get_next_action_id() -> u32 {
+  if let Some(id) = ACTION_IDS.get() {
+    let new_id = id + 1;
+    ACTION_IDS.set(new_id);
+    new_id
+  } else {
+    0
+  }
+}
+
 pub static ACTIONS2: Global<AHashMap<u32, ActionState>> = global!(AHashMap::new());
 
 // TODO: this should probably get the id and return it instead of having separate calls.
-pub fn start_action(id: u32) {
+pub fn start_action() -> u32 {
+  let id = get_next_action_id();
+
   ACTIONS2.insert(id, ActionState::new());
+
+  id
 }
 
 pub fn add_stderr_log(id: u32, text: &str) {
@@ -85,17 +102,17 @@ mod tests {
 
   #[test]
   fn test_start_action() {
-    start_action(3);
+    let id = start_action();
 
-    assert!(ACTIONS2.get_by_key(&3).is_some());
+    assert!(ACTIONS2.get_by_key(&id).is_some());
   }
 
   #[test]
   fn test_add_log() {
-    start_action(3);
-    add_stdout_log(3, "stdout text");
+    let id = start_action();
+    add_stdout_log(id, "stdout text");
 
-    assert!(!ACTIONS2.get_by_key(&3).unwrap().stdout.is_empty());
-    assert_eq!(ACTIONS2.get_by_key(&3).unwrap().stdout[0], "stdout text");
+    assert!(!ACTIONS2.get_by_key(&id).unwrap().stdout.is_empty());
+    assert_eq!(ACTIONS2.get_by_key(&id).unwrap().stdout[0], "stdout text");
   }
 }

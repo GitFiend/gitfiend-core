@@ -80,6 +80,13 @@ where
       data.clear()
     }
   }
+
+  pub fn len(&self) -> Option<usize> {
+    if let Ok(data) = self.data.write() {
+      return Some(data.len());
+    }
+    None
+  }
 }
 
 #[cfg(test)]

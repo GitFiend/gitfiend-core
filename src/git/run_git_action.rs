@@ -1,5 +1,5 @@
 use std::ffi::OsStr;
-use std::io::{Error, Read};
+use std::io::{stderr, Error, Read};
 use std::process::{Command, Stdio};
 use std::{env, thread, time};
 use time::Duration;
@@ -57,9 +57,9 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
 
   thread::spawn(move || {
     for c in git_commands {
-      let result = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c);
+      let ok = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c);
 
-      if result.is_err() {
+      if !ok {
         break;
       }
     }
@@ -102,62 +102,75 @@ pub fn run_git_action_inner(
   repo_path: String,
   git_version: GitVersion,
   args: Vec<String>,
-) -> Result<(), ActionError> {
+) -> bool {
   // let mut cmd = Command::new(_fake_action_script_path().expect("Fake action script path"))
   //   .stdout(Stdio::piped())
   //   .stderr(Stdio::piped())
   //   .spawn()?;
 
-  let mut cmd = Command::new(GIT_PATH.as_path())
+  if let Ok(mut cmd) = Command::new(GIT_PATH.as_path())
     .args(args_with_config(args, git_version))
     .current_dir(repo_path)
     .stderr(Stdio::piped())
     .stdout(Stdio::piped())
-    .spawn()?;
+    .spawn()
+  {
+    let mut stderr_lines: Vec<String> = Vec::new();
+    let mut stdout_lines: Vec<String> = Vec::new();
 
-  let mut stderr_lines: Vec<String> = Vec::new();
+    while let Ok(None) = cmd.try_wait() {
+      thread::sleep(Duration::from_millis(50));
 
-  while let Ok(None) = cmd.try_wait() {
-    thread::sleep(Duration::from_millis(50));
+      if let Some(stderr) = cmd.stderr.as_mut() {
+        let text = read_available_string_data(stderr);
 
-    if let Some(stderr) = cmd.stderr.as_mut() {
-      let text = read_available_string_data(stderr);
+        if !text.is_empty() {
+          add_stderr_log(id, &text);
 
-      if !text.is_empty() {
-        add_stderr_log(id, &text);
+          stderr_lines.push(text);
+        }
+      }
 
-        stderr_lines.push(text);
+      if let Some(stdout) = cmd.stdout.as_mut() {
+        let text = read_available_string_data(stdout);
+
+        if !text.is_empty() {
+          add_stdout_log(id, &text);
+
+          stdout_lines.push(text);
+        }
       }
     }
-  }
 
-  let status = cmd.wait()?;
+    if let Ok(status) = cmd.wait() {
+      let mut stdout = String::new();
 
-  let mut stdout = String::new();
-
-  if let Some(mut out) = cmd.stdout.take() {
-    if let Ok(len) = out.read_to_string(&mut stdout) {
-      if len > 0 {
-        add_stdout_log(id, &stdout);
+      if let Some(mut out) = cmd.stdout.take() {
+        if let Ok(len) = out.read_to_string(&mut stdout) {
+          if len > 0 {
+            add_stdout_log(id, &stdout);
+          }
+        }
       }
-    }
-  }
 
-  if !status.success() {
-    return if has_credential_error(&stderr_lines.join("\n")) {
-      set_action_error(id, Credential);
+      if !status.success() {
+        if has_credential_error(&stderr_lines.join("\n")) {
+          set_action_error(id, Credential);
+        } else {
+          set_action_error(id, ActionError::Git);
+        }
+        return false;
+      }
 
-      Err(Credential)
+      set_action_done(id);
     } else {
-      set_action_error(id, ActionError::Git);
-
-      Err(ActionError::Git)
-    };
+      set_action_error(id, IO(String::from("Failed to get status on cmd.wait()")));
+    }
+  } else {
+    set_action_error(id, IO(String::from("Failed to spawn command")));
   }
 
-  set_action_done(id);
-
-  Ok(())
+  true
 }
 
 fn read_available_string_data<T>(readable: &mut T) -> String

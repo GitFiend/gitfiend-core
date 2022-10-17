@@ -1,5 +1,5 @@
 use std::ffi::OsStr;
-use std::io::{stderr, stdout, Error, Read};
+use std::io::{Error, Read};
 use std::process::{Command, Stdio};
 use std::{env, thread, time};
 use time::Duration;
@@ -115,8 +115,6 @@ pub fn run_git_action_inner(
     .stdout(Stdio::piped())
     .spawn()
   {
-    // let mut stderr_lines: Vec<String> = Vec::new();
-
     while let Ok(None) = cmd.try_wait() {
       thread::sleep(Duration::from_millis(50));
 
@@ -142,35 +140,20 @@ pub fn run_git_action_inner(
           let _ = t2.join();
         }
       }
-
-      // if let Some(stderr) = cmd.stderr.as_mut() {
-      //   let text = read_available_string_data(stderr);
-      //
-      //   if !text.is_empty() {
-      //     add_stderr_log(id, &text);
-      //
-      //     stderr_lines.push(text);
-      //   }
-      // }
-      //
-      // if let Some(stdout) = cmd.stdout.as_mut() {
-      //   let text = read_available_string_data(stdout);
-      //
-      //   if !text.is_empty() {
-      //     add_stdout_log(id, &text);
-      //   }
-      // }
     }
 
     if let Ok(status) = cmd.wait() {
       if !status.success() {
-        let action = ACTIONS2.get_by_key(&id).unwrap();
-
-        if has_credential_error(&action.stderr.join("\n")) {
-          set_action_error(id, Credential);
+        if let Some(action) = ACTIONS2.get_by_key(&id) {
+          if has_credential_error(&action.stderr.join("\n")) {
+            set_action_error(id, Credential);
+          } else {
+            set_action_error(id, ActionError::Git);
+          }
         } else {
-          set_action_error(id, ActionError::Git);
+          set_action_error(id, IO(String::from("Failed to read ACTIONS to stderr")));
         }
+
         return false;
       }
 
@@ -196,9 +179,7 @@ where
   loop {
     let mut buffer = [0; BUFFER_SIZE];
 
-    println!("before read");
     if let Ok(size) = readable.read(&mut buffer) {
-      println!("after read {}", size);
       all_data.extend(&buffer[..size]);
 
       if size == BUFFER_SIZE {

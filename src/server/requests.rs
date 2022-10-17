@@ -44,7 +44,7 @@ pub fn start_async_server() {
   print_port(server.server_addr().port());
 
   for mut request in server.incoming_requests() {
-    println!("{}", request.url());
+    // println!("{}", request.url());
 
     match &request.url()[..3] {
       "/r/" => {

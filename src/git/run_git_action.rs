@@ -128,17 +128,17 @@ pub fn run_git_action_inner(
         });
 
         if let Some(mut stderr) = cmd.stderr.take() {
-          let t2 = thread::spawn(move || {
-            let text = read_available_string_data(&mut stderr);
+          // let t2 = thread::spawn(move || {
+          let text = read_available_string_data(&mut stderr);
 
-            if !text.is_empty() {
-              add_stderr_log(id, &text);
-            }
-          });
+          if !text.is_empty() {
+            add_stderr_log(id, &text);
+          }
+          // });
 
-          let _ = t1.join();
-          let _ = t2.join();
+          // let _ = t2.join();
         }
+        let _ = t1.join();
       }
     }
 

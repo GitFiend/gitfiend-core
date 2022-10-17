@@ -1,5 +1,5 @@
 use std::ffi::OsStr;
-use std::io::{stderr, Error, Read};
+use std::io::{stderr, stdout, Error, Read};
 use std::process::{Command, Stdio};
 use std::{env, thread, time};
 use time::Duration;
@@ -120,26 +120,28 @@ pub fn run_git_action_inner(
     while let Ok(None) = cmd.try_wait() {
       thread::sleep(Duration::from_millis(50));
 
-      let mut stdout = cmd.stdout.take().unwrap();
-      let t1 = thread::spawn(move || {
-        let text = read_available_string_data(&mut stdout);
+      if let Some(mut stdout) = cmd.stdout.take() {
+        let t1 = thread::spawn(move || {
+          let text = read_available_string_data(&mut stdout);
 
-        if !text.is_empty() {
-          add_stdout_log(id, &text);
+          if !text.is_empty() {
+            add_stdout_log(id, &text);
+          }
+        });
+
+        if let Some(mut stderr) = cmd.stderr.take() {
+          let t2 = thread::spawn(move || {
+            let text = read_available_string_data(&mut stderr);
+
+            if !text.is_empty() {
+              add_stderr_log(id, &text);
+            }
+          });
+
+          let _ = t1.join();
+          let _ = t2.join();
         }
-      });
-
-      let mut stderr = cmd.stderr.take().unwrap();
-      let t2 = thread::spawn(move || {
-        let text = read_available_string_data(&mut stderr);
-
-        if !text.is_empty() {
-          add_stderr_log(id, &text);
-        }
-      });
-
-      let _ = t1.join();
-      let _ = t2.join();
+      }
 
       // if let Some(stderr) = cmd.stderr.as_mut() {
       //   let text = read_available_string_data(stderr);

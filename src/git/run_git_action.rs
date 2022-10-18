@@ -56,12 +56,19 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
   let repo_path = repo_path.to_string();
 
   thread::spawn(move || {
+    let mut failed = false;
+
     for c in git_commands {
       let ok = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c);
 
       if !ok {
+        failed = true;
         break;
       }
+    }
+
+    if !failed {
+      set_action_done(id);
     }
   });
 
@@ -117,29 +124,6 @@ pub fn run_git_action_inner(
   {
     read_action_output(&mut cmd, id);
 
-    // while let Ok(None) = cmd.try_wait() {
-    //   thread::sleep(Duration::from_millis(50));
-    //
-    //   if let Some(mut stdout) = cmd.stdout.take() {
-    //     let t1 = thread::spawn(move || {
-    //       let text = read_available_string_data(&mut stdout);
-    //
-    //       if !text.is_empty() {
-    //         add_stdout_log(id, &text);
-    //       }
-    //     });
-    //
-    //     if let Some(mut stderr) = cmd.stderr.take() {
-    //       let text = read_available_string_data(&mut stderr);
-    //
-    //       if !text.is_empty() {
-    //         add_stderr_log(id, &text);
-    //       }
-    //     }
-    //     let _ = t1.join();
-    //   }
-    // }
-
     if let Ok(status) = cmd.wait() {
       if !status.success() {
         if let Some(action) = ACTIONS2.get_by_key(&id) {
@@ -155,7 +139,7 @@ pub fn run_git_action_inner(
         return false;
       }
 
-      set_action_done(id);
+      // set_action_done(id);
     } else {
       set_action_error(id, IO(String::from("Failed to get status on cmd.wait()")));
     }
@@ -167,29 +151,7 @@ pub fn run_git_action_inner(
 }
 
 fn read_action_output(cmd: &mut Child, id: u32) {
-  // let mut read = || {
-  //   if let Some(mut stdout) = cmd.stdout.take() {
-  //     let t1 = thread::spawn(move || {
-  //       let text = read_available_string_data(&mut stdout);
-  //
-  //       if !text.is_empty() {
-  //         add_stdout_log(id, &text);
-  //       }
-  //     });
-  //
-  //     if let Some(mut stderr) = cmd.stderr.take() {
-  //       let text = read_available_string_data(&mut stderr);
-  //
-  //       if !text.is_empty() {
-  //         add_stderr_log(id, &text);
-  //       }
-  //     }
-  //     let _ = t1.join();
-  //   }
-  // };
-
   while let Ok(None) = cmd.try_wait() {
-    // read();
     if let Some(mut stdout) = cmd.stdout.take() {
       let t1 = thread::spawn(move || {
         let text = read_available_string_data(&mut stdout);
@@ -212,7 +174,6 @@ fn read_action_output(cmd: &mut Child, id: u32) {
     thread::sleep(Duration::from_millis(50));
   }
 
-  // read();
   if let Some(mut stdout) = cmd.stdout.take() {
     let t1 = thread::spawn(move || {
       let text = read_available_string_data(&mut stdout);

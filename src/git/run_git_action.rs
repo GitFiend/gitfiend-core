@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 use std::io::{Error, Read};
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::{env, thread, time};
 use time::Duration;
 
@@ -115,32 +115,30 @@ pub fn run_git_action_inner(
     .stdout(Stdio::piped())
     .spawn()
   {
-    while let Ok(None) = cmd.try_wait() {
-      thread::sleep(Duration::from_millis(50));
+    read_action_output(&mut cmd, id);
 
-      if let Some(mut stdout) = cmd.stdout.take() {
-        let t1 = thread::spawn(move || {
-          let text = read_available_string_data(&mut stdout);
-
-          if !text.is_empty() {
-            add_stdout_log(id, &text);
-          }
-        });
-
-        if let Some(mut stderr) = cmd.stderr.take() {
-          // let t2 = thread::spawn(move || {
-          let text = read_available_string_data(&mut stderr);
-
-          if !text.is_empty() {
-            add_stderr_log(id, &text);
-          }
-          // });
-
-          // let _ = t2.join();
-        }
-        let _ = t1.join();
-      }
-    }
+    // while let Ok(None) = cmd.try_wait() {
+    //   thread::sleep(Duration::from_millis(50));
+    //
+    //   if let Some(mut stdout) = cmd.stdout.take() {
+    //     let t1 = thread::spawn(move || {
+    //       let text = read_available_string_data(&mut stdout);
+    //
+    //       if !text.is_empty() {
+    //         add_stdout_log(id, &text);
+    //       }
+    //     });
+    //
+    //     if let Some(mut stderr) = cmd.stderr.take() {
+    //       let text = read_available_string_data(&mut stderr);
+    //
+    //       if !text.is_empty() {
+    //         add_stderr_log(id, &text);
+    //       }
+    //     }
+    //     let _ = t1.join();
+    //   }
+    // }
 
     if let Ok(status) = cmd.wait() {
       if !status.success() {
@@ -166,6 +164,73 @@ pub fn run_git_action_inner(
   }
 
   true
+}
+
+fn read_action_output(cmd: &mut Child, id: u32) {
+  // let mut read = || {
+  //   if let Some(mut stdout) = cmd.stdout.take() {
+  //     let t1 = thread::spawn(move || {
+  //       let text = read_available_string_data(&mut stdout);
+  //
+  //       if !text.is_empty() {
+  //         add_stdout_log(id, &text);
+  //       }
+  //     });
+  //
+  //     if let Some(mut stderr) = cmd.stderr.take() {
+  //       let text = read_available_string_data(&mut stderr);
+  //
+  //       if !text.is_empty() {
+  //         add_stderr_log(id, &text);
+  //       }
+  //     }
+  //     let _ = t1.join();
+  //   }
+  // };
+
+  while let Ok(None) = cmd.try_wait() {
+    // read();
+    if let Some(mut stdout) = cmd.stdout.take() {
+      let t1 = thread::spawn(move || {
+        let text = read_available_string_data(&mut stdout);
+
+        if !text.is_empty() {
+          add_stdout_log(id, &text);
+        }
+      });
+
+      if let Some(mut stderr) = cmd.stderr.take() {
+        let text = read_available_string_data(&mut stderr);
+
+        if !text.is_empty() {
+          add_stderr_log(id, &text);
+        }
+      }
+      let _ = t1.join();
+    }
+
+    thread::sleep(Duration::from_millis(50));
+  }
+
+  // read();
+  if let Some(mut stdout) = cmd.stdout.take() {
+    let t1 = thread::spawn(move || {
+      let text = read_available_string_data(&mut stdout);
+
+      if !text.is_empty() {
+        add_stdout_log(id, &text);
+      }
+    });
+
+    if let Some(mut stderr) = cmd.stderr.take() {
+      let text = read_available_string_data(&mut stderr);
+
+      if !text.is_empty() {
+        add_stderr_log(id, &text);
+      }
+    }
+    let _ = t1.join();
+  }
 }
 
 fn read_available_string_data<T>(readable: &mut T) -> String

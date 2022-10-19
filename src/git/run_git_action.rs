@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Error, Read};
-use std::process::{Child, Command, Stdio};
+use std::process::{Command, Stdio};
 use std::{env, thread, time};
 use time::Duration;
 
@@ -15,7 +15,7 @@ use crate::git::action_state::{
 };
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
-use crate::git::run_git_action::ActionError::{Credential, IO};
+use crate::git::run_git_action::ActionError::{Credential, Git, IO};
 use crate::git::store::GIT_VERSION;
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -59,9 +59,8 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
     let mut failed = false;
 
     for c in git_commands {
-      let ok = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c);
-
-      if !ok {
+      if let Err(e) = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c) {
+        set_action_error(id, e);
         failed = true;
         break;
       }
@@ -95,7 +94,7 @@ pub fn poll_action2(options: &PollOptions) -> Option<ActionState> {
     if action.done {
       ACTIONS2.remove(action_id);
 
-      dprintln!("Num actions {:?}", ACTIONS2.len());
+      // dprintln!("Num actions {:?}", ACTIONS2.len());
     }
 
     return Some(action);
@@ -104,116 +103,75 @@ pub fn poll_action2(options: &PollOptions) -> Option<ActionState> {
   None
 }
 
+// let mut cmd = Command::new(_fake_action_script_path().expect("Fake action script path"))
+//   .stdout(Stdio::piped())
+//   .stderr(Stdio::piped())
+//   .spawn()?;
+
 pub fn run_git_action_inner(
   id: u32,
   repo_path: String,
   git_version: GitVersion,
   args: Vec<String>,
-) -> bool {
-  // let mut cmd = Command::new(_fake_action_script_path().expect("Fake action script path"))
-  //   .stdout(Stdio::piped())
-  //   .stderr(Stdio::piped())
-  //   .spawn()?;
-
-  if let Ok(mut cmd) = Command::new(GIT_PATH.as_path())
+) -> Result<(), ActionError> {
+  let mut cmd = Command::new(GIT_PATH.as_path())
     .args(args_with_config(args, git_version))
     .current_dir(repo_path)
     .stderr(Stdio::piped())
     .stdout(Stdio::piped())
-    .spawn()
-  {
-    let out = BufReader::new(cmd.stdout.take().unwrap());
-    let mut err = BufReader::new(cmd.stderr.take().unwrap());
+    .spawn()?;
 
-    let thread = thread::spawn(move || {
-      while let Ok(None) = cmd.try_wait() {
-        thread::sleep(Duration::from_millis(50));
+  let out = BufReader::new(
+    cmd
+      .stdout
+      .take()
+      .ok_or_else(|| IO("stdout.take() failed".to_string()))?,
+  );
+  let mut err = BufReader::new(
+    cmd
+      .stderr
+      .take()
+      .ok_or_else(|| IO("stderr.take() failed".to_string()))?,
+  );
 
-        let text = read_available_string_data(&mut err);
+  let thread = thread::spawn(move || {
+    while let Ok(None) = cmd.try_wait() {
+      thread::sleep(Duration::from_millis(50));
 
-        if !text.is_empty() {
-          add_stderr_log(id, &text);
-        }
+      let text = read_available_string_data(&mut err);
+
+      if !text.is_empty() {
+        add_stderr_log(id, &text);
       }
-
-      cmd
-    });
-
-    out.lines().for_each(|line| {
-      add_stdout_log(id, &line.unwrap());
-    });
-
-    let mut cmd = thread.join().unwrap();
-
-    if let Ok(status) = cmd.wait() {
-      if !status.success() {
-        if let Some(action) = ACTIONS2.get_by_key(&id) {
-          if has_credential_error(&action.stderr.join("\n")) {
-            set_action_error(id, Credential);
-          } else {
-            set_action_error(id, ActionError::Git);
-          }
-        } else {
-          set_action_error(id, IO(String::from("Failed to read ACTIONS to stderr")));
-        }
-
-        return false;
-      }
-
-      // set_action_done(id);
-    } else {
-      set_action_error(id, IO(String::from("Failed to get status on cmd.wait()")));
     }
-  } else {
-    set_action_error(id, IO(String::from("Failed to spawn command")));
+
+    cmd
+  });
+
+  out.lines().for_each(|line| {
+    if let Ok(line) = line {
+      add_stdout_log(id, &line);
+    }
+  });
+
+  if let Ok(mut cmd) = thread.join() {
+    let status = cmd.wait()?;
+
+    if !status.success() {
+      let action = ACTIONS2
+        .get_by_key(&id)
+        .ok_or_else(|| IO(format!("Failed to load action {} from ACTIONS", id)))?;
+
+      return if has_credential_error(&action.stderr.join("\n")) {
+        Err(Credential)
+      } else {
+        Err(Git)
+      };
+    }
   }
 
-  true
+  Ok(())
 }
-
-// fn read_action_output(cmd: &mut Child, id: u32) {
-//   while let Ok(None) = cmd.try_wait() {
-//     if let Some(mut stdout) = cmd.stdout.take() {
-//       let t1 = thread::spawn(move || {
-//         let text = read_available_string_data(&mut stdout);
-//
-//         if !text.is_empty() {
-//           add_stdout_log(id, &text);
-//         }
-//       });
-//
-//       if let Some(mut stderr) = cmd.stderr.take() {
-//         let text = read_available_string_data(&mut stderr);
-//
-//         if !text.is_empty() {
-//           add_stderr_log(id, &text);
-//         }
-//       }
-//       let _ = t1.join();
-//     }
-//
-//     thread::sleep(Duration::from_millis(50));
-//   }
-//
-//   if let Some(mut stdout) = cmd.stdout.take() {
-//     let t1 = thread::spawn(move || {
-//       let text = read_available_string_data(&mut stdout);
-//
-//       if !text.is_empty() {
-//         add_stdout_log(id, &text);
-//       }
-//     });
-//
-//     if let Some(mut stderr) = cmd.stderr.take() {
-//       let text = read_available_string_data(&mut stderr);
-//
-//       if !text.is_empty() {
-//         add_stderr_log(id, &text);
-//       }
-//     }
-//     let _ = t1.join();
-//   }
-// }
 
 fn read_available_string_data<T>(readable: &mut T) -> String
 where

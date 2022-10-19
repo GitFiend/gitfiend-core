@@ -127,12 +127,10 @@ pub fn run_git_action_inner(
       .take()
       .ok_or_else(|| IO("stdout.take() failed".to_string()))?,
   );
-  let mut err = BufReader::new(
-    cmd
-      .stderr
-      .take()
-      .ok_or_else(|| IO("stderr.take() failed".to_string()))?,
-  );
+  let mut err = cmd
+    .stderr
+    .take()
+    .ok_or_else(|| IO("stderr.take() failed".to_string()))?;
 
   let thread = thread::spawn(move || {
     while let Ok(None) = cmd.try_wait() {

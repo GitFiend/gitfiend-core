@@ -11,7 +11,7 @@ use ts_rs::TS;
 use crate::dprintln;
 use crate::git::action_state::{
   add_stderr_log, add_stdout_log, set_action_done, set_action_error, start_action, ActionState,
-  ACTIONS2,
+  ACTIONS,
 };
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
@@ -90,9 +90,9 @@ pub fn poll_action2(options: &PollOptions) -> Option<ActionState> {
     return None;
   }
 
-  if let Some(action) = ACTIONS2.get_by_key(action_id) {
+  if let Some(action) = ACTIONS.get_by_key(action_id) {
     if action.done {
-      ACTIONS2.remove(action_id);
+      ACTIONS.remove(action_id);
 
       // dprintln!("Num actions {:?}", ACTIONS2.len());
     }
@@ -156,7 +156,7 @@ pub fn run_git_action_inner(
     let status = cmd.wait()?;
 
     if !status.success() {
-      let action = ACTIONS2
+      let action = ACTIONS
         .get_by_key(&id)
         .ok_or_else(|| IO(format!("Failed to load action {} from ACTIONS", id)))?;
 

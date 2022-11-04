@@ -10,7 +10,7 @@ use std::env;
 
 static COMMITS: Global<AHashMap<String, Vec<Commit>>> = global!(AHashMap::new());
 
-pub static PATCHES: Global<(String, HashMap<String, Vec<Patch>>)> =
+static PATCHES: Global<(String, HashMap<String, Vec<Patch>>)> =
   global!((String::new(), HashMap::new()));
 
 pub static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
@@ -25,6 +25,20 @@ pub fn insert_commits(repo_path: &str, commits: &Vec<Commit>) {
 
 pub fn get_commits(repo_path: &str) -> Option<Vec<Commit>> {
   COMMITS.get_by_key(&repo_path.to_string())
+}
+
+pub fn insert_patches(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) {
+  PATCHES.set((repo_path.to_string(), patches.to_owned()));
+}
+
+pub fn get_patches(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
+  if let Some((path, patches)) = PATCHES.get() {
+    if path == repo_path && !patches.is_empty() {
+      return Some(patches);
+    }
+  }
+
+  None
 }
 
 pub fn clear_cache(_: &ReqOptions) {

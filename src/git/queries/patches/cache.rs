@@ -11,7 +11,7 @@ use crate::dprintln;
 use directories::ProjectDirs;
 
 use crate::git::git_types::Patch;
-use crate::git::store::PATCHES;
+use crate::git::store;
 
 pub fn write_patches_cache(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) -> Option<()> {
   let cache_dir = get_cache_dir()?;
@@ -21,7 +21,7 @@ pub fn write_patches_cache(repo_path: &str, patches: &HashMap<String, Vec<Patch>
 
   let now = Instant::now();
 
-  PATCHES.set((repo_path.to_string(), patches.clone()));
+  store::insert_patches(repo_path, patches);
 
   dprintln!(
     "Took {}ms to put patches in temp cache (write).",
@@ -32,10 +32,8 @@ pub fn write_patches_cache(repo_path: &str, patches: &HashMap<String, Vec<Patch>
 }
 
 pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
-  if let Some((rp, patches)) = PATCHES.get() {
-    if rp == repo_path && !patches.is_empty() {
-      return Some(patches);
-    }
+  if let Some(patches) = store::get_patches(repo_path) {
+    return Some(patches);
   }
 
   let cache_dir = get_cache_dir()?;
@@ -50,7 +48,7 @@ pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>
   if let Some(patches) = maybe_patches {
     let now = Instant::now();
 
-    PATCHES.set((repo_path.to_string(), patches.clone()));
+    store::insert_patches(repo_path, &patches);
     dprintln!(
       "Took {}ms to put patches in temp cache (load).",
       now.elapsed().as_millis()
@@ -80,9 +78,7 @@ fn generate_file_name(repo_path: &str) -> String {
     .map(|p| p.to_str().unwrap_or(""))
     .collect::<Vec<&str>>()
     .join("")
-    .replace('\\', "")
-    .replace(':', "")
-    .replace('/', "");
+    .replace(['\\', ':', '/'], "");
 
   format!("{}.json", id)
 }

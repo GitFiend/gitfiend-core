@@ -6,7 +6,7 @@ use crate::git::run_git::RunGitOptions;
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct WipPatchInfo {
   pub old_file: String,
   pub new_file: String,

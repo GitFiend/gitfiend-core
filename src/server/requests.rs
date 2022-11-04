@@ -88,10 +88,7 @@ pub fn start_async_server() {
 
           // Core messages
           clear_cache,
-          // get_action_logs,
-          // clear_action_logs,
           set_credentials,
-          // poll_action,
           poll_action2,
           override_git_home,
 

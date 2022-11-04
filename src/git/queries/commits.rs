@@ -17,7 +17,7 @@ use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
 use crate::git::run_git::{run_git, RunGitOptions};
-use crate::git::store::COMMITS;
+use crate::git::store;
 use crate::parser::parse_all;
 use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
 
@@ -86,7 +86,7 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
   } = options;
 
   if *fast {
-    if let Some(commits) = COMMITS.get_by_key(repo_path) {
+    if let Some(commits) = store::get_commits(repo_path) {
       return Some(apply_commit_filters(repo_path, commits, filters));
     }
   }
@@ -133,7 +133,8 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
     now.elapsed().as_millis()
   );
 
-  COMMITS.insert(repo_path.clone(), commits.clone());
+  // COMMITS.insert(repo_path.clone(), commits.clone());
+  store::insert_commits(repo_path, &commits);
 
   let new_options = ReqCommitsOptions {
     repo_path: repo_path.clone(),
@@ -196,7 +197,7 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String
     commit_id2,
   } = options;
 
-  if let Some(commits) = COMMITS.get_by_key(repo_path) {
+  if let Some(commits) = store::get_commits(repo_path) {
     let commit_map: AHashMap<String, Commit> =
       commits.into_iter().map(|c| (c.id.clone(), c)).collect();
 
@@ -251,7 +252,7 @@ pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
 fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
   let now = Instant::now();
 
-  let commits = COMMITS.get_by_key(&options.repo_path)?;
+  let commits = store::get_commits(&options.repo_path)?;
   // let commits = load_commits_from_store(&options.repo_path, &store)?;
 
   let commit_map: AHashMap<String, Commit> = commits
@@ -314,7 +315,7 @@ pub fn commit_is_ancestor(options: &CommitAncestorOpts) -> bool {
     ancestor_candidate_id,
   } = options;
 
-  if let Some(commits) = COMMITS.get_by_key(repo_path) {
+  if let Some(commits) = store::get_commits(repo_path) {
     let commits = get_commit_map_cloned(&commits);
 
     if let Some(commit) = commits.get(commit_id) {

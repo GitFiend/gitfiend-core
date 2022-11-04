@@ -8,7 +8,7 @@ use ahash::AHashMap;
 use std::collections::HashMap;
 use std::env;
 
-pub static COMMITS: Global<AHashMap<String, Vec<Commit>>> = global!(AHashMap::new());
+static COMMITS: Global<AHashMap<String, Vec<Commit>>> = global!(AHashMap::new());
 
 pub static PATCHES: Global<(String, HashMap<String, Vec<Patch>>)> =
   global!((String::new(), HashMap::new()));
@@ -19,8 +19,16 @@ pub static CONFIG: Global<GitConfig> = global!(GitConfig::new());
 
 pub static GIT_VERSION: Global<GitVersion> = global!(GitVersion::new());
 
+pub fn insert_commits(repo_path: &str, commits: &Vec<Commit>) {
+  COMMITS.insert(repo_path.to_string(), commits.to_owned());
+}
+
+pub fn get_commits(repo_path: &str) -> Option<Vec<Commit>> {
+  COMMITS.get_by_key(&repo_path.to_string())
+}
+
 pub fn clear_cache(_: &ReqOptions) {
-  COMMITS.clear();
+  // COMMITS.clear();
   clear_completed_searches();
 
   dprintln!("Cleared cache.");

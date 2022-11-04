@@ -8,9 +8,8 @@ use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
 use crate::git::queries::COMMIT_0_ID;
-use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
-use crate::git::store::COMMITS;
+use crate::git::{run_git, store};
 use crate::parser::parse_all;
 use crate::server::git_request::ReqCommitsOptions;
 
@@ -19,7 +18,7 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
 
   let now = Instant::now();
 
-  let commits = COMMITS.get_by_key(repo_path)?;
+  let commits = store::get_commits(repo_path)?;
 
   let mut commits_without_patches: Vec<&Commit> = Vec::new();
   let mut stashes_or_merges_without_patches: Vec<&Commit> = Vec::new();

@@ -8,7 +8,8 @@ use crate::git::queries::commits::{
   load_head_commit, load_top_commit_for_branch, TopCommitOptions,
 };
 use crate::git::queries::refs::ref_diffs::{calc_remote_ref_diffs, get_ref_info_map_from_commits};
-use crate::git::store::{COMMITS, CONFIG};
+use crate::git::store;
+use crate::git::store::{CONFIG};
 use crate::server::git_request::ReqOptions;
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -27,7 +28,7 @@ pub struct HeadInfo {
 pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
   let ReqOptions { repo_path } = options;
 
-  let commits = COMMITS.get_by_key(repo_path)?;
+  let commits = store::get_commits(repo_path)?;
 
   if commits.is_empty() {
     return None;

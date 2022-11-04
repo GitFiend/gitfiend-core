@@ -7,7 +7,7 @@ use crate::git::git_types::Patch;
 use crate::git::queries::patches::cache::load_patches_cache;
 use crate::git::queries::search::search_code::FileMatch;
 use crate::git::queries::search::SearchOptions;
-use crate::git::store::COMMITS;
+use crate::git::store;
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Hash, TS)]
 #[ts(export)]
@@ -36,7 +36,7 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
     num_results,
   } = options;
 
-  let commits = COMMITS.get_by_key(repo_path)?;
+  let commits = store::get_commits(repo_path)?;
   let patches = load_patches_cache(repo_path)?;
   let search_text = search_text.to_lowercase();
   let mut results: Vec<CoreSearchResult> = Vec::new();

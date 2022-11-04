@@ -1,6 +1,7 @@
 use std::hash::Hash;
 use std::sync::RwLock;
 
+use crate::git::git_types::Commit;
 use ahash::AHashMap;
 use once_cell::sync::Lazy;
 

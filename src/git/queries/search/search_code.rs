@@ -4,7 +4,7 @@ use crate::git::git_types::{HunkLine, Patch};
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
 use crate::git::queries::search::search_cancelled;
-use crate::git::store::COMMITS;
+use crate::git::store;
 use crate::parser::parse_all;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
@@ -45,7 +45,7 @@ pub fn search_commits_for_code(
     ..
   } = options;
 
-  let commits = COMMITS.get_by_key(repo_path)?;
+  let commits = store::get_commits(repo_path)?;
 
   Some(
     commit_patches

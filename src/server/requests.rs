@@ -39,9 +39,15 @@ const PORT: u16 = 0;
 const ADDRESS: fn() -> String = || format!("127.0.0.1:{}", PORT);
 
 pub fn start_async_server() {
-  let server = Server::http(ADDRESS()).unwrap();
+  let server = Server::http(ADDRESS()).expect("Started server");
 
-  print_port(server.server_addr().port());
+  print_port(
+    server
+      .server_addr()
+      .to_ip()
+      .expect("Get port for printing")
+      .port(),
+  );
 
   for mut request in server.incoming_requests() {
     // dprintln!("{}", request.url());
@@ -106,7 +112,7 @@ pub fn start_async_server() {
 }
 
 fn print_port(port: u16) {
-  // This is parsed by the renderer. Expected to be formatted like:
+  // This is required by the renderer. Expected to be formatted like:
   // PORT:12345
   println!("PORT:{}", port);
 }

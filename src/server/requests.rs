@@ -16,7 +16,6 @@ use crate::git::queries::commits::{
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::hunks::images::load_commit_image;
 use crate::git::queries::hunks::load_hunks::load_hunks;
-use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::patches::patches_for_commit::load_patches_for_commit;
 use crate::git::queries::refs::head_info::calc_head_info;
 use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
@@ -28,7 +27,7 @@ use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::run_git_action::poll_action2;
-use crate::git::store::{clear_cache, override_git_home};
+use crate::git::store::{clear_all_caches, clear_cache, override_git_home};
 use crate::server::static_files::handle_resource_request;
 
 #[cfg(debug_assertions)]
@@ -67,7 +66,7 @@ pub fn start_async_server() {
           load_head_commit,
           load_top_commit_for_branch,
           commit_ids_between_commits,
-          load_patches,
+          // load_patches,
           load_hunks,
           is_merge_in_progress,
           load_wip_patches,
@@ -88,6 +87,7 @@ pub fn start_async_server() {
 
           // Core messages
           clear_cache,
+          clear_all_caches,
           set_credentials,
           poll_action2,
           override_git_home,

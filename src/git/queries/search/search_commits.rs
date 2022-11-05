@@ -5,6 +5,7 @@ use ts_rs::TS;
 
 use crate::git::git_types::Patch;
 use crate::git::queries::patches::cache::load_patches_cache;
+use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::search::search_code::FileMatch;
 use crate::git::queries::search::SearchOptions;
 use crate::git::store;
@@ -37,7 +38,7 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
   } = options;
 
   let commits = store::get_commits(repo_path)?;
-  let patches = load_patches_cache(repo_path)?;
+  let patches = load_patches(repo_path, &commits)?;
   let search_text = search_text.to_lowercase();
   let mut results: Vec<CoreSearchResult> = Vec::new();
 

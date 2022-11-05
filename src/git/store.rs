@@ -1,9 +1,10 @@
 use crate::git::git_types::{Commit, GitConfig, Patch};
 use crate::git::git_version::GitVersion;
+use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
-use crate::{dprintln, global};
+use crate::{dprintln, global, time};
 use ahash::AHashMap;
 use std::collections::HashMap;
 use std::env;
@@ -28,7 +29,9 @@ pub fn get_commits(repo_path: &str) -> Option<Vec<Commit>> {
 }
 
 pub fn insert_patches(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) {
-  PATCHES.set((repo_path.to_string(), patches.to_owned()));
+  time!("insert_patches", {
+    PATCHES.set((repo_path.to_string(), patches.to_owned()));
+  });
 }
 
 pub fn get_patches(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
@@ -42,10 +45,16 @@ pub fn get_patches(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
 }
 
 pub fn clear_cache(_: &ReqOptions) {
-  // COMMITS.clear();
   clear_completed_searches();
 
   dprintln!("Cleared cache.");
+}
+
+pub fn clear_all_caches(_: &ReqOptions) {
+  clear_completed_searches();
+  clear_patch_cache();
+
+  dprintln!("Cleared all caches.");
 }
 
 pub fn override_git_home(options: &ReqOptions) {

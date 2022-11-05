@@ -2,11 +2,11 @@ use std::cmp::Ordering;
 use std::thread;
 use std::time::Instant;
 
-use crate::dprintln;
 use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::dprintln;
 use crate::git::git_types::{Commit, RefInfo};
 use crate::git::queries::commit_calcs::{
   find_commit_ancestors, get_commit_ids_between_commits2, get_commit_map_cloned,
@@ -19,7 +19,7 @@ use crate::git::queries::stashes::load_stashes;
 use crate::git::run_git::{run_git, RunGitOptions};
 use crate::git::store;
 use crate::parser::parse_all;
-use crate::server::git_request::{ReqCommitsOptions, ReqOptions};
+use crate::server::git_request::ReqOptions;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -133,14 +133,17 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
     now.elapsed().as_millis()
   );
 
-  // COMMITS.insert(repo_path.clone(), commits.clone());
   store::insert_commits(repo_path, &commits);
 
-  let new_options = ReqCommitsOptions {
-    repo_path: repo_path.clone(),
-    num_commits: *num_commits,
-  };
-  thread::spawn(move || load_patches(&new_options));
+  // let new_options = ReqCommitsOptions {
+  //   repo_path: repo_path.clone(),
+  //   num_commits: *num_commits,
+  // };
+  // thread::spawn(move || load_patches(&new_options));
+
+  if !filters.is_empty() {
+    load_patches(repo_path, &commits);
+  }
 
   Some(apply_commit_filters(repo_path, commits, filters))
 }

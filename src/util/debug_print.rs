@@ -9,3 +9,14 @@ macro_rules! dprintln {
 macro_rules! dprintln {
   ($( $args:expr ),*) => {};
 }
+
+#[macro_export]
+macro_rules! time {
+  ($name:expr, $code:block) => {
+    let now = std::time::Instant::now();
+
+    $code
+
+    dprintln!("{} took {}ms", $name, now.elapsed().as_millis());
+  }
+}

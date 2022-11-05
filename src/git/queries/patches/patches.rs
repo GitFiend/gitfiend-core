@@ -8,17 +8,12 @@ use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
 use crate::git::queries::COMMIT_0_ID;
+use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
-use crate::git::{run_git, store};
 use crate::parser::parse_all;
-use crate::server::git_request::ReqCommitsOptions;
 
-pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<Patch>>> {
-  let ReqCommitsOptions { repo_path, .. } = options;
-
+pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<String, Vec<Patch>>> {
   let now = Instant::now();
-
-  let commits = store::get_commits(repo_path)?;
 
   let mut commits_without_patches: Vec<&Commit> = Vec::new();
   let mut stashes_or_merges_without_patches: Vec<&Commit> = Vec::new();
@@ -51,7 +46,9 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
   }
 
   if !commits_without_patches.is_empty() {
-    if let Some(patches) = load_normal_patches(&commits_without_patches, options) {
+    if let Some(patches) =
+      load_normal_patches(repo_path, &commits_without_patches, commits.len() as u32)
+    {
       new_patches.extend(patches);
     }
   }
@@ -61,8 +58,9 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
       new_patches.insert(id, patches);
     } else {
       // TODO: Some commits have no patches. We should probably save it anyway?
-      // Maybe not if we aren't sure our method is correct.
-      dprintln!("Failed to get patches for commit {}", c.id);
+      new_patches.insert(c.id.clone(), Vec::new());
+      // Maybe not if we aren't sure our method is correct?
+      // dprintln!("Failed to get patches for commit {}", c.id);
     }
   }
 
@@ -74,12 +72,13 @@ pub fn load_patches(options: &ReqCommitsOptions) -> Option<HashMap<String, Vec<P
 }
 
 fn load_normal_patches(
+  repo_path: &str,
   commits_without_patches: &Vec<&Commit>,
-  options: &ReqCommitsOptions,
+  num_commits: u32,
 ) -> Option<HashMap<String, Vec<Patch>>> {
   if commits_without_patches.len() > 20 {
     // Assume we now have all the plain commits.
-    load_all_patches_for_normal_commits(options)
+    load_all_patches_for_normal_commits(repo_path, num_commits)
   } else {
     // We can't handle many commit ids with this command.
     let mut ids: Vec<&str> = commits_without_patches
@@ -91,7 +90,7 @@ fn load_normal_patches(
     ids.extend(["--name-status", "--pretty=format:%H,", "-z"]);
 
     let out = run_git::run_git(RunGitOptions {
-      repo_path: &options.repo_path,
+      repo_path,
       args: ids,
     })?;
 
@@ -103,7 +102,8 @@ fn load_normal_patches(
 
 /// This doesn't include stashes and merges.
 fn load_all_patches_for_normal_commits(
-  options: &ReqCommitsOptions,
+  repo_path: &str,
+  num_commits: u32,
 ) -> Option<HashMap<String, Vec<Patch>>> {
   let out = run_git::run_git(RunGitOptions {
     args: [
@@ -114,9 +114,9 @@ fn load_all_patches_for_normal_commits(
       // Can't get correct patch info for merges with this command.
       "--no-merges",
       "-z",
-      &format!("-n{}", options.num_commits),
+      &format!("-n{}", num_commits),
     ],
-    repo_path: &options.repo_path,
+    repo_path,
   })?;
 
   let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
@@ -125,7 +125,7 @@ fn load_all_patches_for_normal_commits(
 }
 
 // without cache
-fn load_patches_for_commit(repo_path: &String, commit: &Commit) -> Option<(String, Vec<Patch>)> {
+fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> Option<(String, Vec<Patch>)> {
   let diff = String::from("diff");
   let name_status = String::from("--name-status");
   let z = String::from("-z");

@@ -2,7 +2,7 @@ extern crate directories;
 
 use std::collections::HashMap;
 use std::error::Error;
-use std::fs::{create_dir_all, File};
+use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -19,14 +19,7 @@ pub fn write_patches_cache(repo_path: &str, patches: &HashMap<String, Vec<Patch>
 
   let full_path = cache_dir.join(file_name);
 
-  let now = Instant::now();
-
   store::insert_patches(repo_path, patches);
-
-  dprintln!(
-    "Took {}ms to put patches in temp cache (write).",
-    now.elapsed().as_millis()
-  );
 
   write_patches_to_file(full_path, patches).ok()
 }
@@ -46,13 +39,7 @@ pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>
   let maybe_patches = read_patches_from_file(cache_file).ok();
 
   if let Some(patches) = maybe_patches {
-    let now = Instant::now();
-
     store::insert_patches(repo_path, &patches);
-    dprintln!(
-      "Took {}ms to put patches in temp cache (load).",
-      now.elapsed().as_millis()
-    );
 
     return Some(patches);
   }
@@ -119,4 +106,12 @@ fn write_patches_to_file<P: AsRef<Path>>(
   dprintln!("Wrote patches to '{:?}'", path.as_ref().to_str());
 
   Ok(())
+}
+
+pub fn clear_patch_cache() -> Option<()> {
+  let cache_dir = get_cache_dir()?;
+
+  remove_dir_all(cache_dir).ok()?;
+
+  Some(())
 }

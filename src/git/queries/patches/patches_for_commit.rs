@@ -1,5 +1,6 @@
 use crate::git::git_types::Patch;
-use crate::git::queries::patches::cache::load_patches_cache;
+use crate::git::queries::patches::patches::load_patches;
+use crate::git::store;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -17,5 +18,8 @@ pub fn load_patches_for_commit(options: &ReqPatchesForCommitOpts) -> Option<Vec<
     commit_id,
   } = options;
 
-  Some(load_patches_cache(repo_path)?.get(commit_id)?.clone())
+  let commits = store::get_commits(repo_path)?;
+  let all_patches = load_patches(repo_path, &commits)?;
+
+  Some(all_patches.get(commit_id)?.clone())
 }

@@ -73,7 +73,6 @@ pub struct ReqCommitsOptions2 {
   pub skip_stashes: bool,
 }
 
-#[elapsed]
 pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Commit>> {
   let ReqCommitsOptions2 {
     repo_path,

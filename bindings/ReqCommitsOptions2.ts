@@ -6,4 +6,5 @@ export interface ReqCommitsOptions2 {
   numCommits: number;
   filters: Array<CommitFilter>;
   fast: boolean;
+  skipStashes: boolean;
 }

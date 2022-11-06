@@ -1,4 +1,5 @@
 use crate::dprintln;
+use loggers::elapsed;
 use std::time::Instant;
 
 use crate::git::git_types::Commit;
@@ -7,9 +8,8 @@ use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::parser::parse_all;
 
+#[elapsed]
 pub fn load_stashes(repo_path: &String) -> Option<Vec<Commit>> {
-  let now = Instant::now();
-
   let out = run_git::run_git(RunGitOptions {
     args: [
       "reflog",
@@ -22,11 +22,6 @@ pub fn load_stashes(repo_path: &String) -> Option<Vec<Commit>> {
     ],
     repo_path,
   });
-
-  dprintln!(
-    "Took {}ms to request stashes from Git",
-    now.elapsed().as_millis()
-  );
 
   let mut commits = parse_all(P_COMMITS, out?.as_str())?;
 

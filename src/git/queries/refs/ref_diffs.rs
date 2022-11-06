@@ -3,6 +3,7 @@ use std::time::Instant;
 
 use crate::dprintln;
 use ahash::AHashMap;
+use loggers::elapsed;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -22,6 +23,7 @@ pub struct RefDiffOptions {
   pub head_commit_id: String,
 }
 
+#[elapsed]
 pub fn calc_ref_diffs(
   options: &RefDiffOptions,
 ) -> Option<(
@@ -37,13 +39,7 @@ pub fn calc_ref_diffs(
   let commits = store::get_commits(repo_path)?;
   let config = CONFIG.get().unwrap_or_else(GitConfig::new);
 
-  let now = Instant::now();
-
-  let res = Some(calc_ref_diffs_inner(&commits, &config, head_commit_id));
-
-  dprintln!("Took {}ms for calc_ref_diffs", now.elapsed().as_millis());
-
-  res
+  Some(calc_ref_diffs_inner(&commits, &config, head_commit_id))
 }
 
 // We need to pass in head as it may not be found in provided commits in some cases.

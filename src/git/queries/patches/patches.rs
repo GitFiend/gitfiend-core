@@ -1,6 +1,6 @@
-use crate::dprintln;
 use std::collections::HashMap;
-use std::time::Instant;
+
+use loggers::elapsed;
 
 use crate::git::git_types::{Commit, Patch};
 use crate::git::queries::patches::cache::{load_patches_cache, write_patches_cache};
@@ -12,9 +12,8 @@ use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::parser::parse_all;
 
+#[elapsed]
 pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<String, Vec<Patch>>> {
-  let now = Instant::now();
-
   let mut commits_without_patches: Vec<&Commit> = Vec::new();
   let mut stashes_or_merges_without_patches: Vec<&Commit> = Vec::new();
 
@@ -65,8 +64,6 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<St
   }
 
   write_patches_cache(repo_path, &new_patches);
-
-  dprintln!("Took {}ms for load_patches", now.elapsed().as_millis());
 
   Some(new_patches)
 }

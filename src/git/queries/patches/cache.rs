@@ -9,6 +9,7 @@ use std::time::Instant;
 
 use crate::dprintln;
 use directories::ProjectDirs;
+use loggers::elapsed;
 
 use crate::git::git_types::Patch;
 use crate::git::store;
@@ -70,11 +71,8 @@ fn generate_file_name(repo_path: &str) -> String {
   format!("{}.json", id)
 }
 
-fn read_patches_from_file<P: AsRef<Path>>(
-  path: P,
-) -> Result<HashMap<String, Vec<Patch>>, Box<dyn Error>> {
-  let now = Instant::now();
-
+#[elapsed]
+fn read_patches_from_file(path: PathBuf) -> Result<HashMap<String, Vec<Patch>>, Box<dyn Error>> {
   let file = File::open(&path)?;
 
   let mut reader = BufReader::new(file);
@@ -83,12 +81,6 @@ fn read_patches_from_file<P: AsRef<Path>>(
   reader.read_to_string(&mut text)?;
 
   let patches = serde_json::from_str(&text)?;
-
-  dprintln!(
-    "Took {}ms to read and parse patches. Length {}.",
-    now.elapsed().as_millis(),
-    text.len()
-  );
 
   Ok(patches)
 }

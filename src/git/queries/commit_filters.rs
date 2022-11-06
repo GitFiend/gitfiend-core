@@ -1,7 +1,5 @@
-use std::time::Instant;
-
-use crate::dprintln;
 use ahash::{AHashMap, AHashSet};
+use loggers::elapsed;
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -19,14 +17,13 @@ pub enum CommitFilter {
   File { file_name: String },
 }
 
+#[elapsed]
 pub fn apply_commit_filters(
   repo_path: &str,
   commits: Vec<Commit>,
   filters: &[CommitFilter],
 ) -> Vec<Commit> {
   let commit_map = get_commit_map_cloned(&commits);
-
-  let now = Instant::now();
 
   let results: Vec<AHashSet<&str>> = filters
     .iter()
@@ -62,8 +59,6 @@ pub fn apply_commit_filters(
     .filter(|c| results.iter().all(|r| r.contains(c.id.as_str())))
     .map(|c| c.id.clone())
     .collect();
-
-  dprintln!("Took {}ms to filter commits", now.elapsed().as_millis());
 
   let mut remaining_commits: Vec<Commit> = Vec::new();
   let mut skipped = 0;

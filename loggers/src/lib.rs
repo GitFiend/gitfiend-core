@@ -3,7 +3,7 @@ use quote::quote;
 use syn::{Item, ItemFn};
 
 /*
-This is taken modified from https://github.com/nmeylan/elapsed-time
+This is taken and modified from https://github.com/nmeylan/elapsed-time
  */
 
 // We don't bother printing time if it took less than this.

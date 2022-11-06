@@ -1,4 +1,5 @@
 use crate::dprintln;
+use loggers::elapsed;
 use serde::Deserialize;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
@@ -16,15 +17,12 @@ pub struct ScanOptions {
   pub workspaces_enabled: bool,
 }
 
+#[elapsed]
 pub fn scan_workspace(options: &ScanOptions) -> Vec<PathBuf> {
   let dir = PathBuf::from(&options.repo_path);
   let mut repo_paths: Vec<PathBuf> = Vec::new();
 
-  let now = Instant::now();
-
   scan_workspace_inner(dir, options.workspaces_enabled, &mut repo_paths, 0);
-
-  dprintln!("Took {}ms to scan", now.elapsed().as_millis());
 
   repo_paths
 }

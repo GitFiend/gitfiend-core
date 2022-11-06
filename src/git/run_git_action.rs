@@ -4,6 +4,7 @@ use std::process::{Command, Stdio};
 use std::{env, thread, time};
 use time::Duration;
 
+use loggers::elapsed;
 use serde::Deserialize;
 use serde::Serialize;
 use ts_rs::TS;

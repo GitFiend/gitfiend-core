@@ -32,8 +32,6 @@ pub struct TopCommitOptions {
 
 #[elapsed]
 pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<Commit> {
-  let _now = Instant::now();
-
   let out = run_git(RunGitOptions {
     args: [
       "log",
@@ -45,11 +43,6 @@ pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<Commit> 
     ],
     repo_path: &options.repo_path,
   });
-
-  dprintln!(
-    "Took {}ms to request top commit from Git",
-    _now.elapsed().as_millis()
-  );
 
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
@@ -96,8 +89,6 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
     }
   }
 
-  let now = Instant::now();
-
   let p1 = repo_path.clone();
   let p2 = repo_path.clone();
   let num = *num_commits;
@@ -107,11 +98,6 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
 
   let stashes = stashes_thread.join().ok()?;
   let mut commits = commits_thread.join().ok()??;
-
-  dprintln!(
-    "Took {}ms to request stashes and commits from Git",
-    now.elapsed().as_millis()
-  );
 
   if let Some(mut stashes) = stashes {
     commits.append(&mut stashes);
@@ -129,14 +115,7 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
     c.index = i;
   }
 
-  let now = Instant::now();
-
   let commits = finish_initialising_refs_on_commits(commits);
-
-  dprintln!(
-    "Took {}ms to get refs from commits *****",
-    now.elapsed().as_millis()
-  );
 
   store::insert_commits(repo_path, &commits);
 
@@ -147,60 +126,25 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
   Some(apply_commit_filters(repo_path, commits, filters))
 }
 
+#[elapsed]
 pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
-  // let now = Instant::now();
+  let out = run_git(RunGitOptions {
+    args: [
+      "log",
+      "--branches",
+      "--tags",
+      "--remotes",
+      "--decorate=full",
+      PRETTY_FORMATTED,
+      format!("-n{}", num).as_str(),
+      "--date=raw",
+    ],
+    repo_path,
+  })?;
 
-  let out = time_result!("load commits command", {
-    run_git(RunGitOptions {
-      args: [
-        "log",
-        "--branches",
-        "--tags",
-        "--remotes",
-        "--decorate=full",
-        PRETTY_FORMATTED,
-        format!("-n{}", num).as_str(),
-        "--date=raw",
-      ],
-      repo_path,
-    })?
-  });
-
-  // let out = run_git(RunGitOptions {
-  //   args: [
-  //     "log",
-  //     "--branches",
-  //     "--tags",
-  //     "--remotes",
-  //     "--decorate=full",
-  //     PRETTY_FORMATTED,
-  //     format!("-n{}", num).as_str(),
-  //     "--date=raw",
-  //   ],
-  //   repo_path,
-  // })?;
-
-  // dprintln!(
-  //   "Took {}ms to request {} commits from Git",
-  //   now.elapsed().as_millis(),
-  //   num
-  // );
-
-  // let now = Instant::now();
-
-  // let result = parse_all(P_COMMITS, &out);
-  let result = time_result!(format!("parse commits. Length {}", out.len()), {
+  time_result!(format!("parse commits. Length {}", out.len()), {
     parse_all(P_COMMITS, &out)
-  });
-
-  // dprintln!(
-  //   "Took {}ms to parse {} commits. Length {}",
-  //   now.elapsed().as_millis(),
-  //   num,
-  //   out.len()
-  // );
-
-  result
+  })
 }
 
 #[derive(Debug, Deserialize, Serialize, TS)]

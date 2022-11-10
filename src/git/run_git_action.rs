@@ -1,12 +1,10 @@
+use serde::Deserialize;
+use serde::Serialize;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Error, Read};
 use std::process::{Command, Stdio};
 use std::{env, thread, time};
 use time::Duration;
-
-use loggers::elapsed;
-use serde::Deserialize;
-use serde::Serialize;
 use ts_rs::TS;
 
 use crate::dprintln;
@@ -41,25 +39,32 @@ pub struct RunGitActionOptions<'a, const N: usize> {
 }
 
 pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
-  let id = start_action();
+  // let id = start_action();
 
   let RunGitActionOptions {
     commands,
     repo_path,
   } = options;
 
-  let git_version = GIT_VERSION.get().unwrap_or_else(GitVersion::new);
-
   let git_commands: Vec<Vec<String>> = commands
     .iter()
     .map(|c| c.iter().map(|a| a.to_string()).collect())
     .collect();
+
+  run_git_action_with_vec(repo_path, git_commands)
+}
+
+pub fn run_git_action_with_vec(repo_path: &str, commands: Vec<Vec<String>>) -> u32 {
+  let id = start_action();
+
+  let git_version = GIT_VERSION.get().unwrap_or_else(GitVersion::new);
+
   let repo_path = repo_path.to_string();
 
   thread::spawn(move || {
     let mut failed = false;
 
-    for c in git_commands {
+    for c in commands {
       if let Err(e) = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c) {
         set_action_error(id, e);
         failed = true;

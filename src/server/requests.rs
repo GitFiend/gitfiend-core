@@ -2,7 +2,7 @@ use crate::{dprintln, handle_function_request};
 use tiny_http::{Response, Server};
 
 use crate::git::actions::clone::clone_repo;
-use crate::git::actions::command::command;
+use crate::git::actions::command::{command, commands};
 use crate::git::actions::create_repo::create_repo;
 use crate::git::actions::credentials::set_credentials;
 use crate::git::actions::fetch::fetch_all;
@@ -94,6 +94,7 @@ pub fn start_async_server() {
 
           // Actions
           command,
+          commands,
           stash_changes,
           fetch_all,
           clone_repo,

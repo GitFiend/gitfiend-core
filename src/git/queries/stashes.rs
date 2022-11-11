@@ -1,6 +1,4 @@
-use crate::dprintln;
 use loggers::elapsed;
-use std::time::Instant;
 
 use crate::git::git_types::Commit;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS};

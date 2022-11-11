@@ -41,7 +41,9 @@ macro_rules! handle_request {
   ($request:expr, $handler: ident) => {{
     match $crate::parse_json!($request) {
       Some(options) => {
-        $crate::send_response!($request, $handler(&options));
+        $crate::time_block!(stringify!($handler), {
+          $crate::send_response!($request, $handler(&options));
+        });
       }
       None => {}
     };

@@ -5,7 +5,6 @@ use std::error::Error;
 use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::time::Instant;
 
 use crate::dprintln;
 use directories::ProjectDirs;

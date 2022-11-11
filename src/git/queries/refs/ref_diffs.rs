@@ -1,11 +1,7 @@
-use std::collections::HashMap;
-use std::time::Instant;
-
-use crate::dprintln;
 use ahash::AHashMap;
-use loggers::elapsed;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use ts_rs::TS;
 
 use crate::git::git_types::{
@@ -23,7 +19,7 @@ pub struct RefDiffOptions {
   pub head_commit_id: String,
 }
 
-#[elapsed]
+// #[elapsed]
 pub fn calc_ref_diffs(
   options: &RefDiffOptions,
 ) -> Option<(

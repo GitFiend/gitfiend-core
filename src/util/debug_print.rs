@@ -27,7 +27,7 @@ macro_rules! time_block {
     let ms = now.elapsed().as_millis();
 
     if (ms > 1) {
-      dprintln!("{}ms for {}", now.elapsed().as_millis(), $name);
+      $crate::dprintln!("{}ms for {}", now.elapsed().as_millis(), $name);
     }
   }
 }

@@ -4,7 +4,6 @@ use serde::Serialize;
 use ts_rs::TS;
 
 use crate::git::git_types::Patch;
-use crate::git::queries::patches::cache::load_patches_cache;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::search::search_code::FileMatch;
 use crate::git::queries::search::SearchOptions;

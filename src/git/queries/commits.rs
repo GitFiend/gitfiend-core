@@ -1,10 +1,7 @@
+use ahash::AHashMap;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::thread;
-use std::time::Instant;
-
-use ahash::AHashMap;
-use loggers::elapsed;
-use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::git::git_types::{Commit, RefInfo};
@@ -30,7 +27,7 @@ pub struct TopCommitOptions {
   pub branch_name: String,
 }
 
-#[elapsed]
+// #[elapsed]
 pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<Commit> {
   let out = run_git(RunGitOptions {
     args: [
@@ -131,7 +128,7 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
   Some(apply_commit_filters(repo_path, commits, filters))
 }
 
-#[elapsed]
+// #[elapsed]
 pub fn load_commits(repo_path: &String, num: u32) -> Option<Vec<Commit>> {
   let out = run_git(RunGitOptions {
     args: [
@@ -161,7 +158,7 @@ pub struct CommitDiffOpts {
   pub commit_id2: String,
 }
 
-#[elapsed]
+// #[elapsed]
 pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String>> {
   let CommitDiffOpts {
     repo_path,
@@ -182,7 +179,7 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String
 }
 
 // We use this when commit ids are outside our loaded range (not in COMMITS).
-#[elapsed]
+// #[elapsed]
 pub fn commit_ids_between_commits_fallback(
   repo_path: &str,
   commit_id1: &str,
@@ -199,7 +196,7 @@ pub fn commit_ids_between_commits_fallback(
 }
 
 // Use this as a fallback when calculation fails.
-#[elapsed]
+// #[elapsed]
 pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
   if let Some(ids) = get_un_pushed_commits_computed(options) {
     // println!("Computed ids: {:?}", ids);

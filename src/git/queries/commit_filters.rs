@@ -1,5 +1,4 @@
 use ahash::{AHashMap, AHashSet};
-use loggers::elapsed;
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -17,7 +16,7 @@ pub enum CommitFilter {
   File { file_name: String },
 }
 
-#[elapsed]
+// #[elapsed]
 pub fn apply_commit_filters(
   repo_path: &str,
   commits: Vec<Commit>,

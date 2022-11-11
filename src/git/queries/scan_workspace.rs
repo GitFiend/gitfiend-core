@@ -1,9 +1,6 @@
-use crate::dprintln;
-use loggers::elapsed;
 use serde::Deserialize;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
-use std::time::Instant;
 use ts_rs::TS;
 
 const MAX_SCAN_DEPTH: u8 = 5;
@@ -17,7 +14,6 @@ pub struct ScanOptions {
   pub workspaces_enabled: bool,
 }
 
-#[elapsed]
 pub fn scan_workspace(options: &ScanOptions) -> Vec<PathBuf> {
   let dir = PathBuf::from(&options.repo_path);
   let mut repo_paths: Vec<PathBuf> = Vec::new();

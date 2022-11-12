@@ -2,7 +2,7 @@ use crate::git::git_types::{Commit, GitConfig, Patch};
 use crate::git::git_version::GitVersion;
 use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
-use crate::git::repo_watcher::{clear_changed_status, start_watching, stop_watching};
+use crate::git::repo_watcher::clear_changed_status;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 use crate::{dprintln, global, time_block};

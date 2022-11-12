@@ -3,17 +3,27 @@ use crate::util::global::Global;
 use crate::{dprintln, global};
 use loggers::elapsed;
 use notify::{Event, RecursiveMode, Result, Watcher};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
+use ts_rs::TS;
 
-// TODO: Will need to update this for the sub repos we are interested in.
-pub fn open_repo(options: &ReqOptions) {
-  start_watching(&options.repo_path);
+#[derive(Debug, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct WatchRepoOptions {
+  pub repo_paths: Vec<String>,
 }
 
-pub fn close_repo(_: &ReqOptions) {
+pub fn watch_repo(options: &WatchRepoOptions) {
+  let repo_paths = options.repo_paths.clone();
+
+  thread::spawn(move || watch(repo_paths));
+}
+
+pub fn stop_watching_repo(_: &ReqOptions) {
   stop_watching();
 }
 
@@ -31,21 +41,14 @@ pub fn clear_changed_status() {
 
 static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
 
-pub fn start_watching(repo_path: &str) {
-  let repo_path = repo_path.to_string();
-
-  thread::spawn(move || watch(&repo_path));
-}
-
-//
-fn watch(repo_path: &str) -> Result<()> {
-  if let Some(dirs) = WATCH_DIRS.get() {
-    if dirs.contains_key(repo_path) {
-      return Ok(());
-    }
+fn watch(repo_paths: Vec<String>) -> Result<()> {
+  if already_watching(&repo_paths) {
+    return Ok(());
   }
 
-  // Automatically select the best implementation for your platform.
+  let repo_path =
+    get_root_repo(&repo_paths).ok_or_else(|| notify::Error::generic("Empty repo list"))?;
+
   let mut watcher = notify::recommended_watcher(|res: Result<Event>| match res {
     Ok(event) => {
       dprintln!("{:?}", event.paths);
@@ -56,25 +59,21 @@ fn watch(repo_path: &str) -> Result<()> {
     }
   })?;
 
-  let mut dirs = HashMap::new();
-  dirs.insert(repo_path.to_string(), false);
-  WATCH_DIRS.set(dirs);
-  // WATCH_DIR.set(repo_path.to_string());
+  WATCH_DIRS.set(
+    repo_paths
+      .iter()
+      .map(|path| (path.to_string(), false))
+      .collect(),
+  );
 
   dprintln!("Start watching dir {}", repo_path);
 
-  // Add a path to be watched. All files and directories at that path and
-  // below will be monitored for changes.
-  watcher.watch(Path::new(repo_path), RecursiveMode::Recursive)?;
+  watcher.watch(Path::new(&repo_path), RecursiveMode::Recursive)?;
 
   loop {
     thread::sleep(Duration::from_millis(500));
 
-    if let Some(dirs) = WATCH_DIRS.get() {
-      if !dirs.contains_key(repo_path) {
-        break;
-      }
-    } else {
+    if !already_watching(&repo_paths) {
       break;
     }
   }
@@ -82,6 +81,26 @@ fn watch(repo_path: &str) -> Result<()> {
   dprintln!("Stop watching dir {}", repo_path);
 
   Ok(())
+}
+
+fn get_root_repo(repo_paths: &Vec<String>) -> Option<String> {
+  repo_paths
+    .iter()
+    .min_by(|a, b| a.len().cmp(&b.len()))
+    .cloned()
+}
+
+fn already_watching(repo_paths: &Vec<String>) -> bool {
+  if let Some(dirs) = WATCH_DIRS.get() {
+    if dirs.len() != repo_paths.len() {
+      return false;
+    }
+
+    return repo_paths
+      .iter()
+      .all(|repo_path| dirs.contains_key(repo_path));
+  }
+  false
 }
 
 #[elapsed]

@@ -83,7 +83,7 @@ fn watch(repo_paths: Vec<String>) -> Result<()> {
   Ok(())
 }
 
-fn get_root_repo(repo_paths: &Vec<String>) -> Option<String> {
+fn get_root_repo(repo_paths: &[String]) -> Option<String> {
   repo_paths
     .iter()
     .min_by(|a, b| a.len().cmp(&b.len()))
@@ -105,30 +105,32 @@ fn already_watching(repo_paths: &Vec<String>) -> bool {
 
 #[elapsed]
 fn update_changed(changed_paths: Vec<PathBuf>) {
-  if let Some(watch_dirs) = WATCH_DIRS.get() {
-    let new_dirs = watch_dirs
-      .into_iter()
-      .map(|(watched_dir, changed)| {
-        if !changed {
-          (
-            watched_dir.clone(),
-            changed_paths.iter().any(|path| {
-              if let Some(path_str) = path.to_str() {
-                if path_str.contains(&watched_dir) {
-                  return true;
-                }
-              }
-              false
-            }),
-          )
-        } else {
-          (watched_dir, true)
-        }
-      })
-      .collect();
+  if let Some(mut watch_dirs) = WATCH_DIRS.get() {
+    for changed in changed_paths {
+      if let Some(matching_dir) = closest_match(&changed, &watch_dirs) {
+        // println!("{:?} -> {}", changed, matching_dir);
+        watch_dirs.insert(matching_dir, true);
+      }
+    }
 
-    WATCH_DIRS.set(new_dirs);
+    WATCH_DIRS.set(watch_dirs);
   }
+}
+
+fn closest_match(changed_path: &Path, watch_dirs: &HashMap<String, bool>) -> Option<String> {
+  let mut matches = Vec::<&String>::new();
+
+  for dir in watch_dirs.keys() {
+    if changed_path.starts_with(dir) {
+      matches.push(dir);
+    }
+  }
+
+  matches
+    .iter()
+    .max_by(|a, b| a.len().cmp(&b.len()))
+    .cloned()
+    .cloned()
 }
 
 pub fn stop_watching() {

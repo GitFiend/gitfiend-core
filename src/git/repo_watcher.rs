@@ -24,7 +24,7 @@ pub fn watch_repo(options: &WatchRepoOptions) {
 }
 
 pub fn stop_watching_repo(_: &ReqOptions) {
-  stop_watching();
+  WATCH_DIRS.set(HashMap::new());
 }
 
 pub fn get_changed_repos(_: &ReqOptions) -> Option<HashMap<String, bool>> {
@@ -148,8 +148,4 @@ fn closest_match(changed_path: &str, watch_dirs: &HashMap<String, bool>) -> Opti
     .max_by(|a, b| a.len().cmp(&b.len()))
     .cloned()
     .cloned()
-}
-
-pub fn stop_watching() {
-  WATCH_DIRS.set(HashMap::new());
 }

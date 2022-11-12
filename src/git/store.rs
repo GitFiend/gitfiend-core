@@ -23,6 +23,7 @@ pub static GIT_VERSION: Global<GitVersion> = global!(GitVersion::new());
 
 pub fn insert_commits(repo_path: &str, commits: &Vec<Commit>) {
   COMMITS.insert(repo_path.to_string(), commits.to_owned());
+  clear_changed_status(repo_path);
 }
 
 pub fn get_commits(repo_path: &str) -> Option<Vec<Commit>> {
@@ -47,7 +48,7 @@ pub fn get_patches(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
 
 pub fn clear_cache(_: &ReqOptions) {
   clear_completed_searches();
-  clear_changed_status();
+  // clear_changed_status();
 
   dprintln!("Cleared cache.");
 }

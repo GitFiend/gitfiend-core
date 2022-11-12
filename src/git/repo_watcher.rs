@@ -31,11 +31,18 @@ pub fn get_changed_repos(_: &ReqOptions) -> Option<HashMap<String, bool>> {
   WATCH_DIRS.get()
 }
 
-pub fn clear_changed_status() {
-  println!("clear_changed_status");
+pub fn clear_changed_status(repo_path: &str) {
+  dprintln!("clear_changed_status {}", repo_path);
 
-  if let Some(dirs) = WATCH_DIRS.get() {
-    WATCH_DIRS.set(dirs.into_iter().map(|(dir, _)| (dir, false)).collect());
+  if let Some(mut dirs) = WATCH_DIRS.get() {
+    if dirs.contains_key(repo_path) {
+      dirs.insert(repo_path.to_string(), false);
+
+      WATCH_DIRS.set(dirs);
+    } else {
+      dprintln!("clear_changed_status: {} isn't being watched", repo_path);
+    }
+    // WATCH_DIRS.set(dirs.into_iter().map(|(dir, _)| (dir, false)).collect());
   }
 }
 
@@ -51,7 +58,6 @@ fn watch(repo_paths: Vec<String>) -> Result<()> {
 
   let mut watcher = notify::recommended_watcher(|res: Result<Event>| match res {
     Ok(event) => {
-      dprintln!("{:?}", event.paths);
       update_changed(event.paths);
     }
     Err(e) => {
@@ -105,6 +111,17 @@ fn already_watching(repo_paths: &Vec<String>) -> bool {
 
 #[elapsed]
 fn update_changed(changed_paths: Vec<PathBuf>) {
+  let changed_paths: Vec<String> = changed_paths
+    .iter()
+    .flat_map(|path| path.to_str())
+    .map(|path| path.to_string())
+    .filter(|path| !(path.contains(".git") && path.ends_with(".lock")))
+    .collect();
+
+  if !changed_paths.is_empty() {
+    dprintln!("{:?}", changed_paths);
+  }
+
   if let Some(mut watch_dirs) = WATCH_DIRS.get() {
     for changed in changed_paths {
       if let Some(matching_dir) = closest_match(&changed, &watch_dirs) {
@@ -117,7 +134,7 @@ fn update_changed(changed_paths: Vec<PathBuf>) {
   }
 }
 
-fn closest_match(changed_path: &Path, watch_dirs: &HashMap<String, bool>) -> Option<String> {
+fn closest_match(changed_path: &str, watch_dirs: &HashMap<String, bool>) -> Option<String> {
   let mut matches = Vec::<&String>::new();
 
   for dir in watch_dirs.keys() {

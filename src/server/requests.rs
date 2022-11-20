@@ -60,6 +60,7 @@ pub fn start_async_server() {
 
           // Queries
           run,
+          scan_workspace,
           load_commits_and_stashes,
           load_full_config,
           load_head_commit,
@@ -72,7 +73,6 @@ pub fn start_async_server() {
           load_wip_hunks,
           load_wip_hunk_lines,
           git_version,
-          scan_workspace,
           calc_ref_diffs,
           start_diff_search,
           poll_diff_search,

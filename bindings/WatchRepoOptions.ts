@@ -2,4 +2,5 @@
 
 export interface WatchRepoOptions {
   repoPaths: Array<string>;
+  startChanged: boolean;
 }

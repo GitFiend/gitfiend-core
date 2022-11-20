@@ -15,10 +15,21 @@ use ts_rs::TS;
 #[ts(export)]
 pub struct WatchRepoOptions {
   pub repo_paths: Vec<String>,
+  pub start_changed: bool,
 }
+
+static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
+static CURRENT_DIR: Global<String> = global!(String::new());
 
 pub fn watch_repo(options: &WatchRepoOptions) {
   let repo_paths = options.repo_paths.clone();
+
+  WATCH_DIRS.set(
+    repo_paths
+      .iter()
+      .map(|path| (path.to_string(), options.start_changed))
+      .collect(),
+  );
 
   thread::spawn(move || watch(repo_paths));
 }
@@ -42,19 +53,18 @@ pub fn clear_changed_status(repo_path: &str) {
     } else {
       dprintln!("clear_changed_status: {} isn't being watched", repo_path);
     }
-    // WATCH_DIRS.set(dirs.into_iter().map(|(dir, _)| (dir, false)).collect());
   }
 }
 
-static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
-
 fn watch(repo_paths: Vec<String>) -> Result<()> {
-  if already_watching(&repo_paths) {
-    return Ok(());
-  }
-
   let repo_path =
     get_root_repo(&repo_paths).ok_or_else(|| notify::Error::generic("Empty repo list"))?;
+
+  if already_watching(&repo_path) {
+    dprintln!("Already watching {}", repo_path);
+
+    return Ok(());
+  }
 
   let mut watcher = notify::recommended_watcher(|res: Result<Event>| match res {
     Ok(event) => {
@@ -65,21 +75,15 @@ fn watch(repo_paths: Vec<String>) -> Result<()> {
     }
   })?;
 
-  WATCH_DIRS.set(
-    repo_paths
-      .iter()
-      .map(|path| (path.to_string(), false))
-      .collect(),
-  );
-
   dprintln!("Start watching dir {}", repo_path);
+  CURRENT_DIR.set(repo_path.clone());
 
   watcher.watch(Path::new(&repo_path), RecursiveMode::Recursive)?;
 
   loop {
     thread::sleep(Duration::from_millis(500));
 
-    if !already_watching(&repo_paths) {
+    if !already_watching(&repo_path) {
       break;
     }
   }
@@ -96,15 +100,11 @@ fn get_root_repo(repo_paths: &[String]) -> Option<String> {
     .cloned()
 }
 
-fn already_watching(repo_paths: &Vec<String>) -> bool {
-  if let Some(dirs) = WATCH_DIRS.get() {
-    if dirs.len() != repo_paths.len() {
-      return false;
+fn already_watching(repo_path: &str) -> bool {
+  if let Some(dir) = CURRENT_DIR.get() {
+    if dir == repo_path {
+      return true;
     }
-
-    return repo_paths
-      .iter()
-      .all(|repo_path| dirs.contains_key(repo_path));
   }
   false
 }

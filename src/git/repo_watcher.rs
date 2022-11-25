@@ -58,6 +58,18 @@ pub fn clear_changed_status(repo_path: &str) {
   }
 }
 
+pub fn mark_changed(repo_path: &str) {
+  if let Some(mut dirs) = WATCH_DIRS.get() {
+    if dirs.contains_key(repo_path) {
+      dirs.insert(repo_path.to_string(), true);
+
+      WATCH_DIRS.set(dirs);
+    } else {
+      dprintln!("mark_changed: {} isn't being watched", repo_path);
+    }
+  }
+}
+
 fn watch(root_dir: String) -> Result<()> {
   if already_watching(&root_dir) {
     dprintln!("Already watching {}", root_dir);

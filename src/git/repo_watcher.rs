@@ -15,6 +15,7 @@ use ts_rs::TS;
 #[ts(export)]
 pub struct WatchRepoOptions {
   pub repo_paths: Vec<String>,
+  pub root_repo: String,
   pub start_changed: bool,
 }
 
@@ -22,16 +23,17 @@ static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
 static CURRENT_DIR: Global<String> = global!(String::new());
 
 pub fn watch_repo(options: &WatchRepoOptions) {
-  let repo_paths = options.repo_paths.clone();
-
   WATCH_DIRS.set(
-    repo_paths
+    options
+      .repo_paths
       .iter()
       .map(|path| (path.to_string(), options.start_changed))
       .collect(),
   );
 
-  thread::spawn(move || watch(repo_paths));
+  let root_repo = options.root_repo.clone();
+
+  thread::spawn(move || watch(root_repo));
 }
 
 pub fn stop_watching_repo(_: &ReqOptions) {
@@ -56,12 +58,9 @@ pub fn clear_changed_status(repo_path: &str) {
   }
 }
 
-fn watch(repo_paths: Vec<String>) -> Result<()> {
-  let repo_path =
-    get_root_repo(&repo_paths).ok_or_else(|| notify::Error::generic("Empty repo list"))?;
-
-  if already_watching(&repo_path) {
-    dprintln!("Already watching {}", repo_path);
+fn watch(root_dir: String) -> Result<()> {
+  if already_watching(&root_dir) {
+    dprintln!("Already watching {}", root_dir);
 
     return Ok(());
   }
@@ -75,29 +74,22 @@ fn watch(repo_paths: Vec<String>) -> Result<()> {
     }
   })?;
 
-  dprintln!("Start watching dir {}", repo_path);
-  CURRENT_DIR.set(repo_path.clone());
+  dprintln!("Start watching dir {}", root_dir);
+  CURRENT_DIR.set(root_dir.clone());
 
-  watcher.watch(Path::new(&repo_path), RecursiveMode::Recursive)?;
+  watcher.watch(Path::new(&root_dir), RecursiveMode::Recursive)?;
 
   loop {
     thread::sleep(Duration::from_millis(500));
 
-    if !already_watching(&repo_path) {
+    if !already_watching(&root_dir) {
       break;
     }
   }
 
-  dprintln!("Stop watching dir {}", repo_path);
+  dprintln!("Stop watching dir {}", root_dir);
 
   Ok(())
-}
-
-fn get_root_repo(repo_paths: &[String]) -> Option<String> {
-  repo_paths
-    .iter()
-    .min_by(|a, b| a.len().cmp(&b.len()))
-    .cloned()
 }
 
 fn already_watching(repo_path: &str) -> bool {

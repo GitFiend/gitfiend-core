@@ -113,8 +113,10 @@ fn already_watching(repo_path: &str) -> bool {
   false
 }
 
-const FILTERED_PATH: fn(&&str) -> bool = |path: &&str| {
-  let matches = (path.contains(".git") && path.ends_with(".lock")) || path.ends_with(".git");
+const PATH_FILTER: fn(&&str) -> bool = |path: &&str| {
+  let matches = (path.contains(".git")
+    && (path.ends_with(".lock") || path.ends_with("FETCH_HEAD")))
+    || path.ends_with(".git");
 
   !matches
 };
@@ -124,7 +126,7 @@ fn update_changed(changed_paths: Vec<PathBuf>) {
   let changed_paths: Vec<String> = changed_paths
     .iter()
     .flat_map(|path| path.to_str())
-    .filter(FILTERED_PATH)
+    .filter(PATH_FILTER)
     .map(|path| path.to_string())
     .collect();
 

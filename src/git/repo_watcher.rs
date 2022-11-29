@@ -1,14 +1,16 @@
-use crate::server::git_request::ReqOptions;
-use crate::util::global::Global;
-use crate::{dprintln, global};
-use loggers::elapsed;
-use notify::{Event, RecursiveMode, Result, Watcher};
-use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
+
+use loggers::elapsed;
+use notify::{Event, RecursiveMode, Result, Watcher};
+use serde::Deserialize;
 use ts_rs::TS;
+
+use crate::server::git_request::ReqOptions;
+use crate::util::global::Global;
+use crate::{dprintln, global};
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -21,6 +23,24 @@ pub struct WatchRepoOptions {
 
 static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
 static CURRENT_DIR: Global<String> = global!(String::new());
+
+// const PATH_FILTER: fn(&&str) -> bool = |path: &&str| {
+//   let matches = path.contains(".git");
+//   // && (path.ends_with(".lock") || path.ends_with("FETCH_HEAD")))
+//   // || path.ends_with(".git");
+//
+//   !matches
+// };
+
+const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
+  let matches = path.iter().any(|part| part.eq(".git"));
+
+  // if matches {
+  //   println!("Filter Match: {:?}", path);
+  // }
+
+  !matches
+};
 
 pub fn watch_repo(options: &WatchRepoOptions) {
   WATCH_DIRS.set(
@@ -113,20 +133,12 @@ fn already_watching(repo_path: &str) -> bool {
   false
 }
 
-const PATH_FILTER: fn(&&str) -> bool = |path: &&str| {
-  let matches = (path.contains(".git")
-    && (path.ends_with(".lock") || path.ends_with("FETCH_HEAD")))
-    || path.ends_with(".git");
-
-  !matches
-};
-
 #[elapsed]
 fn update_changed(changed_paths: Vec<PathBuf>) {
   let changed_paths: Vec<String> = changed_paths
     .iter()
-    .flat_map(|path| path.to_str())
     .filter(PATH_FILTER)
+    .flat_map(|path| path.to_str())
     .map(|path| path.to_string())
     .collect();
 

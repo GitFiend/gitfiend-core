@@ -24,31 +24,24 @@ pub struct WatchRepoOptions {
 static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
 static CURRENT_DIR: Global<String> = global!(String::new());
 
-// const PATH_FILTER: fn(&&str) -> bool = |path: &&str| {
-//   let matches = path.contains(".git");
-//   // && (path.ends_with(".lock") || path.ends_with("FETCH_HEAD")))
-//   // || path.ends_with(".git");
-//
-//   !matches
-// };
-
+// Ignoring most of .git
+// Want to watch: HEAD, ORIG_HEAD
+// need to filter out /logs/HEAD
 const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
-  let matches = path.iter().any(|part| part.eq(".git"))
-    && !(path.ends_with("HEAD") || path.ends_with("ORIG_HEAD"));
+  let ignore = path.iter().any(|part| part.eq(".git"))
+    && !((path.ends_with("HEAD")
+      && !path
+        .parent()
+        .unwrap_or_else(|| Path::new(""))
+        .ends_with("logs"))
+      || path.ends_with("ORIG_HEAD"));
 
-  let isHead = path.ends_with("HEAD") && path.iter().all(|part| !part.eq("logs"));
+  // println!("Changed Path: {:?}", path);
+  // if ignore {
+  //   println!("Filter Match: {:?}", path);
+  // }
 
-  // Want to watch:
-  // HEAD
-  // ORIG_HEAD
-  // need to filter out /logs/HEAD
-
-  println!("Changed Path: {:?}", path);
-  if matches {
-    println!("Filter Match: {:?}", path);
-  }
-
-  !matches
+  !ignore
 };
 
 pub fn watch_repo(options: &WatchRepoOptions) {

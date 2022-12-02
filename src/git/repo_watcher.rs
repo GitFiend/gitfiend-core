@@ -33,11 +33,20 @@ static CURRENT_DIR: Global<String> = global!(String::new());
 // };
 
 const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
-  let matches = path.iter().any(|part| part.eq(".git"));
+  let matches = path.iter().any(|part| part.eq(".git"))
+    && !(path.ends_with("HEAD") || path.ends_with("ORIG_HEAD"));
 
-  // if matches {
-  //   println!("Filter Match: {:?}", path);
-  // }
+  let isHead = path.ends_with("HEAD") && path.iter().all(|part| !part.eq("logs"));
+
+  // Want to watch:
+  // HEAD
+  // ORIG_HEAD
+  // need to filter out /logs/HEAD
+
+  println!("Changed Path: {:?}", path);
+  if matches {
+    println!("Filter Match: {:?}", path);
+  }
 
   !matches
 };

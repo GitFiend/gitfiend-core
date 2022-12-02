@@ -66,6 +66,13 @@ pub fn get_changed_repos(_: &ReqOptions) -> Option<HashMap<String, bool>> {
   WATCH_DIRS.get()
 }
 
+pub fn repo_has_changed(options: &ReqOptions) -> Option<bool> {
+  let dirs = WATCH_DIRS.get()?;
+  let changed = dirs.get(&options.repo_path)?;
+
+  Some(*changed)
+}
+
 pub fn clear_changed_status(repo_path: &str) {
   dprintln!("clear_changed_status {}", repo_path);
 

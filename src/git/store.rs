@@ -10,13 +10,18 @@ use ahash::AHashMap;
 use std::collections::HashMap;
 use std::env;
 
-static COMMITS: Global<AHashMap<String, Vec<Commit>>> = global!(AHashMap::new());
+type RepoPath = String;
+type PatchPath = String;
 
-static PATCHES: Global<(String, HashMap<String, Vec<Patch>>)> =
-  global!((String::new(), HashMap::new()));
+static COMMITS: Global<AHashMap<RepoPath, Vec<Commit>>> = global!(AHashMap::new());
 
+static PATCHES: Global<(RepoPath, HashMap<PatchPath, Vec<Patch>>)> =
+  global!((RepoPath::new(), HashMap::new()));
+
+// Key is 2 commit ids joined.
 pub static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
 
+// This probably needs to be per repo. We could then watch for changes?
 pub static CONFIG: Global<GitConfig> = global!(GitConfig::new());
 
 pub static GIT_VERSION: Global<GitVersion> = global!(GitVersion::new());

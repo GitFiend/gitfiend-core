@@ -7,15 +7,6 @@ use ahash::{AHashMap, AHashSet};
 pub fn get_common_branches(_: &ReqOptions) -> Option<Vec<String>> {
   let repos: AHashMap<String, Vec<Commit>> = get_all_workspace_commits()?;
 
-  println!(
-    "repos.len(): {:?}, num commits in each: {:?}",
-    repos.len(),
-    repos
-      .iter()
-      .map(|(_, c)| { c.len() })
-      .collect::<Vec<usize>>()
-  );
-
   let mut counts: AHashMap</* short_name */ String, AHashSet</* repo_path */ String>> =
     AHashMap::new();
 
@@ -42,13 +33,23 @@ pub fn get_common_branches(_: &ReqOptions) -> Option<Vec<String>> {
     }
   }
 
-  println!("counts: {:?}", counts);
-
   let shared = counts
     .into_iter()
     .filter(|(_, repo_paths)| repo_paths.len() == expected_num)
     .map(|(short_name, _)| short_name)
     .collect::<Vec<String>>();
+
+  if shared.is_empty() {
+    println!("get_common_branches: empty result.");
+    println!(
+      "repos.len(): {:?}, num commits in each: {:?}",
+      expected_num,
+      get_all_workspace_commits()?
+        .iter()
+        .map(|(_, c)| { c.len() })
+        .collect::<Vec<usize>>()
+    );
+  }
 
   Some(shared)
 }

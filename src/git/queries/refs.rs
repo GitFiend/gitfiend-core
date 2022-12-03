@@ -143,7 +143,6 @@ pub fn get_ref_info_from_commits(commits: &[Commit]) -> Vec<RefInfo> {
   refs
 }
 
-// #[elapsed]
 pub fn finish_initialising_refs_on_commits(commits: Vec<Commit>) -> Vec<Commit> {
   let refs = get_ref_info_from_commits(&commits);
 

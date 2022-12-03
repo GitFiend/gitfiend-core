@@ -13,6 +13,7 @@ use crate::git::queries::commits::{
   commit_ids_between_commits, commit_is_ancestor, get_un_pushed_commits, load_commits_and_stashes,
   load_head_commit, load_top_commit_for_branch,
 };
+use crate::git::queries::common_branches::get_common_branches;
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::hunks::images::load_commit_image;
 use crate::git::queries::hunks::load_hunks::load_hunks;
@@ -84,6 +85,9 @@ pub fn start_async_server() {
           load_conflicted_file,
           load_commit_image,
           calc_head_info,
+          get_changed_repos,
+          repo_has_changed,
+          get_common_branches,
 
           // Core messages
           clear_cache,
@@ -93,8 +97,6 @@ pub fn start_async_server() {
           override_git_home,
           watch_repo,
           stop_watching_repo,
-          get_changed_repos,
-          repo_has_changed,
 
           // Actions
           command,

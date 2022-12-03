@@ -30,6 +30,10 @@ pub fn get_commits(repo_path: &str) -> Option<Vec<Commit>> {
   COMMITS.get_by_key(&repo_path.to_string())
 }
 
+pub fn get_all_workspace_commits() -> Option<AHashMap<String, Vec<Commit>>> {
+  COMMITS.get()
+}
+
 pub fn insert_patches(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) {
   time_block!("insert_patches", {
     PATCHES.set((repo_path.to_string(), patches.to_owned()));

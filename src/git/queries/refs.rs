@@ -4,6 +4,7 @@ use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
+use loggers::elapsed;
 
 pub(crate) mod head_info;
 pub(crate) mod ref_diffs;
@@ -129,6 +130,7 @@ pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: f32) -> RefInfo
   }
 }
 
+#[elapsed]
 pub fn get_ref_info_from_commits(commits: &[Commit]) -> Vec<RefInfo> {
   let mut refs: Vec<RefInfo> = Vec::new();
 

@@ -69,9 +69,9 @@ pub fn stop_watching_repo(_: &ReqOptions) {
   WATCH_DIRS.set(HashMap::new());
 }
 
-pub fn get_changed_repos(_: &ReqOptions) -> Option<HashMap<String, bool>> {
-  WATCH_DIRS.get()
-}
+// pub fn get_changed_repos(_: &ReqOptions) -> Option<HashMap<String, bool>> {
+//   WATCH_DIRS.get()
+// }
 
 pub fn repo_has_changed(options: &ReqOptions) -> Option<bool> {
   let dirs = WATCH_DIRS.get()?;

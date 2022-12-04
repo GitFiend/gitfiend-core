@@ -27,9 +27,7 @@ use crate::git::queries::search::search_request::{poll_diff_search, start_diff_s
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
-use crate::git::repo_watcher::{
-  get_changed_repos, repo_has_changed, stop_watching_repo, watch_repo,
-};
+use crate::git::repo_watcher::{repo_has_changed, stop_watching_repo, watch_repo};
 use crate::git::run_git_action::poll_action2;
 use crate::git::store::{clear_all_caches, clear_cache, override_git_home};
 use crate::server::static_files::handle_resource_request;
@@ -85,7 +83,7 @@ pub fn start_async_server() {
           load_conflicted_file,
           load_commit_image,
           calc_head_info,
-          get_changed_repos,
+          // get_changed_repos,
           repo_has_changed,
           get_common_branches,
 

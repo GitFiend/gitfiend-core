@@ -2,7 +2,7 @@ use crate::git::git_types::{Commit, GitConfig, Patch};
 use crate::git::git_version::GitVersion;
 use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
-use crate::git::repo_watcher::clear_changed_status;
+use crate::git::repo_watcher::{clear_changed_status, get_watched_repos};
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 use crate::{dprintln, global, time_block};
@@ -36,7 +36,15 @@ pub fn get_commits(repo_path: &str) -> Option<Vec<Commit>> {
 }
 
 pub fn get_all_workspace_commits() -> Option<AHashMap<RepoPath, Vec<Commit>>> {
-  COMMITS.get()
+  let commits = COMMITS.get()?;
+  let watched_repos: HashMap<RepoPath, bool> = get_watched_repos()?;
+
+  Some(
+    commits
+      .into_iter()
+      .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
+      .collect(),
+  )
 }
 
 pub fn clear_unwatched_repos_from_commits(watched_repos: &HashMap<String, bool>) -> Option<()> {

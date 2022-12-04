@@ -1,18 +1,25 @@
 use crate::git::git_types::{Commit, RefInfo, RefType};
 use crate::git::queries::refs::get_ref_info_from_commits;
-use crate::git::store::get_all_workspace_commits;
+use crate::git::repo_watcher::get_watched_repos;
+use crate::git::store::{get_all_workspace_commits, RepoPath};
 use crate::server::git_request::ReqOptions;
 use ahash::{AHashMap, AHashSet};
+use std::collections::HashMap;
 
 pub fn get_common_branches(_: &ReqOptions) -> Option<Vec<String>> {
-  let repos: AHashMap<String, Vec<Commit>> = get_all_workspace_commits()?;
+  let repos: AHashMap<RepoPath, Vec<Commit>> = get_all_workspace_commits()?;
+  let watched_repos: HashMap<RepoPath, bool> = get_watched_repos()?;
 
   let mut counts: AHashMap</* short_name */ String, AHashSet</* repo_path */ String>> =
     AHashMap::new();
 
-  let expected_num = repos.len();
+  let expected_num = watched_repos.len();
 
   for (repo_path, commits) in repos {
+    if !watched_repos.contains_key(&repo_path) {
+      continue;
+    }
+
     let refs = get_ref_info_from_commits(&commits);
 
     for RefInfo {

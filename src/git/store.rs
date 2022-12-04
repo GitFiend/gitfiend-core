@@ -10,7 +10,7 @@ use ahash::AHashMap;
 use std::collections::HashMap;
 use std::env;
 
-type RepoPath = String;
+pub type RepoPath = String;
 type PatchPath = String;
 
 static COMMITS: Global<AHashMap<RepoPath, Vec<Commit>>> = global!(AHashMap::new());
@@ -35,8 +35,20 @@ pub fn get_commits(repo_path: &str) -> Option<Vec<Commit>> {
   COMMITS.get_by_key(&repo_path.to_string())
 }
 
-pub fn get_all_workspace_commits() -> Option<AHashMap<String, Vec<Commit>>> {
+pub fn get_all_workspace_commits() -> Option<AHashMap<RepoPath, Vec<Commit>>> {
   COMMITS.get()
+}
+
+pub fn clear_unwatched_repos_from_commits(watched_repos: &HashMap<String, bool>) -> Option<()> {
+  let commits = COMMITS
+    .get()?
+    .into_iter()
+    .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
+    .collect();
+
+  COMMITS.set(commits);
+
+  Some(())
 }
 
 pub fn insert_patches(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) {

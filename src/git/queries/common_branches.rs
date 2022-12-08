@@ -6,6 +6,7 @@ use ahash::{AHashMap, AHashSet};
 
 type RefShortName = String;
 
+#[allow(unused_variables, unused_assignments)]
 pub fn get_common_branches(_: &ReqOptions) -> Option<Vec<RefShortName>> {
   let repos: AHashMap<RepoPath, Vec<Commit>> = get_all_workspace_commits()?;
 
@@ -46,7 +47,7 @@ pub fn get_common_branches(_: &ReqOptions) -> Option<Vec<RefShortName>> {
 
   Some(shared)
 }
-
+#[allow(unused_variables, unused_assignments)]
 fn calc_diffs(
   ref_names: &[RefShortName],
   all_repo_refs: &[(RepoPath, Vec<RefInfo>)],
@@ -73,6 +74,7 @@ fn calc_diffs(
 }
 
 // TODO: What about other remotes?
+#[allow(unused_variables, unused_assignments, unused_mut)]
 fn calc_diffs_for_repo(ref_name: &RefShortName, head_name: &RefShortName, refs: &Vec<RefInfo>) {
   let mut head_ref: Option<&RefInfo> = None;
   let mut local_ref: Option<&RefInfo> = None;
@@ -83,7 +85,7 @@ fn calc_diffs_for_repo(ref_name: &RefShortName, head_name: &RefShortName, refs: 
       head_ref = Some(r);
     }
     if r.short_name == *ref_name {
-      if (r.location == RefLocation::Local) {
+      if r.location == RefLocation::Local {
         //
       }
     }

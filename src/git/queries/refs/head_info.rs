@@ -9,7 +9,7 @@ use crate::git::queries::commits::{
 };
 use crate::git::queries::refs::ref_diffs::{calc_remote_ref_diffs, get_ref_info_map_from_commits};
 use crate::git::store;
-use crate::git::store::{CONFIG};
+use crate::git::store::{RepoPath, CONFIG};
 use crate::server::git_request::ReqOptions;
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -141,10 +141,10 @@ fn calc_head_fallback(repo_path: &str) -> Option<(Commit, usize)> {
 }
 
 fn calc_remote_fallback(
-  repo_path: &str,
+  repo_path: &RepoPath,
   head_ref: &mut RefInfo,
 ) -> Option<(u32, Commit, u32, RefInfo)> {
-  let config = CONFIG.get().unwrap_or_else(GitConfig::new);
+  let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
 
   let remote_tracking_branch = config.get_tracking_branch_name(&head_ref.short_name);
 

@@ -1,5 +1,5 @@
 use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation, RefType};
-use crate::git::store::CONFIG;
+use crate::git::store::{RepoPath, CONFIG};
 use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
@@ -145,15 +145,21 @@ pub fn get_ref_info_from_commits(commits: &[Commit]) -> Vec<RefInfo> {
   refs
 }
 
-pub fn finish_initialising_refs_on_commits(commits: Vec<Commit>) -> Vec<Commit> {
+pub fn finish_initialising_refs_on_commits(
+  commits: Vec<Commit>,
+  repo_path: &RepoPath,
+) -> Vec<Commit> {
   let refs = get_ref_info_from_commits(&commits);
 
-  set_sibling_and_remotes_for_commits(commits, &refs)
+  set_sibling_and_remotes_for_commits(commits, &refs, repo_path)
 }
 
-fn set_sibling_and_remotes_for_commits(commits: Vec<Commit>, refs: &[RefInfo]) -> Vec<Commit> {
-  // let config = load_config_from_store(store_lock).unwrap_or(GitConfig::new());
-  let config = CONFIG.get().unwrap_or_else(GitConfig::new);
+fn set_sibling_and_remotes_for_commits(
+  commits: Vec<Commit>,
+  refs: &[RefInfo],
+  repo_path: &RepoPath,
+) -> Vec<Commit> {
+  let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
 
   commits
     .into_iter()

@@ -33,7 +33,7 @@ pub fn calc_ref_diffs(
   } = options;
 
   let commits = store::get_commits(repo_path)?;
-  let config = CONFIG.get().unwrap_or_else(GitConfig::new);
+  let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
 
   Some(calc_ref_diffs_inner(&commits, &config, head_commit_id))
 }

@@ -61,8 +61,10 @@ const P_REMOTE_NAME: Parser<String> = map!(
 
 /// Use this version on focus of GitFiend only. Get it from the store otherwise.
 pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
+  let ReqOptions { repo_path } = options;
+
   let result_text = run_git::run_git(RunGitOptions {
-    repo_path: &options.repo_path,
+    repo_path,
     args: ["config", "--list"],
   });
 
@@ -89,7 +91,7 @@ pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
 
   let config = GitConfig { entries, remotes };
 
-  CONFIG.set(config.clone());
+  CONFIG.insert(repo_path.clone(), config.clone());
 
   Some(config)
 }

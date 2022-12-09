@@ -15,6 +15,7 @@ use crate::git::queries::refs::finish_initialising_refs_on_commits;
 use crate::git::queries::stashes::load_stashes;
 use crate::git::run_git::{run_git, RunGitOptions};
 use crate::git::store;
+use crate::git::store::RepoPath;
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
 use crate::{dprintln, time_result};
@@ -63,7 +64,7 @@ pub fn load_head_commit(options: &ReqOptions) -> Option<Commit> {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReqCommitsOptions2 {
-  pub repo_path: String,
+  pub repo_path: RepoPath,
   pub num_commits: u32,
   pub filters: Vec<CommitFilter>,
   pub fast: bool, // Fast means to use the cache only, don't run git command.
@@ -117,7 +118,7 @@ pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<Comm
     c.index = i;
   }
 
-  let commits = finish_initialising_refs_on_commits(commits);
+  let commits = finish_initialising_refs_on_commits(commits, repo_path);
 
   store::insert_commits(repo_path, &commits);
 

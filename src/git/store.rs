@@ -22,7 +22,7 @@ static PATCHES: Global<(RepoPath, HashMap<PatchPath, Vec<Patch>>)> =
 pub static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
 
 // This probably needs to be per repo. We could then watch for changes?
-pub static CONFIG: Global<GitConfig> = global!(GitConfig::new());
+pub static CONFIG: Global<AHashMap<RepoPath, GitConfig>> = global!(AHashMap::new());
 
 pub static GIT_VERSION: Global<GitVersion> = global!(GitVersion::new());
 
@@ -55,6 +55,14 @@ pub fn clear_unwatched_repos_from_commits(watched_repos: &HashMap<String, bool>)
     .collect();
 
   COMMITS.set(commits);
+
+  let configs = CONFIG
+    .get()?
+    .into_iter()
+    .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
+    .collect();
+
+  CONFIG.set(configs);
 
   Some(())
 }

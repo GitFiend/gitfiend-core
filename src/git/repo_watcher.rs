@@ -29,13 +29,33 @@ static CURRENT_DIR: Global<String> = global!(String::new());
 // Want to watch: HEAD, ORIG_HEAD
 // need to filter out /logs/HEAD
 const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
-  let ignore = path.iter().any(|part| part.eq(".git"))
-    && !((path.ends_with("HEAD")
-      && !path
-        .parent()
-        .unwrap_or_else(|| Path::new(""))
-        .ends_with("logs"))
-      || path.ends_with("ORIG_HEAD"));
+  let contains_git = path.iter().any(|part| part.eq(".git"));
+
+  // let ignore = contains_git
+  //   && !((path.ends_with("HEAD")
+  //     && !path
+  //       .parent()
+  //       .unwrap_or_else(|| Path::new(""))
+  //       .ends_with("logs"))
+  //     || path.ends_with("ORIG_HEAD"));
+
+  let mut ignore = false;
+
+  if contains_git {
+    // println!("{:?}", path);
+
+    ignore = true;
+
+    if path.ends_with("ORIG_HEAD")
+      || path.ends_with("HEAD")
+        && !path
+          .parent()
+          .unwrap_or_else(|| Path::new(""))
+          .ends_with("logs")
+    {
+      ignore = false;
+    }
+  }
 
   // println!("Changed Path: {:?}", path);
   // if ignore {

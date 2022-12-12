@@ -209,3 +209,22 @@ fn closest_match(changed_path: &str, watch_dirs: &HashMap<String, bool>) -> Opti
     .cloned()
     .cloned()
 }
+
+#[cfg(test)]
+mod tests {
+  use crate::git::repo_watcher::PATH_FILTER;
+  use std::path::Path;
+
+  #[test]
+  fn test_path_filter() {
+    assert_eq!(Path::new("/repo/.git").to_str(), Some("/repo/.git"));
+    assert_eq!(
+      Path::new("/repo/.git").to_path_buf().to_str(),
+      Some("/repo/.git")
+    );
+
+    let ignore = PATH_FILTER(&&Path::new("/repo/.git").to_path_buf());
+
+    assert!(ignore);
+  }
+}

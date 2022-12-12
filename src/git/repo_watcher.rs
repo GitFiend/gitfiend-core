@@ -29,17 +29,9 @@ static CURRENT_DIR: Global<String> = global!(String::new());
 // Want to watch: HEAD, ORIG_HEAD
 // need to filter out /logs/HEAD
 const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
-  let contains_git = path.iter().any(|part| part.eq(".git"));
-
-  // let ignore = contains_git
-  //   && !((path.ends_with("HEAD")
-  //     && !path
-  //       .parent()
-  //       .unwrap_or_else(|| Path::new(""))
-  //       .ends_with("logs"))
-  //     || path.ends_with("ORIG_HEAD"));
-
   let mut ignore = false;
+
+  let contains_git = path.iter().any(|part| part.eq(".git"));
 
   if contains_git {
     // println!("{:?}", path);
@@ -56,11 +48,6 @@ const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
       ignore = false;
     }
   }
-
-  // println!("Changed Path: {:?}", path);
-  // if ignore {
-  //   println!("Filter Match: {:?}", path);
-  // }
 
   !ignore
 };
@@ -217,14 +204,24 @@ mod tests {
 
   #[test]
   fn test_path_filter() {
+    let is_ignored = |path| !PATH_FILTER(path);
+
     assert_eq!(Path::new("/repo/.git").to_str(), Some("/repo/.git"));
     assert_eq!(
       Path::new("/repo/.git").to_path_buf().to_str(),
       Some("/repo/.git")
     );
 
-    let ignore = PATH_FILTER(&&Path::new("/repo/.git").to_path_buf());
+    let p = &Path::new("/repo/.git").to_path_buf();
+    assert!(is_ignored(&p));
 
-    assert!(ignore);
+    let p = &Path::new("/repo/.git/logs/HEAD").to_path_buf();
+    assert!(is_ignored(&p));
+
+    let p = &Path::new("/repo/.git/HEAD").to_path_buf();
+    assert!(!is_ignored(&p));
+
+    let p = &Path::new("/repo/.git/ORIG_HEAD").to_path_buf();
+    assert!(!is_ignored(&p));
   }
 }

@@ -1,4 +1,4 @@
-use crate::git::git_types::{Commit, DateResult};
+use crate::git::git_types::{CommitInfo, DateResult};
 use crate::git::queries::refs::{make_ref_info, RefInfoPart};
 use crate::git::queries::{RefInfo, P_OPTIONAL_REFS};
 use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, WS};
@@ -54,7 +54,7 @@ type PCommitResult = (
 );
 
 // Don't put a comma on the last one otherwise the macro will complain
-pub const P_COMMIT_ROW: Parser<Commit> = map!(
+pub const P_COMMIT_ROW: Parser<CommitInfo> = map!(
   and!(
     /*  0 */ P_GROUP, // author
     /*  1 */ P_SEP,
@@ -80,7 +80,7 @@ pub const P_COMMIT_ROW: Parser<Commit> = map!(
 
     let num_parents = result.8.len();
 
-    Commit {
+    CommitInfo {
       author: result.0,
       email: result.2,
       date: result.4,
@@ -97,6 +97,6 @@ pub const P_COMMIT_ROW: Parser<Commit> = map!(
   }
 );
 
-pub const P_COMMITS: Parser<Vec<Commit>> = many!(P_COMMIT_ROW);
+pub const P_COMMITS: Parser<Vec<CommitInfo>> = many!(P_COMMIT_ROW);
 
 pub const P_ID_LIST: Parser<Vec<String>> = rep_parser_sep!(ANY_WORD, UNTIL_LINE_END);

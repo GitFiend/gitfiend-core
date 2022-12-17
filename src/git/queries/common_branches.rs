@@ -1,5 +1,4 @@
-use crate::git::git_types::{Commit, RefInfo, RefLocation, RefType};
-use crate::git::queries::refs::get_ref_info_from_commits;
+use crate::git::git_types::{RefInfo, RefLocation, RefType};
 use crate::git::store::{get_all_workspace_commits, RepoPath};
 use crate::server::git_request::ReqOptions;
 use ahash::{AHashMap, AHashSet};
@@ -8,14 +7,14 @@ type RefShortName = String;
 
 #[allow(unused_variables, unused_assignments)]
 pub fn get_common_branches(_: &ReqOptions) -> Option<Vec<RefShortName>> {
-  let repos: AHashMap<RepoPath, Vec<Commit>> = get_all_workspace_commits()?;
+  let repos = get_all_workspace_commits()?;
 
   let mut counts: AHashMap<RefShortName, AHashSet<RepoPath>> = AHashMap::new();
 
   let expected_num = repos.len();
   let data: Vec<(String, Vec<RefInfo>)> = repos
     .into_iter()
-    .map(|(repo_name, commits)| (repo_name, get_ref_info_from_commits(&commits)))
+    .map(|(repo_name, (_, refs))| (repo_name, refs))
     .collect();
 
   for (repo_path, refs) in &data {

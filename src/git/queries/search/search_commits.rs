@@ -36,10 +36,16 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
     num_results,
   } = options;
 
-  let commits = store::get_commits(repo_path)?;
+  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
   let patches = load_patches(repo_path, &commits)?;
   let search_text = search_text.to_lowercase();
   let mut results: Vec<CoreSearchResult> = Vec::new();
+
+  let ref_ids = refs
+    .iter()
+    .filter(|r| r.full_name.to_lowercase().contains(&search_text))
+    .map(|r| r.id.clone())
+    .collect::<Vec<String>>();
 
   for commit in commits {
     let mut matches: HashSet<SearchMatchType> = HashSet::new();
@@ -59,11 +65,18 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
 
     let matching_patches = get_matching_patches(&search_text, &commit.id, &patches);
 
+    // let ref_ids: Vec<String> = commit
+    //   .refs
+    //   .iter()
+    //   .filter(|r| r.full_name.to_lowercase().contains(&search_text))
+    //   .map(|r| r.id.clone())
+    //   .collect();
+
     let ref_ids: Vec<String> = commit
       .refs
       .iter()
-      .filter(|r| r.full_name.to_lowercase().contains(&search_text))
-      .map(|r| r.id.clone())
+      .filter(|id| ref_ids.contains(id))
+      .cloned()
       .collect();
 
     if !matches.is_empty() || !matching_patches.is_empty() || !ref_ids.is_empty() {

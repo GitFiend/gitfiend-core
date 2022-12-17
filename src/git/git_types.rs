@@ -9,7 +9,7 @@ pub struct DateResult {
   pub adjustment: i32,
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub enum RefType {
   Branch,
@@ -27,7 +27,7 @@ pub enum RefLocation {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub struct Commit {
+pub struct CommitInfo {
   pub author: String,
   pub email: String,
   pub date: DateResult,
@@ -38,6 +38,25 @@ pub struct Commit {
   pub message: String,
   pub stash_id: Option<String>,
   pub refs: Vec<RefInfo>,
+
+  pub filtered: bool,
+  pub num_skipped: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct Commit {
+  pub author: String,
+  pub email: String,
+  pub date: DateResult,
+  pub id: String,
+  pub index: usize,
+  pub parent_ids: Vec<String>,
+  pub is_merge: bool,
+  pub message: String,
+  pub stash_id: Option<String>,
+  pub refs: Vec<String>,
 
   pub filtered: bool,
   pub num_skipped: u32,
@@ -148,7 +167,7 @@ pub enum HunkLineStatus {
   HeaderEnd,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct HunkRange {
@@ -171,7 +190,7 @@ pub enum WipPatchType {
   U,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct WipPatch {

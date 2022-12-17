@@ -18,7 +18,7 @@ pub fn load_patches_for_commit(options: &ReqPatchesForCommitOpts) -> Option<Vec<
     commit_id,
   } = options;
 
-  let commits = store::get_commits(repo_path)?;
+  let (commits, _) = store::get_commits_and_refs(repo_path)?;
   let all_patches = load_patches(repo_path, &commits)?;
 
   Some(all_patches.get(commit_id)?.clone())

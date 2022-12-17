@@ -1,4 +1,4 @@
-use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation, RefType};
+use crate::git::git_types::{CommitInfo, GitConfig, RefInfo, RefLocation, RefType};
 use crate::git::store::{RepoPath, CONFIG};
 use crate::or;
 use crate::parser::standard_parsers::WS;
@@ -131,7 +131,7 @@ pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: f32) -> RefInfo
 }
 
 #[elapsed]
-pub fn get_ref_info_from_commits(commits: &[Commit]) -> Vec<RefInfo> {
+pub fn get_ref_info_from_commits(commits: &[CommitInfo]) -> Vec<RefInfo> {
   let mut refs: Vec<RefInfo> = Vec::new();
 
   for c in commits.iter() {
@@ -145,41 +145,60 @@ pub fn get_ref_info_from_commits(commits: &[Commit]) -> Vec<RefInfo> {
   refs
 }
 
-pub fn finish_initialising_refs_on_commits(
-  commits: Vec<Commit>,
-  repo_path: &RepoPath,
-) -> Vec<Commit> {
-  let refs = get_ref_info_from_commits(&commits);
+// pub fn finish_initialising_refs_on_commits(
+//   commits: Vec<CommitInfo>,
+//   repo_path: &RepoPath,
+// ) -> Vec<CommitInfo> {
+//   let refs = get_ref_info_from_commits(&commits);
+//
+//   set_sibling_and_remotes_for_commits(commits, &refs, repo_path)
+// }
 
-  set_sibling_and_remotes_for_commits(commits, &refs, repo_path)
-}
-
-fn set_sibling_and_remotes_for_commits(
-  commits: Vec<Commit>,
-  refs: &[RefInfo],
-  repo_path: &RepoPath,
-) -> Vec<Commit> {
+// Sets siblings and remotes and returns new refs.
+pub fn finish_properties_on_refs(refs: Vec<RefInfo>, repo_path: &RepoPath) -> Vec<RefInfo> {
   let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
 
-  commits
-    .into_iter()
-    .map(|mut c| {
-      c.refs = c
-        .refs
-        .into_iter()
-        .map(|mut r| {
-          if r.remote_name.is_none() {
-            r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
-          }
+  refs
+    .iter()
+    .map(|r| {
+      let mut i = r.clone();
 
-          r.sibling_id = get_sibling_id_for_ref(&r, refs);
-          r
-        })
-        .collect();
-      c
+      if i.remote_name.is_none() {
+        i.remote_name = Some(config.get_remote_for_branch(&i.short_name));
+      }
+
+      i.sibling_id = get_sibling_id_for_ref(&i, &refs);
+      i
     })
     .collect()
 }
+
+// fn set_sibling_and_remotes_for_commits(
+//   commits: Vec<CommitInfo>,
+//   refs: &[RefInfo],
+//   repo_path: &RepoPath,
+// ) -> Vec<CommitInfo> {
+//   let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
+//
+//   commits
+//     .into_iter()
+//     .map(|mut c| {
+//       c.refs = c
+//         .refs
+//         .into_iter()
+//         .map(|mut r| {
+//           if r.remote_name.is_none() {
+//             r.remote_name = Some(config.get_remote_for_branch(&r.short_name));
+//           }
+//
+//           r.sibling_id = get_sibling_id_for_ref(&r, refs);
+//           r
+//         })
+//         .collect();
+//       c
+//     })
+//     .collect()
+// }
 
 fn get_sibling_id_for_ref(ri: &RefInfo, refs: &[RefInfo]) -> Option<String> {
   if ri.location == RefLocation::Remote {

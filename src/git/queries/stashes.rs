@@ -1,13 +1,14 @@
 use loggers::elapsed;
 
-use crate::git::git_types::Commit;
+use crate::git::git_types::CommitInfo;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS};
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
+use crate::git::store::RepoPath;
 use crate::parser::parse_all;
 
 #[elapsed]
-pub fn load_stashes(repo_path: &String) -> Option<Vec<Commit>> {
+pub fn load_stashes(repo_path: &RepoPath) -> Option<Vec<CommitInfo>> {
   let out = run_git::run_git(RunGitOptions {
     args: [
       "reflog",

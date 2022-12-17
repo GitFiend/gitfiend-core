@@ -10,7 +10,7 @@ use crate::git::actions::stash::{stash_changes, stash_staged};
 use crate::git::conflicts::api::load_conflicted_file;
 use crate::git::git_version::git_version;
 use crate::git::queries::commits::{
-  commit_ids_between_commits, commit_is_ancestor, get_un_pushed_commits, load_commits_and_stashes,
+  commit_ids_between_commits, commit_is_ancestor, get_un_pushed_commits, load_commits_and_refs,
   load_head_commit, load_top_commit_for_branch,
 };
 use crate::git::queries::common_branches::get_common_branches;
@@ -62,7 +62,8 @@ pub fn start_async_server() {
           // Queries
           run,
           scan_workspace,
-          load_commits_and_stashes,
+          // load_commits_and_stashes,
+          load_commits_and_refs,
           load_full_config,
           load_head_commit,
           load_top_commit_for_branch,

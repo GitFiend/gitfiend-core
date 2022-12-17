@@ -2,9 +2,9 @@ use ahash::{AHashMap, AHashSet};
 use serde::Deserialize;
 use ts_rs::TS;
 
-use crate::git::git_types::Commit;
+use crate::git::git_types::{Commit, RefInfo};
 use crate::git::queries::commit_calcs::{find_commit_ancestors, get_commit_map_cloned};
-use crate::git::queries::patches::cache::load_patches_cache;
+use crate::git::queries::patches::patches::load_patches;
 
 #[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -16,10 +16,10 @@ pub enum CommitFilter {
   File { file_name: String },
 }
 
-// #[elapsed]
 pub fn apply_commit_filters(
   repo_path: &str,
   commits: Vec<Commit>,
+  refs: &Vec<RefInfo>,
   filters: &[CommitFilter],
 ) -> Vec<Commit> {
   let commit_map = get_commit_map_cloned(&commits);
@@ -28,12 +28,12 @@ pub fn apply_commit_filters(
     .iter()
     .map(|filter| match filter {
       CommitFilter::Branch { short_name, .. } => {
-        get_all_commits_with_branch_name(short_name, &commit_map)
+        get_all_commits_with_branch_name(short_name, &commit_map, refs)
       }
       CommitFilter::User { author, .. } => get_commits_for_user(author, &commits),
       CommitFilter::Commit { commit_id } => [commit_id.as_str()].into_iter().collect(),
       CommitFilter::File { file_name } => {
-        if let Some(patches) = load_patches_cache(repo_path) {
+        if let Some(patches) = load_patches(repo_path, &commits) {
           return commits
             .iter()
             .filter(|c| {
@@ -84,17 +84,24 @@ pub fn apply_commit_filters(
 fn get_all_commits_with_branch_name<'a>(
   short_name: &str,
   commits: &'a AHashMap<String, Commit>,
+  refs: &[RefInfo],
 ) -> AHashSet<&'a str> {
   let mut ids_to_keep = AHashSet::<&'a str>::new();
 
-  commits
+  // refs.iter().filter(|r| r.short_name == short_name).map(|r| commits.get(&r.commit_id))
+
+  // commits
+  //   .iter()
+  //   .filter(|(_, c)| c.refs.iter().any(|r| r.short_name == short_name))
+  refs
     .iter()
-    .filter(|(_, c)| c.refs.iter().any(|r| r.short_name == short_name))
-    .for_each(|(id, c)| {
-      if !ids_to_keep.contains(id.as_str()) {
+    .filter(|r| r.short_name == short_name)
+    .flat_map(|r| commits.get(&r.commit_id))
+    .for_each(|c| {
+      if !ids_to_keep.contains(c.id.as_str()) {
         let ancestors = find_commit_ancestors(c, commits);
 
-        ids_to_keep.insert(id);
+        ids_to_keep.insert(c.id.as_str());
         ids_to_keep.extend(ancestors);
       }
     });

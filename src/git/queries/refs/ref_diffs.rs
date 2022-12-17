@@ -32,23 +32,33 @@ pub fn calc_ref_diffs(
     ..
   } = options;
 
-  let commits = store::get_commits(repo_path)?;
+  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
   let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
 
-  Some(calc_ref_diffs_inner(&commits, &config, head_commit_id))
+  Some(calc_ref_diffs_inner(
+    &commits,
+    &refs,
+    &config,
+    head_commit_id,
+  ))
 }
 
 // We need to pass in head as it may not be found in provided commits in some cases.
 pub fn calc_ref_diffs_inner(
   commits: &Vec<Commit>,
+  refs: &Vec<RefInfo>,
   config: &GitConfig,
   head_commit_id: &String,
 ) -> (
   HashMap<String, LocalRefCommitDiff>,
   HashMap<String, RefCommitDiff>,
 ) {
-  let refs = get_ref_info_map_from_commits(commits);
-  let pairs = get_ref_pairs(&refs, config);
+  let ref_map = refs
+    .into_iter()
+    .map(|r| (r.id.clone(), r.clone()))
+    .collect();
+  // let refs = get_ref_info_map_from_commits(commits);
+  let pairs = get_ref_pairs(&ref_map, config);
 
   let commit_map: AHashMap<String, Commit> = commits
     .clone()
@@ -57,7 +67,7 @@ pub fn calc_ref_diffs_inner(
     .collect();
 
   let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, &commit_map);
-  let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &refs, &commit_map);
+  let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &ref_map, &commit_map);
 
   (local_ref_diffs, remote_ref_diffs)
 }
@@ -181,16 +191,16 @@ fn get_sibling(
   None
 }
 
-pub fn get_ref_info_map_from_commits(commits: &[Commit]) -> AHashMap<String, RefInfo> {
-  let mut refs: AHashMap<String, RefInfo> = AHashMap::new();
-
-  for c in commits.iter() {
-    for r in c.refs.iter() {
-      if !r.full_name.contains("HEAD") {
-        refs.insert(r.id.clone(), r.clone());
-      }
-    }
-  }
-
-  refs
-}
+// pub fn get_ref_info_map_from_commits(commits: &[Commit]) -> AHashMap<String, RefInfo> {
+//   let mut refs: AHashMap<String, RefInfo> = AHashMap::new();
+//
+//   for c in commits.iter() {
+//     for r in c.refs.iter() {
+//       if !r.full_name.contains("HEAD") {
+//         refs.insert(r.id.clone(), r.clone());
+//       }
+//     }
+//   }
+//
+//   refs
+// }

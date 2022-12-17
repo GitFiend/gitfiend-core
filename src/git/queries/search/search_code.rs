@@ -45,7 +45,7 @@ pub fn search_commits_for_code(
     ..
   } = options;
 
-  let commits = store::get_commits(repo_path)?;
+  let (commits, _) = store::get_commits_and_refs(repo_path)?;
 
   Some(
     commit_patches

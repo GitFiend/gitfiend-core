@@ -2,12 +2,12 @@ use ahash::AHashMap;
 use serde::Serialize;
 use ts_rs::TS;
 
-use crate::git::git_types::{Commit, GitConfig, RefInfo, RefLocation};
+use crate::git::git_types::{Commit, CommitInfo, GitConfig, RefInfo, RefLocation};
 use crate::git::queries::commit_calcs::count_commits_between_fallback;
 use crate::git::queries::commits::{
-  load_head_commit, load_top_commit_for_branch, TopCommitOptions,
+  convert_commit, load_head_commit, load_top_commit_for_branch, TopCommitOptions,
 };
-use crate::git::queries::refs::ref_diffs::{calc_remote_ref_diffs, get_ref_info_map_from_commits};
+use crate::git::queries::refs::ref_diffs::calc_remote_ref_diffs;
 use crate::git::store;
 use crate::git::store::{RepoPath, CONFIG};
 use crate::server::git_request::ReqOptions;
@@ -28,13 +28,13 @@ pub struct HeadInfo {
 pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
   let ReqOptions { repo_path } = options;
 
-  let commits = store::get_commits(repo_path)?;
+  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
 
   if commits.is_empty() {
     return None;
   }
 
-  let head_info = calc_head_info_from_commits(commits);
+  let head_info = calc_head_info_from_commits(commits, refs);
 
   if let Some(mut head_info) = head_info.clone() {
     if head_info.remote_ref.is_none() {
@@ -59,7 +59,7 @@ pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
     {
       return Some(HeadInfo {
         ref_info: head_ref.clone(),
-        commit: head_commit,
+        commit: convert_commit(head_commit),
         remote_ref: Some(remote_ref),
         remote_commit: Some(remote_commit),
         remote_ahead,
@@ -73,8 +73,9 @@ pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
 
 // Note: This depends on COMMITS and REF_DIFFS already being loaded.
 // Change this to just take commits? Better to have calls to COMMITS at api level.
-fn calc_head_info_from_commits(commits: Vec<Commit>) -> Option<HeadInfo> {
-  let all_refs = get_ref_info_map_from_commits(&commits);
+fn calc_head_info_from_commits(commits: Vec<Commit>, refs: Vec<RefInfo>) -> Option<HeadInfo> {
+  let all_refs: AHashMap<String, RefInfo> =
+    refs.iter().map(|r| (r.id.clone(), r.clone())).collect();
 
   let commit_map = commits
     .into_iter()
@@ -84,42 +85,41 @@ fn calc_head_info_from_commits(commits: Vec<Commit>) -> Option<HeadInfo> {
   let mut remote_ahead = 0;
   let mut remote_behind = 0;
 
-  for (_, commit) in &commit_map {
-    for info in &commit.refs {
-      if info.head {
-        let mut remote_ref: Option<&RefInfo> = None;
-        let mut remote_commit: Option<&Commit> = None;
+  for info in refs {
+    if info.head {
+      let mut remote_ref: Option<&RefInfo> = None;
+      let mut remote_commit: Option<&Commit> = None;
+      let commit = commit_map.get(&info.commit_id)?;
 
-        if let Some(sibling_id) = &info.sibling_id {
-          remote_ref = all_refs.get(sibling_id);
-          if let Some(remote_ref) = remote_ref {
-            remote_commit = commit_map.get(&remote_ref.commit_id);
-          } else {
-            // TODO: It may still exist, but not be part of our commit batch.
-            // Maybe this is too unlikely? A user would need to commit 1000 times without pushing
-            // for this to happen?
-            // Unless they set a small number of commits to show in the future?
-          }
-        }
-
+      if let Some(sibling_id) = &info.sibling_id {
+        remote_ref = all_refs.get(sibling_id);
         if let Some(remote_ref) = remote_ref {
-          let diffs_map = calc_remote_ref_diffs(&commit.id, &all_refs, &commit_map);
-
-          if let Some(diffs) = diffs_map.get(&remote_ref.id) {
-            remote_ahead = diffs.ahead_of_head;
-            remote_behind = diffs.behind_head;
-          }
+          remote_commit = commit_map.get(&remote_ref.commit_id);
+        } else {
+          // TODO: It may still exist, but not be part of our commit batch.
+          // Maybe this is too unlikely? A user would need to commit 1000 times without pushing
+          // for this to happen?
+          // Unless they set a small number of commits to show in the future?
         }
-
-        return Some(HeadInfo {
-          ref_info: info.clone(),
-          commit: commit.clone(),
-          remote_ref: remote_ref.cloned(),
-          remote_commit: remote_commit.cloned(),
-          remote_ahead,
-          remote_behind,
-        });
       }
+
+      if let Some(remote_ref) = remote_ref {
+        let diffs_map = calc_remote_ref_diffs(&info.commit_id, &all_refs, &commit_map);
+
+        if let Some(diffs) = diffs_map.get(&remote_ref.id) {
+          remote_ahead = diffs.ahead_of_head;
+          remote_behind = diffs.behind_head;
+        }
+      }
+
+      return Some(HeadInfo {
+        ref_info: info.clone(),
+        commit: commit.clone(),
+        remote_ref: remote_ref.cloned(),
+        remote_commit: remote_commit.cloned(),
+        remote_ahead,
+        remote_behind,
+      });
     }
   }
 
@@ -128,7 +128,7 @@ fn calc_head_info_from_commits(commits: Vec<Commit>) -> Option<HeadInfo> {
 
 // We return an index to the ref in the commit. This is so we can
 // set sibling id later and not have separate instances of the same RefInfo
-fn calc_head_fallback(repo_path: &str) -> Option<(Commit, usize)> {
+fn calc_head_fallback(repo_path: &str) -> Option<(CommitInfo, usize)> {
   if let Some(commit) = load_head_commit(&ReqOptions {
     repo_path: repo_path.to_string(),
   }) {
@@ -168,7 +168,12 @@ fn calc_remote_fallback(
       let remote_behind =
         count_commits_between_fallback(repo_path, &remote_ref.full_name, &head_ref.full_name);
 
-      return Some((remote_ahead, remote_commit, remote_behind, remote_ref));
+      return Some((
+        remote_ahead,
+        convert_commit(remote_commit),
+        remote_behind,
+        remote_ref,
+      ));
     }
   }
 

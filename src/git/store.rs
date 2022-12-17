@@ -1,4 +1,4 @@
-use crate::git::git_types::{Commit, GitConfig, Patch};
+use crate::git::git_types::{Commit, GitConfig, Patch, RefInfo};
 use crate::git::git_version::GitVersion;
 use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
@@ -13,7 +13,10 @@ use std::env;
 pub type RepoPath = String;
 type PatchPath = String;
 
-static COMMITS: Global<AHashMap<RepoPath, Vec<Commit>>> = global!(AHashMap::new());
+// static COMMITS: Global<AHashMap<RepoPath, Vec<CommitInfo>>> = global!(AHashMap::new());
+
+static COMMITS_AND_REFS: Global<AHashMap<RepoPath, (Vec<Commit>, Vec<RefInfo>)>> =
+  global!(AHashMap::new());
 
 static PATCHES: Global<(RepoPath, HashMap<PatchPath, Vec<Patch>>)> =
   global!((RepoPath::new(), HashMap::new()));
@@ -26,17 +29,26 @@ pub static CONFIG: Global<AHashMap<RepoPath, GitConfig>> = global!(AHashMap::new
 
 pub static GIT_VERSION: Global<GitVersion> = global!(GitVersion::new());
 
-pub fn insert_commits(repo_path: &str, commits: &Vec<Commit>) {
-  COMMITS.insert(repo_path.to_string(), commits.to_owned());
+// pub fn insert_commits(repo_path: &str, commits: &Vec<CommitInfo>) {
+//   COMMITS.insert(repo_path.to_string(), commits.to_owned());
+//   clear_changed_status(repo_path);
+// }
+
+pub fn insert_commits2(repo_path: &RepoPath, commits: &Vec<Commit>, refs: &Vec<RefInfo>) {
+  COMMITS_AND_REFS.insert(repo_path.to_owned(), (commits.to_owned(), refs.to_owned()));
   clear_changed_status(repo_path);
 }
 
-pub fn get_commits(repo_path: &str) -> Option<Vec<Commit>> {
-  COMMITS.get_by_key(&repo_path.to_string())
+// pub fn get_commits(repo_path: &str) -> Option<Vec<CommitInfo>> {
+//   COMMITS.get_by_key(&repo_path.to_string())
+// }
+
+pub fn get_commits_and_refs(repo_path: &RepoPath) -> Option<(Vec<Commit>, Vec<RefInfo>)> {
+  COMMITS_AND_REFS.get_by_key(repo_path)
 }
 
-pub fn get_all_workspace_commits() -> Option<AHashMap<RepoPath, Vec<Commit>>> {
-  let commits = COMMITS.get()?;
+pub fn get_all_workspace_commits() -> Option<AHashMap<RepoPath, (Vec<Commit>, Vec<RefInfo>)>> {
+  let commits = COMMITS_AND_REFS.get()?;
   let watched_repos: HashMap<RepoPath, bool> = get_watched_repos()?;
 
   Some(
@@ -48,13 +60,13 @@ pub fn get_all_workspace_commits() -> Option<AHashMap<RepoPath, Vec<Commit>>> {
 }
 
 pub fn clear_unwatched_repos_from_commits(watched_repos: &HashMap<String, bool>) -> Option<()> {
-  let commits = COMMITS
+  let commits = COMMITS_AND_REFS
     .get()?
     .into_iter()
     .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
     .collect();
 
-  COMMITS.set(commits);
+  COMMITS_AND_REFS.set(commits);
 
   let configs = CONFIG
     .get()?

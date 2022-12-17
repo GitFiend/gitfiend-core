@@ -55,15 +55,13 @@ const P_HUNK: Parser<Hunk> = map!(
     let old_num = old_line_range.start;
     let new_num = new_line_range.start;
 
-    let hunk = Hunk {
+    Hunk {
       old_line_range,
       new_line_range,
       context_line: String::from(""),
       lines: get_hunk_lines(old_num, new_num, res.2),
       index: -1,
-    };
-
-    hunk
+    }
   }
 );
 

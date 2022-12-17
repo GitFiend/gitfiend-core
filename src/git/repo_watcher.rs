@@ -25,27 +25,44 @@ pub struct WatchRepoOptions {
 static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
 static CURRENT_DIR: Global<String> = global!(String::new());
 
-// Ignoring most of .git
-// Want to watch: HEAD, ORIG_HEAD
-// need to filter out /logs/HEAD
-const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
+// // Ignoring most of .git
+// // Want to watch: HEAD, ORIG_HEAD
+// // need to filter out /logs/HEAD
+// const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
+//   let mut ignore = false;
+//
+//   let contains_git = path.iter().any(|part| part.eq(".git"));
+//
+//   if contains_git {
+//     // println!("{:?}", path);
+//
+//     ignore = true;
+//
+//     if path.ends_with("ORIG_HEAD")
+//       || path.ends_with("HEAD")
+//         && !path
+//           .parent()
+//           .unwrap_or_else(|| Path::new(""))
+//           .ends_with("logs")
+//     {
+//       ignore = false;
+//     }
+//   }
+//
+//   !ignore
+// };
+
+// Ignore anything in .git/logs
+const PATH_FILTER2: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
   let mut ignore = false;
 
-  let contains_git = path.iter().any(|part| part.eq(".git"));
+  let parts: Vec<&str> = path.iter().flat_map(|part| part.to_str()).collect();
 
-  if contains_git {
-    // println!("{:?}", path);
-
-    ignore = true;
-
-    if path.ends_with("ORIG_HEAD")
-      || path.ends_with("HEAD")
-        && !path
-          .parent()
-          .unwrap_or_else(|| Path::new(""))
-          .ends_with("logs")
-    {
-      ignore = false;
+  if let Some(i) = parts.iter().position(|p| *p == ".git") {
+    if let Some(next) = parts.get(i + 1) {
+      if *next == "logs" {
+        ignore = true;
+      }
     }
   }
 
@@ -160,7 +177,7 @@ fn already_watching(repo_path: &str) -> bool {
 fn update_changed(changed_paths: Vec<PathBuf>) {
   let changed_paths: Vec<String> = changed_paths
     .iter()
-    .filter(PATH_FILTER)
+    .filter(PATH_FILTER2)
     .flat_map(|path| path.to_str())
     .map(|path| path.to_string())
     .collect();
@@ -199,23 +216,43 @@ fn closest_match(changed_path: &str, watch_dirs: &HashMap<String, bool>) -> Opti
 
 #[cfg(test)]
 mod tests {
-  use crate::git::repo_watcher::PATH_FILTER;
+  use crate::git::repo_watcher::PATH_FILTER2;
   use std::path::Path;
 
-  #[test]
-  fn test_path_filter() {
-    let is_ignored = |path| !PATH_FILTER(path);
+  // #[test]
+  // fn test_path_filter() {
+  //   let is_ignored = |path| !PATH_FILTER(path);
+  //
+  //   assert_eq!(Path::new("/repo/.git").to_str(), Some("/repo/.git"));
+  //   assert_eq!(
+  //     Path::new("/repo/.git").to_path_buf().to_str(),
+  //     Some("/repo/.git")
+  //   );
+  //
+  //   let p = &Path::new("/repo/.git").to_path_buf();
+  //   assert!(is_ignored(&p));
+  //
+  //   let p = &Path::new("/repo/.git/logs/HEAD").to_path_buf();
+  //   assert!(is_ignored(&p));
+  //
+  //   let p = &Path::new("/repo/.git/HEAD").to_path_buf();
+  //   assert!(!is_ignored(&p));
+  //
+  //   let p = &Path::new("/repo/.git/ORIG_HEAD").to_path_buf();
+  //   assert!(!is_ignored(&p));
+  // }
 
-    assert_eq!(Path::new("/repo/.git").to_str(), Some("/repo/.git"));
-    assert_eq!(
-      Path::new("/repo/.git").to_path_buf().to_str(),
-      Some("/repo/.git")
-    );
+  #[test]
+  fn test_path_filter2() {
+    let is_ignored = |path| !PATH_FILTER2(path);
 
     let p = &Path::new("/repo/.git").to_path_buf();
-    assert!(is_ignored(&p));
+    assert!(!is_ignored(&p));
 
     let p = &Path::new("/repo/.git/logs/HEAD").to_path_buf();
+    assert!(is_ignored(&p));
+
+    let p = &Path::new("/repo/.git/logs").to_path_buf();
     assert!(is_ignored(&p));
 
     let p = &Path::new("/repo/.git/HEAD").to_path_buf();

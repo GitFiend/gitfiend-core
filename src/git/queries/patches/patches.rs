@@ -129,10 +129,7 @@ fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> Option<(String, 
 
   let out = match commit {
     Commit {
-      stash_id: None,
-      is_merge: true,
-      id,
-      ..
+      is_merge: true, id, ..
     } => run_git::run_git(RunGitOptions {
       repo_path,
       args: [diff, name_status, z, format!("{}^1", id), id.to_string()],

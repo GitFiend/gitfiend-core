@@ -4,6 +4,7 @@ use ts_rs::TS;
 
 use crate::dprintln;
 use crate::git::run_git_action::{run_git_action, RunGitActionOptions};
+use crate::git::store::get_git_version;
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -19,12 +20,18 @@ pub fn clone_repo(options: &CloneOptions) -> u32 {
     return 0;
   }
 
+  let version = get_git_version();
+
+  let command = if version.major > 1 && version.minor > 12 {
+    vec!["clone", "--recurse-submodules", "--progress", &options.url]
+  } else {
+    vec!["clone", "--recursive", "--progress", &options.url]
+  };
+
   let out = run_git_action(RunGitActionOptions {
     repo_path: &options.repo_path,
-    commands: [vec!["clone", "--progress", &options.url]],
+    commands: [command],
   });
-
-  // print_action_result(out);
 
   dprintln!("{:?}", out);
 

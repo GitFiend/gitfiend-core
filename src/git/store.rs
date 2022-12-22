@@ -29,19 +29,15 @@ pub static CONFIG: Global<AHashMap<RepoPath, GitConfig>> = global!(AHashMap::new
 
 pub static GIT_VERSION: Global<GitVersion> = global!(GitVersion::new());
 
-// pub fn insert_commits(repo_path: &str, commits: &Vec<CommitInfo>) {
-//   COMMITS.insert(repo_path.to_string(), commits.to_owned());
-//   clear_changed_status(repo_path);
-// }
+// Assumes git is installed.
+pub fn get_git_version() -> GitVersion {
+  GIT_VERSION.get().unwrap_or_else(GitVersion::new)
+}
 
 pub fn insert_commits2(repo_path: &RepoPath, commits: &Vec<Commit>, refs: &Vec<RefInfo>) {
   COMMITS_AND_REFS.insert(repo_path.to_owned(), (commits.to_owned(), refs.to_owned()));
   clear_changed_status(repo_path);
 }
-
-// pub fn get_commits(repo_path: &str) -> Option<Vec<CommitInfo>> {
-//   COMMITS.get_by_key(&repo_path.to_string())
-// }
 
 pub fn get_commits_and_refs(repo_path: &RepoPath) -> Option<(Vec<Commit>, Vec<RefInfo>)> {
   COMMITS_AND_REFS.get_by_key(repo_path)

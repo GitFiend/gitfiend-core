@@ -15,7 +15,7 @@ use crate::git::action_state::{
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::{Credential, Git, IO};
-use crate::git::store::GIT_VERSION;
+use crate::git::store::get_git_version;
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -57,7 +57,7 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
 pub fn run_git_action_with_vec(repo_path: &str, commands: Vec<Vec<String>>) -> u32 {
   let id = start_action();
 
-  let git_version = GIT_VERSION.get().unwrap_or_else(GitVersion::new);
+  let git_version = get_git_version();
 
   let repo_path = repo_path.to_string();
 

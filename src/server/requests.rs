@@ -62,7 +62,6 @@ pub fn start_async_server() {
           // Queries
           run,
           scan_workspace,
-          // load_commits_and_stashes,
           load_commits_and_refs,
           load_full_config,
           load_head_commit,
@@ -84,8 +83,9 @@ pub fn start_async_server() {
           load_conflicted_file,
           load_commit_image,
           calc_head_info,
-          // get_changed_repos,
           repo_has_changed,
+
+          // TODO
           get_common_branches,
 
           // Core messages

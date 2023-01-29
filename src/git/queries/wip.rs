@@ -6,6 +6,8 @@ use crate::server::git_request::ReqOptions;
 use std::fs;
 use std::path::Path;
 
+// Returns the commit id of the branch we tried to merge
+// into our current if we have a conflict.
 pub fn is_merge_in_progress(options: &ReqOptions) -> Option<String> {
   let ReqOptions { repo_path } = options;
 

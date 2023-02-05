@@ -53,6 +53,7 @@ static CURRENT_DIR: Global<String> = global!(String::new());
 // };
 
 // Ignore anything in .git/logs
+// What about ".git/index.lock" ?
 const PATH_FILTER2: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
   let mut ignore = false;
 
@@ -64,6 +65,10 @@ const PATH_FILTER2: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
         ignore = true;
       }
     }
+  }
+
+  if parts.last().unwrap_or(&"").contains(".lock") {
+    ignore = true
   }
 
   !ignore
@@ -260,5 +265,8 @@ mod tests {
 
     let p = &Path::new("/repo/.git/ORIG_HEAD").to_path_buf();
     assert!(!is_ignored(&p));
+
+    let p = &Path::new("/Users/tobysuggate/Repos/game-dist/.git/index.lock").to_path_buf();
+    assert!(is_ignored(&p));
   }
 }

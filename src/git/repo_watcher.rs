@@ -22,35 +22,10 @@ pub struct WatchRepoOptions {
   pub start_changed: bool,
 }
 
-static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
+// The root dir?
 static CURRENT_DIR: Global<String> = global!(String::new());
 
-// // Ignoring most of .git
-// // Want to watch: HEAD, ORIG_HEAD
-// // need to filter out /logs/HEAD
-// const PATH_FILTER: fn(&&PathBuf) -> bool = |path: &&PathBuf| {
-//   let mut ignore = false;
-//
-//   let contains_git = path.iter().any(|part| part.eq(".git"));
-//
-//   if contains_git {
-//     // println!("{:?}", path);
-//
-//     ignore = true;
-//
-//     if path.ends_with("ORIG_HEAD")
-//       || path.ends_with("HEAD")
-//         && !path
-//           .parent()
-//           .unwrap_or_else(|| Path::new(""))
-//           .ends_with("logs")
-//     {
-//       ignore = false;
-//     }
-//   }
-//
-//   !ignore
-// };
+static WATCH_DIRS: Global<HashMap<String, bool>> = global!(HashMap::new());
 
 // Ignore anything in .git/logs
 // What about ".git/index.lock" ?
@@ -97,10 +72,6 @@ pub fn get_watched_repos() -> Option<HashMap<RepoPath, bool>> {
 pub fn stop_watching_repo(_: &ReqOptions) {
   WATCH_DIRS.set(HashMap::new());
 }
-
-// pub fn get_changed_repos(_: &ReqOptions) -> Option<HashMap<String, bool>> {
-//   WATCH_DIRS.get()
-// }
 
 pub fn repo_has_changed(options: &ReqOptions) -> Option<bool> {
   let dirs = WATCH_DIRS.get()?;
@@ -155,6 +126,8 @@ fn watch(root_dir: String) -> Result<()> {
   CURRENT_DIR.set(root_dir.clone());
 
   watcher.watch(Path::new(&root_dir), RecursiveMode::Recursive)?;
+
+  dprintln!("Watcher ready for dir {}", root_dir);
 
   loop {
     thread::sleep(Duration::from_millis(500));

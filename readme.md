@@ -1,10 +1,14 @@
 # GitFiend Server
 
+This is the internal server process GitFiend uses to query repo data and run git commands.
+
+#### Run server
+`cargo run`
+
 #### Generate typescript types
 `cargo test`
 
 #### Release build
-
 `cargo build --release`
 
 ## Building static for linux

@@ -106,6 +106,7 @@ fn load_all_patches_for_normal_commits(
     args: [
       "log",
       "--remotes",
+      "--branches",
       "--name-status",
       "--pretty=format:%H,",
       // Can't get correct patch info for merges with this command.

@@ -4,32 +4,44 @@ use crate::parser::standard_parsers::{UNTIL_LINE_END, WS};
 use crate::parser::Parser;
 use crate::{and, many, map, or, word};
 
-const P_DIFF_LINE: Parser<(&str, String)> = and!(word!("diff"), UNTIL_LINE_END);
+type IgnoredLine<'a> = (&'a str, String);
 
-// TODO: Not sure what part to return res.0 or res.1?
+const P_DIFF_LINE: Parser<IgnoredLine> = and!(word!("diff"), UNTIL_LINE_END);
+
 const P_OPTIONAL_HEADER: Parser<String> = or!(
-  map!(and!(word!("deleted"), UNTIL_LINE_END), |res: (
-    &str,
-    String
-  )| res
-    .0
-    .to_string()),
-  map!(and!(word!("new file"), UNTIL_LINE_END), |res: (
-    &str,
-    String
-  )| res
-    .0
-    .to_string()),
+  map!(and!(word!("deleted"), UNTIL_LINE_END), |_: IgnoredLine| {
+    String::from("deleted")
+  }),
+  map!(and!(word!("new file"), UNTIL_LINE_END), |_: IgnoredLine| {
+    String::from("new file")
+  }),
+  P_RENAME_HEADER,
   WS
 );
 
-const P_INDEX_LINE: Parser<(&str, String)> = and!(word!("index"), UNTIL_LINE_END);
+/*
+Parse something like:
 
-const P_OLD_FILE: Parser<(&str, String)> = and!(word!("---"), UNTIL_LINE_END);
+similarity index 88%
+rename from BetterName.txt
+rename to BetterName2.txt
+ */
+const P_RENAME_HEADER: Parser<String> = map!(
+  and!(
+    and!(word!("similarity"), UNTIL_LINE_END),
+    and!(word!("rename"), UNTIL_LINE_END),
+    and!(word!("rename"), UNTIL_LINE_END)
+  ),
+  |_: (IgnoredLine, IgnoredLine, IgnoredLine)| { String::from("rename") }
+);
 
-const P_NEW_FILE: Parser<(&str, String)> = and!(word!("+++"), UNTIL_LINE_END);
+const P_INDEX_LINE: Parser<IgnoredLine> = and!(word!("index"), UNTIL_LINE_END);
 
-const P_BINARY_INFO: Parser<(&str, String)> = and!(word!("Binary"), UNTIL_LINE_END);
+const P_OLD_FILE: Parser<IgnoredLine> = and!(word!("---"), UNTIL_LINE_END);
+
+const P_NEW_FILE: Parser<IgnoredLine> = and!(word!("+++"), UNTIL_LINE_END);
+
+const P_BINARY_INFO: Parser<IgnoredLine> = and!(word!("Binary"), UNTIL_LINE_END);
 
 struct FileInfo {
   is_binary: bool,

@@ -80,7 +80,9 @@ pub fn repo_has_changed(options: &ReqOptions) -> Option<bool> {
   Some(*changed)
 }
 
-pub fn clear_changed_status(repo_path: &str) {
+pub fn clear_repo_changed_status(options: &ReqOptions) {
+  let ReqOptions { repo_path } = options;
+
   dprintln!("clear_changed_status {}", repo_path);
 
   if let Some(mut dirs) = WATCH_DIRS.get() {

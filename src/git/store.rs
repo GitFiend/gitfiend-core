@@ -2,7 +2,7 @@ use crate::git::git_types::{Commit, GitConfig, Patch, RefInfo};
 use crate::git::git_version::GitVersion;
 use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
-use crate::git::repo_watcher::{clear_changed_status, get_watched_repos};
+use crate::git::repo_watcher::{clear_repo_changed_status, get_watched_repos};
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 use crate::{dprintln, global, time_block};
@@ -36,7 +36,10 @@ pub fn get_git_version() -> GitVersion {
 
 pub fn insert_commits2(repo_path: &RepoPath, commits: &Vec<Commit>, refs: &Vec<RefInfo>) {
   COMMITS_AND_REFS.insert(repo_path.to_owned(), (commits.to_owned(), refs.to_owned()));
-  clear_changed_status(repo_path);
+
+  clear_repo_changed_status(&ReqOptions {
+    repo_path: repo_path.to_string(),
+  });
 }
 
 pub fn get_commits_and_refs(repo_path: &RepoPath) -> Option<(Vec<Commit>, Vec<RefInfo>)> {

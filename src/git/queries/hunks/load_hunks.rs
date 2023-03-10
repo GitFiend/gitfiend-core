@@ -44,7 +44,8 @@ pub fn load_hunks_args(commit: &Commit, patch: &Patch) -> Vec<String> {
   let mut args: Vec<String> = Vec::new();
 
   if *is_merge {
-    args.extend_from_slice(&[diff, format!("{}^@", id)]);
+    // args.extend_from_slice(&[diff, format!("{}^@", id)]);
+    args.extend_from_slice(&[diff, format!("{}...{}", parent_ids[0], parent_ids[1])]);
   } else if !commit.parent_ids.is_empty() {
     args.extend_from_slice(&[diff, format!("{}..{}", parent_ids[0], id)]);
   } else {

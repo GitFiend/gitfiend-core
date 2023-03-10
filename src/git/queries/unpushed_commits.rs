@@ -1,4 +1,4 @@
-use crate::git::git_types::{Commit, RefInfo};
+use crate::git::git_types::{Commit, RefInfo, RefLocation};
 use crate::git::queries::commit_calcs::get_commit_ids_between_commit_ids;
 use crate::git::queries::commits_parsers::P_ID_LIST;
 use crate::git::run_git::{run_git, RunGitOptions};
@@ -7,11 +7,27 @@ use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
 use crate::{dprintln, time_result};
 use ahash::AHashMap;
+use serde::Serialize;
+use ts_rs::TS;
 
-pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct UnPushedCommits {
+  // Commits that are un-pushed on this branch, but pushed on another.
+  pub this_branch: Vec<String>,
+  // Commits that haven't been pushed period. These have more edit options available.
+  pub all_branches: Vec<String>,
+}
+
+pub fn get_un_pushed_commits(options: &ReqOptions) -> UnPushedCommits {
   if let Some(ids) = get_un_pushed_commits_computed(options) {
-    // println!("Computed ids: {:?}", ids);
-    return ids;
+    let unique = get_unique_un_pushed_commits(&options.repo_path);
+
+    return UnPushedCommits {
+      this_branch: ids,
+      all_branches: unique.unwrap_or_default(),
+    };
   } else {
     dprintln!("get_un_pushed_commits: Refs not found in commits, fall back to git request.");
   }
@@ -21,11 +37,66 @@ pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
     args: ["log", "HEAD", "--not", "--remotes", "--pretty=format:%H"],
   }) {
     if let Some(ids) = parse_all(P_ID_LIST, &out) {
-      return ids;
+      return UnPushedCommits {
+        // This branch is probably far behind the remote.
+        // TODO: Do we include all commits then?
+        this_branch: Vec::new(),
+        all_branches: ids,
+      };
     }
   }
 
-  Vec::new()
+  UnPushedCommits {
+    this_branch: Vec::new(),
+    all_branches: Vec::new(),
+  }
+}
+
+// Assumes head has some commits remote ref doesn't. If remote is ahead of ref then, could be misleading.
+fn get_unique_un_pushed_commits(repo_path: &String) -> Option<Vec<String>> {
+  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
+
+  let ref_map: AHashMap<String, RefInfo> = refs.iter().map(|r| (r.id.clone(), r.clone())).collect();
+  let commit_map: AHashMap<String, Commit> =
+    commits.iter().map(|c| (c.id.clone(), c.clone())).collect();
+
+  let head_ref = get_head_ref(&refs)?;
+  let remote = find_sibling_ref(head_ref, &refs)?;
+  let head = commits.iter().find(|c| c.id == head_ref.commit_id)?;
+
+  let mut unique: Vec<String> = Vec::new();
+
+  un_pushed(head, &remote.commit_id, &commit_map, &ref_map, &mut unique);
+
+  Some(unique)
+}
+
+fn un_pushed(
+  current: &Commit,
+  remote_id: &str,
+  commits: &AHashMap<String, Commit>,
+  refs: &AHashMap<String, RefInfo>,
+  unique: &mut Vec<String>,
+) {
+  if current.id == remote_id
+    || current.refs.iter().any(|ref_id| {
+      if let Some(r) = refs.get(ref_id) {
+        r.location == RefLocation::Remote
+      } else {
+        false
+      }
+    })
+  {
+    return;
+  } else {
+    unique.push(current.id.clone());
+  }
+
+  for id in &current.parent_ids {
+    if let Some(commit) = commits.get(id) {
+      un_pushed(commit, remote_id, commits, refs, unique);
+    }
+  }
 }
 
 // This will return none if head ref or remote ref can't be found in provided commits.

@@ -1,5 +1,7 @@
 # GitFiend Server
 
+TODO: Rename this repo.
+
 This is the internal server process GitFiend uses to query repo data and run git commands.
 
 #### Run server

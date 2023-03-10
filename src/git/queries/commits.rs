@@ -27,7 +27,6 @@ pub struct TopCommitOptions {
   pub branch_name: String,
 }
 
-// #[elapsed]
 pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<CommitInfo> {
   let out = run_git(RunGitOptions {
     args: [
@@ -81,14 +80,10 @@ pub fn load_commits_and_refs(options: &ReqCommitsOptions2) -> Option<(Vec<Commit
 
   let (commits, refs) = load_commits_unfiltered(repo_path, *num_commits, *fast, *skip_stashes)?;
 
-  // let refs = get_ref_info_from_commits(&commit_info);
-  // let commits = get_commits_from_info(apply_commit_filters(repo_path, commit_info, filters));
-
   Some((
     apply_commit_filters(repo_path, commits, &refs, filters),
     refs,
   ))
-  // Some((commits, refs))
 }
 
 fn get_commits_from_info(commit_info: Vec<CommitInfo>) -> Vec<Commit> {
@@ -156,78 +151,14 @@ fn load_commits_unfiltered(
     c.index = i;
   }
 
-  // let commits = finish_initialising_refs_on_commits(commits, repo_path);
-
   let refs = finish_properties_on_refs(get_ref_info_from_commits(&commits), repo_path);
   let commits = get_commits_from_info(commits);
 
-  store::insert_commits2(repo_path, &commits, &refs);
-  // store::insert_commits(repo_path, &commits);
+  store::insert_commits(repo_path, &commits, &refs);
 
   Some((commits, refs))
 }
 
-// pub fn load_commits_and_stashes(options: &ReqCommitsOptions2) -> Option<Vec<CommitInfo>> {
-//   let ReqCommitsOptions2 {
-//     repo_path,
-//     num_commits,
-//     filters,
-//     fast,
-//     skip_stashes,
-//   } = options;
-//
-//   if *fast {
-//     if let Some(commits) = store::get_commits(repo_path) {
-//       return Some(apply_commit_filters(repo_path, commits, filters));
-//     }
-//   }
-//
-//   let mut commits = if *skip_stashes {
-//     load_commits(repo_path, *num_commits)?
-//   } else {
-//     let p1 = repo_path.clone();
-//     let p2 = repo_path.clone();
-//     let num = *num_commits;
-//
-//     let stashes_thread = thread::spawn(move || load_stashes(&p1));
-//     let commits_thread = thread::spawn(move || load_commits(&p2, num));
-//
-//     let stashes = stashes_thread.join().ok()?;
-//     let mut commits = commits_thread.join().ok()??;
-//
-//     if let Some(mut stashes) = stashes {
-//       commits.append(&mut stashes);
-//     }
-//
-//     commits.sort_by(|a, b| {
-//       if b.stash_id.is_some() || a.stash_id.is_some() {
-//         b.date.ms.partial_cmp(&a.date.ms).unwrap_or(Ordering::Equal)
-//       } else {
-//         Ordering::Equal
-//       }
-//     });
-//
-//     commits
-//   };
-//
-//   for (i, c) in commits.iter_mut().enumerate() {
-//     c.index = i;
-//   }
-//
-//   let commits = finish_initialising_refs_on_commits(commits, repo_path);
-//
-//   store::insert_commits(repo_path, &commits);
-//
-//   // // TODO: I don't get this. Why don't we always load patches?
-//   // // Shouldn't this be if filters is empty?
-//   // if !filters.is_empty() {
-//   //   load_patches(repo_path, &commits);
-//   // }
-//
-//   Some(apply_commit_filters(repo_path, commits, filters))
-// }
-
-// #[elapsed]
 pub fn load_commits(repo_path: &RepoPath, num: u32) -> Option<Vec<CommitInfo>> {
   let out = run_git(RunGitOptions {
     args: [
@@ -257,7 +188,6 @@ pub struct CommitDiffOpts {
   pub commit_id2: String,
 }
 
-// #[elapsed]
 pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String>> {
   let CommitDiffOpts {
     repo_path,
@@ -278,7 +208,6 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String
 }
 
 // We use this when commit ids are outside our loaded range (not in COMMITS).
-// #[elapsed]
 pub fn commit_ids_between_commits_fallback(
   repo_path: &str,
   commit_id1: &str,
@@ -294,8 +223,6 @@ pub fn commit_ids_between_commits_fallback(
   parse_all(P_ID_LIST, &out)
 }
 
-// Use this as a fallback when calculation fails.
-// #[elapsed]
 pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
   if let Some(ids) = get_un_pushed_commits_computed(options) {
     // println!("Computed ids: {:?}", ids);
@@ -331,30 +258,9 @@ fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
   })
 }
 
-// fn get_head_ref(commits: &[Commit]) -> Option<&RefInfo> {
-//   commits
-//     .iter()
-//     .find(|c| c.refs.iter().any(|r| r.head))?
-//     .refs
-//     .iter()
-//     .find(|r| r.head)
-// }
-
 fn get_head_ref(refs: &[RefInfo]) -> Option<&RefInfo> {
   refs.iter().find(|r| r.head)
 }
-
-// pub fn find_sibling_ref<'a>(ri: &RefInfo, commits: &'a [Commit]) -> Option<&'a RefInfo> {
-//   if let Some(sibling_id) = &ri.sibling_id {
-//     return commits
-//       .iter()
-//       .find(|c| c.refs.iter().any(|r| &r.id == sibling_id))?
-//       .refs
-//       .iter()
-//       .find(|r| &r.id == sibling_id);
-//   }
-//   None
-// }
 
 pub fn find_sibling_ref<'a>(ri: &RefInfo, refs: &'a [RefInfo]) -> Option<&'a RefInfo> {
   if let Some(sibling_id) = &ri.sibling_id {

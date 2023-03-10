@@ -34,7 +34,7 @@ pub fn get_git_version() -> GitVersion {
   GIT_VERSION.get().unwrap_or_else(GitVersion::new)
 }
 
-pub fn insert_commits2(repo_path: &RepoPath, commits: &Vec<Commit>, refs: &Vec<RefInfo>) {
+pub fn insert_commits(repo_path: &RepoPath, commits: &Vec<Commit>, refs: &Vec<RefInfo>) {
   COMMITS_AND_REFS.insert(repo_path.to_owned(), (commits.to_owned(), refs.to_owned()));
 
   clear_repo_changed_status(&ReqOptions {

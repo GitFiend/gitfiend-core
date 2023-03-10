@@ -1,12 +1,6 @@
-use ahash::AHashMap;
-use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
-use std::thread;
-use ts_rs::TS;
-
 use crate::git::git_types::{Commit, CommitInfo, RefInfo};
 use crate::git::queries::commit_calcs::{
-  find_commit_ancestors, get_commit_ids_between_commits2, get_commit_map_cloned,
+  find_commit_ancestors, get_commit_ids_between_commit_ids, get_commit_map_cloned,
 };
 use crate::git::queries::commit_filters::{apply_commit_filters, CommitFilter};
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
@@ -18,6 +12,11 @@ use crate::git::store::RepoPath;
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
 use crate::{dprintln, time_result};
+use ahash::AHashMap;
+use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::thread;
+use ts_rs::TS;
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -199,7 +198,7 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> Option<Vec<String
     let commit_map: AHashMap<String, Commit> =
       commits.into_iter().map(|c| (c.id.clone(), c)).collect();
 
-    if let Some(result) = get_commit_ids_between_commits2(commit_id2, commit_id1, &commit_map) {
+    if let Some(result) = get_commit_ids_between_commit_ids(commit_id2, commit_id1, &commit_map) {
       return Some(result);
     }
   }
@@ -221,52 +220,6 @@ pub fn commit_ids_between_commits_fallback(
   });
 
   parse_all(P_ID_LIST, &out)
-}
-
-pub fn get_un_pushed_commits(options: &ReqOptions) -> Vec<String> {
-  if let Some(ids) = get_un_pushed_commits_computed(options) {
-    // println!("Computed ids: {:?}", ids);
-    return ids;
-  } else {
-    dprintln!("get_un_pushed_commits: Refs not found in commits, fall back to git request.");
-  }
-
-  if let Some(out) = run_git(RunGitOptions {
-    repo_path: &options.repo_path,
-    args: ["log", "HEAD", "--not", "--remotes", "--pretty=format:%H"],
-  }) {
-    if let Some(ids) = parse_all(P_ID_LIST, &out) {
-      return ids;
-    }
-  }
-
-  Vec::new()
-}
-
-// This will return none if head ref or remote ref can't be found in provided commits.
-fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
-  time_result!("get_un_pushed_commits_computed", {
-    let (commits, refs) = store::get_commits_and_refs(&options.repo_path)?;
-
-    let commit_map: AHashMap<String, Commit> =
-      commits.into_iter().map(|c| (c.id.clone(), c)).collect();
-
-    let head_ref = get_head_ref(&refs)?;
-    let remote = find_sibling_ref(head_ref, &refs)?;
-
-    get_commit_ids_between_commits2(&head_ref.commit_id, &remote.commit_id, &commit_map)
-  })
-}
-
-fn get_head_ref(refs: &[RefInfo]) -> Option<&RefInfo> {
-  refs.iter().find(|r| r.head)
-}
-
-pub fn find_sibling_ref<'a>(ri: &RefInfo, refs: &'a [RefInfo]) -> Option<&'a RefInfo> {
-  if let Some(sibling_id) = &ri.sibling_id {
-    return refs.iter().find(|r| &r.id == sibling_id);
-  }
-  None
 }
 
 #[derive(Debug, Deserialize, Serialize, TS)]

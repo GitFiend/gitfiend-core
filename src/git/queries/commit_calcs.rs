@@ -84,7 +84,7 @@ pub fn count_commits_between_commit_ids(
 }
 
 // How many commits ahead is a. The order matters.
-pub fn get_commit_ids_between_commits2(
+pub fn get_commit_ids_between_commit_ids(
   a_id: &String,
   b_id: &String,
   commits: &AHashMap<String, Commit>,

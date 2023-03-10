@@ -10,8 +10,8 @@ use crate::git::actions::stash::{stash_changes, stash_staged};
 use crate::git::conflicts::api::load_conflicted_file;
 use crate::git::git_version::git_version;
 use crate::git::queries::commits::{
-  commit_ids_between_commits, commit_is_ancestor, get_un_pushed_commits, load_commits_and_refs,
-  load_head_commit, load_top_commit_for_branch,
+  commit_ids_between_commits, commit_is_ancestor, load_commits_and_refs, load_head_commit,
+  load_top_commit_for_branch,
 };
 use crate::git::queries::common_branches::get_common_branches;
 use crate::git::queries::config::load_full_config;
@@ -24,6 +24,7 @@ use crate::git::queries::run::run;
 use crate::git::queries::scan_workspace::scan_workspace;
 use crate::git::queries::search::search_commits::search_commits;
 use crate::git::queries::search::search_request::{poll_diff_search, start_diff_search};
+use crate::git::queries::unpushed_commits::get_un_pushed_commits;
 use crate::git::queries::wip::is_merge_in_progress;
 use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;

@@ -6,7 +6,7 @@ use crate::git::store;
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
 use crate::{dprintln, time_result};
-use ahash::AHashMap;
+use ahash::{AHashMap, AHashSet};
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -22,11 +22,11 @@ pub struct UnPushedCommits {
 
 pub fn get_un_pushed_commits(options: &ReqOptions) -> UnPushedCommits {
   if let Some(ids) = get_un_pushed_commits_computed(options) {
-    let unique = get_unique_un_pushed_commits(&options.repo_path);
+    let all = get_unique_un_pushed_commits(&options.repo_path, &ids).unwrap_or_default();
 
     return UnPushedCommits {
       this_branch: ids,
-      all_branches: unique.unwrap_or_default(),
+      all_branches: all,
     };
   } else {
     dprintln!("get_un_pushed_commits: Refs not found in commits, fall back to git request.");
@@ -53,9 +53,13 @@ pub fn get_un_pushed_commits(options: &ReqOptions) -> UnPushedCommits {
 }
 
 // Assumes head has some commits remote ref doesn't. If remote is ahead of ref then, could be misleading.
-fn get_unique_un_pushed_commits(repo_path: &String) -> Option<Vec<String>> {
+fn get_unique_un_pushed_commits(
+  repo_path: &String,
+  un_pushed_ids: &[String],
+) -> Option<Vec<String>> {
   let (commits, refs) = store::get_commits_and_refs(repo_path)?;
 
+  let un_pushed_ids: AHashSet<String> = un_pushed_ids.iter().cloned().collect();
   let ref_map: AHashMap<String, RefInfo> = refs.iter().map(|r| (r.id.clone(), r.clone())).collect();
   let commit_map: AHashMap<String, Commit> =
     commits.iter().map(|c| (c.id.clone(), c.clone())).collect();
@@ -66,7 +70,14 @@ fn get_unique_un_pushed_commits(repo_path: &String) -> Option<Vec<String>> {
 
   let mut unique: Vec<String> = Vec::new();
 
-  un_pushed(head, &remote.commit_id, &commit_map, &ref_map, &mut unique);
+  un_pushed(
+    head,
+    &remote.commit_id,
+    &commit_map,
+    &ref_map,
+    &un_pushed_ids,
+    &mut unique,
+  );
 
   Some(unique)
 }
@@ -76,6 +87,7 @@ fn un_pushed(
   remote_id: &str,
   commits: &AHashMap<String, Commit>,
   refs: &AHashMap<String, RefInfo>,
+  un_pushed_ids: &AHashSet<String>,
   unique: &mut Vec<String>,
 ) {
   if current.id == remote_id
@@ -88,13 +100,13 @@ fn un_pushed(
     })
   {
     return;
-  } else {
+  } else if un_pushed_ids.contains(&current.id) {
     unique.push(current.id.clone());
   }
 
   for id in &current.parent_ids {
     if let Some(commit) = commits.get(id) {
-      un_pushed(commit, remote_id, commits, refs, unique);
+      un_pushed(commit, remote_id, commits, refs, un_pushed_ids, unique);
     }
   }
 }

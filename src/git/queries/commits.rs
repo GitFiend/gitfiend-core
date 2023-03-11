@@ -4,6 +4,7 @@ use crate::git::queries::commit_calcs::{
 };
 use crate::git::queries::commit_filters::{apply_commit_filters, CommitFilter};
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
+use crate::git::queries::refs::head_info::{calc_head_info, HeadInfo};
 use crate::git::queries::refs::{finish_properties_on_refs, get_ref_info_from_commits};
 use crate::git::queries::stashes::load_stashes;
 use crate::git::run_git::{run_git, RunGitOptions};
@@ -178,7 +179,7 @@ pub fn load_commits(repo_path: &RepoPath, num: u32) -> Option<Vec<CommitInfo>> {
   })
 }
 
-#[derive(Debug, Deserialize, Serialize, TS)]
+#[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct CommitDiffOpts {
@@ -222,7 +223,7 @@ pub fn commit_ids_between_commits_fallback(
   parse_all(P_ID_LIST, &out)
 }
 
-#[derive(Debug, Deserialize, Serialize, TS)]
+#[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct CommitAncestorOpts {
@@ -249,4 +250,46 @@ pub fn commit_is_ancestor(options: &CommitAncestorOpts) -> bool {
   }
 
   false
+}
+
+#[derive(Debug, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CommitOnBranchOpts {
+  pub repo_path: String,
+  pub commit_id: String,
+}
+
+pub fn commit_is_on_branch(options: &CommitOnBranchOpts) -> Option<bool> {
+  let CommitOnBranchOpts {
+    repo_path,
+    commit_id,
+  } = options;
+
+  let HeadInfo {
+    remote_commit,
+    commit,
+    ..
+  } = calc_head_info(&ReqOptions {
+    repo_path: repo_path.clone(),
+  })?;
+
+  let (commits, _) = store::get_commits_and_refs(repo_path)?;
+  let commits = get_commit_map_cloned(&commits);
+
+  if let Some(c) = remote_commit {
+    let ancestors = find_commit_ancestors(&c, &commits);
+
+    if ancestors.contains(commit_id.as_str()) {
+      return Some(true);
+    }
+  }
+
+  let ancestors = find_commit_ancestors(&commit, &commits);
+
+  if ancestors.contains(commit_id.as_str()) {
+    return Some(true);
+  }
+
+  Some(false)
 }

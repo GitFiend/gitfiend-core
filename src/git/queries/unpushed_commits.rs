@@ -69,6 +69,7 @@ fn get_unique_un_pushed_commits(
   let head = commits.iter().find(|c| c.id == head_ref.commit_id)?;
 
   let mut unique: Vec<String> = Vec::new();
+  let mut checked: AHashSet<String> = AHashSet::new();
 
   un_pushed(
     head,
@@ -76,20 +77,27 @@ fn get_unique_un_pushed_commits(
     &commit_map,
     &ref_map,
     &un_pushed_ids,
+    &mut checked,
     &mut unique,
   );
 
   Some(unique)
 }
 
-fn un_pushed(
-  current: &Commit,
+fn un_pushed<'a>(
+  current: &'a Commit,
   remote_id: &str,
   commits: &AHashMap<String, Commit>,
   refs: &AHashMap<String, RefInfo>,
   un_pushed_ids: &AHashSet<String>,
+  checked: &mut AHashSet<String>,
   unique: &mut Vec<String>,
 ) {
+  if checked.contains(&*current.id) {
+    return;
+  }
+  checked.insert(current.id.clone());
+
   if current.id == remote_id
     || current.refs.iter().any(|ref_id| {
       if let Some(r) = refs.get(ref_id) {
@@ -106,7 +114,15 @@ fn un_pushed(
 
   for id in &current.parent_ids {
     if let Some(commit) = commits.get(id) {
-      un_pushed(commit, remote_id, commits, refs, un_pushed_ids, unique);
+      un_pushed(
+        commit,
+        remote_id,
+        commits,
+        refs,
+        un_pushed_ids,
+        checked,
+        unique,
+      );
     }
   }
 }

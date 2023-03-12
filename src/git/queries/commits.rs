@@ -13,9 +13,10 @@ use crate::git::store::RepoPath;
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
 use crate::{dprintln, time_result};
-use ahash::AHashMap;
+use ahash::{AHashMap, AHashSet};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::thread;
 use ts_rs::TS;
 
@@ -266,30 +267,43 @@ pub fn commit_is_on_branch(options: &CommitOnBranchOpts) -> Option<bool> {
     commit_id,
   } = options;
 
+  Some(
+    get_all_commits_on_current_branch(&ReqOptions {
+      repo_path: repo_path.clone(),
+    })?
+    .contains(commit_id),
+  )
+}
+
+pub fn get_all_commits_on_current_branch(options: &ReqOptions) -> Option<HashSet<String>> {
+  let ReqOptions { repo_path } = options;
+
   let HeadInfo {
     remote_commit,
     commit,
     ..
   } = calc_head_info(&ReqOptions {
-    repo_path: repo_path.clone(),
+    repo_path: repo_path.to_string(),
   })?;
 
   let (commits, _) = store::get_commits_and_refs(repo_path)?;
   let commits = get_commit_map_cloned(&commits);
 
+  let mut ancestors: HashSet<String> = HashSet::new();
+
   if let Some(c) = remote_commit {
-    let ancestors = find_commit_ancestors(&c, &commits);
-
-    if ancestors.contains(commit_id.as_str()) {
-      return Some(true);
-    }
+    ancestors.extend(
+      find_commit_ancestors(&c, &commits)
+        .iter()
+        .map(|id| id.to_string()),
+    );
   }
 
-  let ancestors = find_commit_ancestors(&commit, &commits);
+  ancestors.extend(
+    find_commit_ancestors(&commit, &commits)
+      .iter()
+      .map(|id| id.to_string()),
+  );
 
-  if ancestors.contains(commit_id.as_str()) {
-    return Some(true);
-  }
-
-  Some(false)
+  Some(ancestors)
 }

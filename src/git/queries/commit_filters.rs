@@ -19,7 +19,7 @@ pub enum CommitFilter {
 pub fn apply_commit_filters(
   repo_path: &str,
   commits: Vec<Commit>,
-  refs: &Vec<RefInfo>,
+  refs: &[RefInfo],
   filters: &[CommitFilter],
 ) -> Vec<Commit> {
   let commit_map = get_commit_map_cloned(&commits);
@@ -88,11 +88,6 @@ fn get_all_commits_with_branch_name<'a>(
 ) -> AHashSet<&'a str> {
   let mut ids_to_keep = AHashSet::<&'a str>::new();
 
-  // refs.iter().filter(|r| r.short_name == short_name).map(|r| commits.get(&r.commit_id))
-
-  // commits
-  //   .iter()
-  //   .filter(|(_, c)| c.refs.iter().any(|r| r.short_name == short_name))
   refs
     .iter()
     .filter(|r| r.short_name == short_name)

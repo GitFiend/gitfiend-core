@@ -19,7 +19,6 @@ pub struct RefDiffOptions {
   pub head_commit_id: String,
 }
 
-// #[elapsed]
 pub fn calc_ref_diffs(
   options: &RefDiffOptions,
 ) -> Option<(
@@ -45,26 +44,20 @@ pub fn calc_ref_diffs(
 
 // We need to pass in head as it may not be found in provided commits in some cases.
 pub fn calc_ref_diffs_inner(
-  commits: &Vec<Commit>,
-  refs: &Vec<RefInfo>,
+  commits: &[Commit],
+  refs: &[RefInfo],
   config: &GitConfig,
   head_commit_id: &String,
 ) -> (
   HashMap<String, LocalRefCommitDiff>,
   HashMap<String, RefCommitDiff>,
 ) {
-  let ref_map = refs
-    .into_iter()
-    .map(|r| (r.id.clone(), r.clone()))
-    .collect();
+  let ref_map = refs.iter().map(|r| (r.id.clone(), r.clone())).collect();
   // let refs = get_ref_info_map_from_commits(commits);
   let pairs = get_ref_pairs(&ref_map, config);
 
-  let commit_map: AHashMap<String, Commit> = commits
-    .clone()
-    .into_iter()
-    .map(|c| (c.id.clone(), c))
-    .collect();
+  let commit_map: AHashMap<String, Commit> =
+    commits.iter().map(|c| (c.id.clone(), c.clone())).collect();
 
   let local_ref_diffs = calc_local_ref_diffs(head_commit_id, pairs, &commit_map);
   let remote_ref_diffs = calc_remote_ref_diffs(head_commit_id, &ref_map, &commit_map);

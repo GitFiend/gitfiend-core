@@ -6,6 +6,13 @@ use crate::server::git_request::ReqOptions;
 use std::fs;
 use std::path::Path;
 
+pub fn is_rebase_in_progress(options: &ReqOptions) -> bool {
+  Path::new(&options.repo_path)
+    .join(".git")
+    .join("rebase-merge")
+    .exists()
+}
+
 // Returns the commit id of the branch we tried to merge
 // into our current if we have a conflict.
 pub fn is_merge_in_progress(options: &ReqOptions) -> Option<String> {

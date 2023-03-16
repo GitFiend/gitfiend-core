@@ -13,7 +13,7 @@ use crate::git::store::RepoPath;
 use crate::parser::parse_all;
 use crate::server::git_request::ReqOptions;
 use crate::{dprintln, time_result};
-use ahash::{AHashMap, AHashSet};
+use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashSet;

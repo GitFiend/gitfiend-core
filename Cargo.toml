@@ -20,7 +20,7 @@ loggers = {path = "./loggers"}
 notify = "5.1.0"
 
 [profile.dev]
-opt-level = 1
+#opt-level = 1
 #strip = true
 #incremental = false
 

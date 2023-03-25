@@ -19,26 +19,6 @@ pub fn is_merge_in_progress(options: &ReqOptions) -> Option<String> {
   let ReqOptions { repo_path } = options;
 
   read_merge_head(repo_path)
-
-  // let out = run_git::run_git(RunGitOptions {
-  //   repo_path,
-  //   args: ["merge", "HEAD"],
-  // });
-  //
-  // // An empty repo will fail so try another thing?
-  // if out.is_none() {
-  //   let out = run_git::run_git(RunGitOptions {
-  //     repo_path,
-  //     args: ["log", "-n", "1"],
-  //   });
-  //
-  //   if out.is_none() {
-  //     return false;
-  //   }
-  //   return true;
-  // }
-  //
-  // false
 }
 
 fn read_merge_head(repo_path: &str) -> Option<String> {

@@ -3,6 +3,7 @@ use crate::git::git_version::load_git_version;
 use crate::server::requests::start_async_server;
 
 pub(crate) mod git;
+mod index;
 mod parser;
 mod server;
 mod util;

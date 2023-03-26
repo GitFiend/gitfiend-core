@@ -2,17 +2,17 @@ use ahash::{HashMap, HashMapExt};
 use std::str::Chars;
 
 #[derive(Debug)]
-struct ACIndex {
+pub struct ACIndex {
   nodes: HashMap<char, ACNode>,
 }
 impl ACIndex {
-  fn new() -> Self {
+  pub fn new() -> Self {
     Self {
       nodes: HashMap::new(),
     }
   }
 
-  fn add_word(&mut self, word: &str) {
+  pub fn add_word(&mut self, word: &str) {
     let mut chars = word.chars();
 
     if let Some(c) = chars.next() {
@@ -73,8 +73,6 @@ impl ACNode {
   }
 
   fn add_word(&mut self, remaining: &mut Chars) {
-    // let remaining = remaining.clone();
-
     if let Some(c) = remaining.next() {
       if let Some(n) = self.nodes.get_mut(&c) {
         n.add_word(remaining);
@@ -118,6 +116,7 @@ mod tests {
   fn add_multiple_words() {
     let mut index = ACIndex::new();
 
+    index.add_word("abcd");
     index.add_word("abcd");
     index.add_word("aaaa");
     index.add_word("abbb");

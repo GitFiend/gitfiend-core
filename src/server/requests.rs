@@ -34,6 +34,7 @@ use crate::git::repo_watcher::{
 };
 use crate::git::run_git_action::poll_action2;
 use crate::git::store::{clear_all_caches, clear_cache, override_git_home};
+use crate::index::commit_message_ac::commit_message_ac;
 use crate::server::static_files::handle_resource_request;
 
 #[cfg(debug_assertions)]
@@ -91,6 +92,7 @@ pub fn start_async_server() {
           load_commit_image,
           calc_head_info,
           repo_has_changed,
+          commit_message_ac,
 
           // TODO
           get_common_branches,

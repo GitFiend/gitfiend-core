@@ -1,2 +1,2 @@
 mod ac_index;
-mod commit_message_ac;
+pub(crate) mod commit_message_ac;

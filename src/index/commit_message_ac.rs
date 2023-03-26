@@ -105,7 +105,7 @@ fn get_words_in_commit_message(commit: &Commit) -> Vec<String> {
     if char::is_alphanumeric(c) {
       word.push(c);
     } else {
-      if word.len() > 4 {
+      if word.len() > 6 {
         words.push(word.iter().collect());
       }
       word.clear();

@@ -1,3 +1,4 @@
+use crate::git::git_types::Commit;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::store;
 use crate::global;
@@ -74,6 +75,12 @@ fn build_index(repo_path: &String) -> Option<ACIndex> {
   for c in commits {
     index.add_word(&c.email);
     index.add_word(&c.author);
+
+    let message_words = get_words_in_commit_message(&c);
+
+    for w in message_words {
+      index.add_word(&w);
+    }
   }
 
   for r in refs {
@@ -88,4 +95,22 @@ fn build_index(repo_path: &String) -> Option<ACIndex> {
   }
 
   Some(index)
+}
+
+fn get_words_in_commit_message(commit: &Commit) -> Vec<String> {
+  let mut words: Vec<String> = Vec::new();
+  let mut word: Vec<char> = Vec::new();
+
+  for c in commit.message.chars() {
+    if char::is_alphanumeric(c) {
+      word.push(c);
+    } else {
+      if word.len() > 4 {
+        words.push(word.iter().collect());
+      }
+      word.clear();
+    }
+  }
+
+  words
 }

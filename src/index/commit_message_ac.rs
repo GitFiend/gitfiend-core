@@ -1,6 +1,8 @@
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::store;
+use crate::global;
 use crate::index::ac_index::ACIndex;
+use crate::util::global::Global;
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -18,9 +20,49 @@ pub fn commit_message_ac(options: &MessageAC) -> Option<Vec<String>> {
     repo_path,
   } = options;
 
-  let index = build_index(repo_path)?;
+  if current_word.is_empty() {
+    return None;
+  }
+
+  let index = get_index(repo_path)?;
 
   Some(index.find_matching(current_word))
+}
+
+#[derive(Clone)]
+struct CommitMessageAC {
+  pub repo_path: String,
+  pub index: ACIndex,
+}
+
+impl CommitMessageAC {
+  fn new() -> Self {
+    Self {
+      repo_path: String::from(""),
+      index: ACIndex::new(),
+    }
+  }
+}
+
+static INDEX: Global<CommitMessageAC> = global!(CommitMessageAC::new());
+
+fn get_index(repo_path: &String) -> Option<ACIndex> {
+  if let Some(index) = INDEX.get() {
+    if &index.repo_path == repo_path {
+      return Some(index.index);
+    }
+  }
+
+  if let Some(index) = build_index(repo_path) {
+    INDEX.set(CommitMessageAC {
+      repo_path: repo_path.clone(),
+      index: index.clone(),
+    });
+
+    return Some(index);
+  }
+
+  None
 }
 
 fn build_index(repo_path: &String) -> Option<ACIndex> {

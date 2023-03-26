@@ -1,7 +1,7 @@
 use ahash::{HashMap, HashMapExt};
 use std::str::Chars;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ACIndex {
   nodes: HashMap<char, ACNode>,
 }
@@ -55,7 +55,7 @@ impl ACIndex {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ACNode {
   char: char,
   nodes: HashMap<char, ACNode>,

@@ -102,7 +102,7 @@ fn get_words_in_commit_message(commit: &Commit) -> Vec<String> {
   let mut word: Vec<char> = Vec::new();
 
   for c in commit.message.chars() {
-    if char::is_alphanumeric(c) {
+    if char::is_alphanumeric(c) && c != '-' && c != '_' {
       word.push(c);
     } else {
       if word.len() > 6 {

@@ -13,12 +13,14 @@ use ts_rs::TS;
 pub struct MessageAC {
   pub current_word: String,
   pub repo_path: String,
+  pub max_num: usize,
 }
 
 pub fn commit_message_ac(options: &MessageAC) -> Option<Vec<String>> {
   let MessageAC {
     current_word,
     repo_path,
+    max_num,
   } = options;
 
   if current_word.is_empty() {
@@ -27,7 +29,9 @@ pub fn commit_message_ac(options: &MessageAC) -> Option<Vec<String>> {
 
   let index = get_index(repo_path)?;
 
-  Some(index.find_matching(current_word))
+  let words = index.find_matching(current_word);
+
+  Some(words.into_iter().take(*max_num).collect())
 }
 
 #[derive(Clone)]

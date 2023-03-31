@@ -1,5 +1,5 @@
+use crate::index::ac_node::ACNode;
 use ahash::{HashMap, HashMapExt};
-use std::str::Chars;
 
 #[derive(Debug, Clone)]
 pub struct ACIndex {
@@ -51,57 +51,6 @@ impl ACIndex {
       .into_iter()
       .map(|suffix| format!("{}{}", word_prefix, suffix))
       .collect()
-  }
-}
-
-#[derive(Debug, Clone)]
-struct ACNode {
-  char: char,
-  nodes: HashMap<char, ACNode>,
-  end_of_word: bool,
-}
-impl ACNode {
-  fn new(char: char, remaining: &mut Chars) -> ACNode {
-    let mut n = ACNode {
-      char,
-      nodes: HashMap::new(),
-      end_of_word: false,
-    };
-
-    n.add_word(remaining);
-
-    n
-  }
-
-  fn add_word(&mut self, remaining: &mut Chars) {
-    if let Some(c) = remaining.next() {
-      if let Some(n) = self.nodes.get_mut(&c) {
-        n.add_word(remaining);
-      } else {
-        self.nodes.insert(c, ACNode::new(c, remaining));
-      }
-    } else {
-      self.end_of_word = true;
-    }
-  }
-
-  fn get_word_endings(&self) -> Vec<String> {
-    if self.nodes.is_empty() {
-      return vec![self.char.to_string()];
-    }
-
-    let mut matches = Vec::new();
-
-    for n in self.nodes.values() {
-      if n.end_of_word {
-        matches.push(String::new());
-      }
-      for s in n.get_word_endings() {
-        matches.push(format!("{}{}", self.char, s));
-      }
-    }
-
-    matches
   }
 }
 

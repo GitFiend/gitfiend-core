@@ -3,4 +3,5 @@
 export interface MessageAC {
   currentWord: string;
   repoPath: string;
+  maxNum: number;
 }

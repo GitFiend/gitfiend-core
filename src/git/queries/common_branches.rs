@@ -1,4 +1,4 @@
-use crate::git::git_types::{RefInfo, RefLocation, RefType};
+use crate::git::git_types::{RefInfo, RefType};
 use crate::git::store::{get_all_workspace_commits, RepoPath};
 use crate::server::git_request::ReqOptions;
 use ahash::{AHashMap, AHashSet};
@@ -72,21 +72,21 @@ fn calc_diffs(
   Some(())
 }
 
-// TODO: What about other remotes?
-#[allow(unused_variables, unused_assignments, unused_mut)]
-fn calc_diffs_for_repo(ref_name: &RefShortName, head_name: &RefShortName, refs: &Vec<RefInfo>) {
-  let mut head_ref: Option<&RefInfo> = None;
-  let mut local_ref: Option<&RefInfo> = None;
-  let mut remote_ref: Option<&RefInfo> = None;
-
-  for r in refs {
-    if head_ref.is_none() && r.short_name == *head_name {
-      head_ref = Some(r);
-    }
-    if r.short_name == *ref_name {
-      if r.location == RefLocation::Local {
-        //
-      }
-    }
-  }
-}
+// // TODO: What about other remotes?
+// #[allow(unused_variables, unused_assignments, unused_mut)]
+// fn calc_diffs_for_repo(ref_name: &RefShortName, head_name: &RefShortName, refs: &Vec<RefInfo>) {
+//   let mut head_ref: Option<&RefInfo> = None;
+//   let mut local_ref: Option<&RefInfo> = None;
+//   let mut remote_ref: Option<&RefInfo> = None;
+//
+//   for r in refs {
+//     if head_ref.is_none() && r.short_name == *head_name {
+//       head_ref = Some(r);
+//     }
+//     if r.short_name == *ref_name {
+//       if r.location == RefLocation::Local {
+//         //
+//       }
+//     }
+//   }
+// }

@@ -28,7 +28,6 @@ impl ACIndex {
     let chars = word_prefix.chars();
 
     let mut nodes = &self.nodes;
-
     let mut endings = Vec::new();
 
     for c in chars {
@@ -59,12 +58,14 @@ impl ACIndex {
 struct ACNode {
   char: char,
   nodes: HashMap<char, ACNode>,
+  end_of_word: bool,
 }
 impl ACNode {
   fn new(char: char, remaining: &mut Chars) -> ACNode {
     let mut n = ACNode {
       char,
       nodes: HashMap::new(),
+      end_of_word: false,
     };
 
     n.add_word(remaining);
@@ -79,6 +80,8 @@ impl ACNode {
       } else {
         self.nodes.insert(c, ACNode::new(c, remaining));
       }
+    } else {
+      self.end_of_word = true;
     }
   }
 
@@ -90,6 +93,9 @@ impl ACNode {
     let mut matches = Vec::new();
 
     for n in self.nodes.values() {
+      if n.end_of_word {
+        matches.push(String::new());
+      }
       for s in n.get_word_endings() {
         matches.push(format!("{}{}", self.char, s));
       }
@@ -129,5 +135,59 @@ mod tests {
     );
 
     assert_eq!(index.find_matching("b"), ["bbbb".to_string()]);
+  }
+
+  #[test]
+  fn add_word_abcd_with_endings() {
+    let mut index = ACIndex::new();
+
+    index.add_word("ab");
+    index.add_word("abcd");
+
+    assert_eq!(
+      index.find_matching("a"),
+      ["ab".to_string(), "abcd".to_string()]
+    );
+  }
+
+  #[test]
+  fn char_boundaries() {
+    let test: Vec<char> = "test".chars().collect();
+
+    assert_eq!(test[1..].len(), 3);
+
+    let text = "🍝️test";
+
+    let mut it = text.chars();
+    assert_eq!(it.next(), Some('🍝'));
+
+    // U+FE0F Variation Selector-16
+    assert_eq!(it.next(), Some('\u{fe0f}'));
+
+    let test: Vec<char> = text.chars().collect();
+
+    assert_eq!(test[0].to_string(), "🍝");
+    assert_eq!(test[0], '🍝');
+    assert_eq!(test[0..1], ['🍝']);
+    assert_eq!(test[1], '\u{fe0f}');
+    assert_eq!(test[0..].len(), 6);
+    assert_eq!(test[1..].len(), 5);
+
+    let s = String::from(text);
+
+    assert_eq!(s.len(), 11);
+    assert_eq!(&s[7..9], "te");
+
+    assert!(s.is_char_boundary(0));
+    assert!(!s.is_char_boundary(1));
+    assert!(!s.is_char_boundary(2));
+    assert!(!s.is_char_boundary(3));
+    assert!(s.is_char_boundary(4));
+    assert!(!s.is_char_boundary(5));
+    assert!(!s.is_char_boundary(6));
+    assert!(s.is_char_boundary(7));
+
+    assert_eq!(&s[..4], "🍝");
+    assert_eq!(&s[..7], "🍝\u{fe0f}");
   }
 }

@@ -4,25 +4,12 @@ use crate::git::store;
 use crate::global;
 use crate::index::ac_index::ACIndex;
 use crate::util::global::Global;
-use serde::Deserialize;
-use ts_rs::TS;
 
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct MessageAC {
-  pub current_word: String,
-  pub repo_path: String,
-  pub max_num: usize,
-}
-
-pub fn commit_message_ac(options: &MessageAC) -> Option<Vec<String>> {
-  let MessageAC {
-    current_word,
-    repo_path,
-    max_num,
-  } = options;
-
+pub fn commit_message_ac(
+  repo_path: &String,
+  current_word: &String,
+  max_num: usize,
+) -> Option<Vec<String>> {
   if current_word.is_empty() {
     return None;
   }
@@ -31,7 +18,7 @@ pub fn commit_message_ac(options: &MessageAC) -> Option<Vec<String>> {
 
   let words = index.find_matching(current_word);
 
-  Some(words.into_iter().take(*max_num).collect())
+  Some(words.into_iter().take(max_num).collect())
 }
 
 #[derive(Clone)]

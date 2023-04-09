@@ -297,6 +297,7 @@ pub fn get_all_commits_on_current_branch(options: &ReqOptions) -> Option<HashSet
         .iter()
         .map(|id| id.to_string()),
     );
+    ancestors.insert(c.id);
   }
 
   ancestors.extend(
@@ -304,6 +305,7 @@ pub fn get_all_commits_on_current_branch(options: &ReqOptions) -> Option<HashSet
       .iter()
       .map(|id| id.to_string()),
   );
+  ancestors.insert(commit.id);
 
   Some(ancestors)
 }

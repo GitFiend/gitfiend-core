@@ -1,4 +1,4 @@
-use crate::git::git_types::{Commit, RefInfo, RefLocation};
+use crate::git::git_types::{Commit, RefInfo, RefLocation, RefType};
 use crate::git::queries::commit_calcs::get_commit_ids_between_commit_ids;
 use crate::git::queries::commits_parsers::P_ID_LIST;
 use crate::git::run_git::{run_git, RunGitOptions};
@@ -84,8 +84,8 @@ fn get_unique_un_pushed_commits(
   Some(unique)
 }
 
-fn un_pushed<'a>(
-  current: &'a Commit,
+fn un_pushed(
+  current: &Commit,
   remote_id: &str,
   commits: &AHashMap<String, Commit>,
   refs: &AHashMap<String, RefInfo>,
@@ -101,7 +101,7 @@ fn un_pushed<'a>(
   if current.id == remote_id
     || current.refs.iter().any(|ref_id| {
       if let Some(r) = refs.get(ref_id) {
-        r.location == RefLocation::Remote
+        r.ref_type == RefType::Branch && r.location == RefLocation::Remote
       } else {
         false
       }

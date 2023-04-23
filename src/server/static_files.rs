@@ -1,9 +1,11 @@
+use serde::Deserialize;
 use std::env;
 use std::fs::File;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-
 use tiny_http::{Header, Request, Response};
+use ts_rs::TS;
 
 pub fn handle_resource_request(request: Request) -> Option<()> {
   let dir = get_server_dir()?;
@@ -53,4 +55,21 @@ pub fn temp_dir(_: &String) -> Option<String> {
 
 pub fn file_size(file_path: &String) -> Option<u64> {
   Some(Path::new(file_path).metadata().ok()?.len())
+}
+
+#[derive(Debug, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct WriteFileOpts {
+  pub file_path: String,
+  pub content: String,
+}
+
+pub fn write_file(options: &WriteFileOpts) -> Option<bool> {
+  let WriteFileOpts { file_path, content } = options;
+
+  let mut file = File::create(file_path).ok()?;
+  file.write_all(content.as_ref()).ok()?;
+
+  Some(true)
 }

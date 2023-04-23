@@ -35,7 +35,9 @@ use crate::git::repo_watcher::{
 use crate::git::run_git_action::poll_action2;
 use crate::git::store::{clear_all_caches, clear_cache, override_git_home};
 use crate::index::auto_complete::auto_complete;
-use crate::server::static_files::{file_size, handle_resource_request, path_exists, temp_dir};
+use crate::server::static_files::{
+  file_size, handle_resource_request, path_exists, temp_dir, write_file,
+};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -101,6 +103,7 @@ pub fn start_async_server() {
           path_exists,
           temp_dir,
           file_size,
+          write_file,
 
           // TODO
           get_common_branches,

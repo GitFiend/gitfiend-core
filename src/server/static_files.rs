@@ -1,11 +1,9 @@
 use std::env;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use tiny_http::{Header, Request, Response};
-
-use crate::dprintln;
 
 pub fn handle_resource_request(request: Request) -> Option<()> {
   let dir = get_server_dir()?;
@@ -14,7 +12,8 @@ pub fn handle_resource_request(request: Request) -> Option<()> {
   let url = request.url().split('?').next()?;
   let file_path = dir.join(&url[3..]);
 
-  dprintln!("file_path {:?}", file_path);
+  #[cfg(debug_assertions)]
+  println!("file_path {:?}, exists: {}", file_path, file_path.exists());
 
   let file = File::open(&file_path).ok()?;
   let mut response = Response::from_file(file);
@@ -30,7 +29,7 @@ pub fn handle_resource_request(request: Request) -> Option<()> {
 }
 
 fn get_content_type(file_path: &str) -> Option<String> {
-  let guess = mime_guess::from_path(&file_path);
+  let guess = mime_guess::from_path(file_path);
 
   Some(format!("Content-Type: {}", guess.first()?))
 }
@@ -42,4 +41,8 @@ fn get_server_dir() -> Option<PathBuf> {
   // TODO: Sort this out. May need to unpack all from asar.
   #[cfg(not(debug_assertions))]
   Some(env::current_exe().ok()?.parent()?.parent()?.to_path_buf())
+}
+
+pub fn path_exists(file_path: &String) -> bool {
+  Path::new(file_path).exists()
 }

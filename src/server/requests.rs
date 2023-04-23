@@ -35,7 +35,7 @@ use crate::git::repo_watcher::{
 use crate::git::run_git_action::poll_action2;
 use crate::git::store::{clear_all_caches, clear_cache, override_git_home};
 use crate::index::auto_complete::auto_complete;
-use crate::server::static_files::handle_resource_request;
+use crate::server::static_files::{handle_resource_request, path_exists};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -59,6 +59,9 @@ pub fn start_async_server() {
     match &request.url()[..3] {
       "/r/" => {
         handle_resource_request(request);
+      }
+      "/pi" => {
+        let _ = request.respond(Response::from_string("gitfiend"));
       }
       "/f/" => {
         handle_function_request! {
@@ -94,6 +97,8 @@ pub fn start_async_server() {
           repo_has_changed,
           auto_complete,
 
+          path_exists,
+
           // TODO
           get_common_branches,
 
@@ -106,6 +111,7 @@ pub fn start_async_server() {
           override_git_home,
           watch_repo,
           stop_watching_repo,
+
 
           // Actions
           command,

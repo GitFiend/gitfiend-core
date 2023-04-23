@@ -46,3 +46,11 @@ fn get_server_dir() -> Option<PathBuf> {
 pub fn path_exists(file_path: &String) -> bool {
   Path::new(file_path).exists()
 }
+
+pub fn temp_dir(_: &String) -> Option<String> {
+  Some(String::from(env::temp_dir().to_str()?))
+}
+
+pub fn file_size(file_path: &String) -> Option<u64> {
+  Some(Path::new(file_path).metadata().ok()?.len())
+}

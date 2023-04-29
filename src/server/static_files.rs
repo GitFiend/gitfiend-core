@@ -14,7 +14,7 @@ pub fn handle_resource_request(request: Request) -> Option<()> {
   let url = request.url().split('?').next()?;
   let file_path = dir.join(&url[3..]);
 
-  #[cfg(debug_assertions)]
+  // #[cfg(debug_assertions)]
   println!("file_path {:?}, exists: {}", file_path, file_path.exists());
 
   let file = File::open(&file_path).ok()?;

@@ -139,5 +139,6 @@ pub fn start_async_server() {
 fn print_port(port: u16) {
   // This is required by the renderer. Expected to be formatted like:
   // PORT:12345
-  println!("PORT:{}", port);
+  // We pad the width so we can read a specific number of chars from the stream.
+  println!("PORT:{:<12}", port);
 }

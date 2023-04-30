@@ -118,7 +118,6 @@ pub fn start_async_server() {
           watch_repo,
           stop_watching_repo,
 
-
           // Actions
           command,
           commands,

@@ -40,9 +40,17 @@ fn get_server_dir() -> Option<PathBuf> {
   #[cfg(debug_assertions)]
   return Some(env::current_dir().ok()?.parent()?.join("git-fiend"));
 
-  // TODO: Sort this out. May need to unpack all from asar.
+  // TODO: This is tested for native mac app, not electron production build.
+  // TODO: May need to unpack all from asar?
   #[cfg(not(debug_assertions))]
-  Some(env::current_exe().ok()?.parent()?.parent()?.to_path_buf())
+  Some(
+    env::current_exe()
+      .ok()?
+      .parent()?
+      .parent()?
+      .parent()?
+      .to_path_buf(),
+  )
 }
 
 pub fn path_exists(file_path: &String) -> bool {

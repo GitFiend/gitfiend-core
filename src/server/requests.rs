@@ -1,4 +1,5 @@
 use crate::{dprintln, handle_function_request};
+use std::process::exit;
 use tiny_http::{Response, Server};
 
 use crate::git::actions::clone::clone_repo;
@@ -64,6 +65,10 @@ pub fn start_async_server() {
       }
       "/pi" => {
         let _ = request.respond(Response::from_string("gitfiend"));
+      }
+      "/ex" => {
+        let _ = request.respond(Response::from_string("GitFiend core exiting..."));
+        exit(0);
       }
       "/f/" => {
         handle_function_request! {

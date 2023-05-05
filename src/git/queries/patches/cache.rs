@@ -6,6 +6,7 @@ use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 
+use crate::config::{APPLICATION, ORGANISATION, QUALIFIER};
 use crate::dprintln;
 use directories::ProjectDirs;
 use loggers::elapsed;
@@ -48,7 +49,7 @@ pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>
 }
 
 fn get_cache_dir() -> Option<PathBuf> {
-  if let Some(proj_dirs) = ProjectDirs::from("com", "tobysuggate", "GitFiend") {
+  if let Some(proj_dirs) = ProjectDirs::from(QUALIFIER, ORGANISATION, APPLICATION) {
     let cache_dir = proj_dirs.cache_dir();
 
     Some(cache_dir.join("patches"))

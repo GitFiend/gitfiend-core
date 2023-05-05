@@ -15,7 +15,6 @@ use crate::git::queries::commits::{
   get_all_commits_on_current_branch, load_commits_and_refs, load_head_commit,
   load_top_commit_for_branch,
 };
-use crate::git::queries::common_branches::get_common_branches;
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::hunks::images::load_commit_image;
 use crate::git::queries::hunks::load_hunks::load_hunks;
@@ -39,6 +38,7 @@ use crate::index::auto_complete::auto_complete;
 use crate::server::static_files::{
   file_size, handle_resource_request, path_exists, temp_dir, write_file,
 };
+use crate::util::data_store::{get_config_value, get_data_store, set_config_value, set_data_store};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -110,9 +110,6 @@ pub fn start_async_server() {
           file_size,
           write_file,
 
-          // TODO
-          get_common_branches,
-
           // Core messages
           clear_cache,
           clear_all_caches,
@@ -122,6 +119,10 @@ pub fn start_async_server() {
           override_git_home,
           watch_repo,
           stop_watching_repo,
+          get_config_value,
+          set_config_value,
+          get_data_store,
+          set_data_store,
 
           // Actions
           command,

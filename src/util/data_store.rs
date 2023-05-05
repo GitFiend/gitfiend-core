@@ -3,7 +3,7 @@ use crate::server::git_request::ReqOptions;
 use directories::ProjectDirs;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
+use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{BufReader, Read, Write};
 use std::path::PathBuf;
 use ts_rs::TS;
@@ -97,9 +97,11 @@ fn load_config() -> Option<HashMap<String, String>> {
 
 fn get_config_file_path() -> Option<PathBuf> {
   if let Some(proj_dirs) = ProjectDirs::from(QUALIFIER, ORGANISATION, APPLICATION) {
-    let cache_dir = proj_dirs.config_dir();
+    let dir = proj_dirs.config_dir();
 
-    Some(cache_dir.join("data_store.json"))
+    create_dir_all(dir).ok()?;
+
+    Some(dir.join("data_store.json"))
   } else {
     None
   }

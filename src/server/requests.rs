@@ -38,7 +38,7 @@ use crate::index::auto_complete::auto_complete;
 use crate::server::static_files::{
   file_size, handle_resource_request, path_exists, temp_dir, write_file,
 };
-use crate::util::data_store::{get_config_value, get_data_store, set_config_value, set_data_store};
+use crate::util::data_store::{get_data_store, set_data_store};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -119,8 +119,6 @@ pub fn start_async_server() {
           override_git_home,
           watch_repo,
           stop_watching_repo,
-          get_config_value,
-          set_config_value,
           get_data_store,
           set_data_store,
 

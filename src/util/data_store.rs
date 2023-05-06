@@ -1,14 +1,14 @@
 use crate::config::{APPLICATION, ORGANISATION, QUALIFIER};
 use crate::server::git_request::ReqOptions;
 use directories::ProjectDirs;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{BufReader, Read, Write};
 use std::path::PathBuf;
 use ts_rs::TS;
 
-pub fn get_data_store(_: &ReqOptions) -> Option<HashMap<String, String>> {
+pub fn get_data_store(_: &ReqOptions) -> UserConfigResult {
   load_config()
 }
 
@@ -19,80 +19,88 @@ pub struct DataStoreValues {
   pub data: HashMap<String, String>,
 }
 
-pub fn set_data_store(o: &DataStoreValues) -> Option<()> {
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ResultStatus {
+  pub success: bool,
+  pub message: String,
+}
+
+impl ResultStatus {
+  pub fn success(message: &str) -> ResultStatus {
+    ResultStatus {
+      success: true,
+      message: message.to_string(),
+    }
+  }
+
+  pub fn failure(message: &str) -> ResultStatus {
+    ResultStatus {
+      success: false,
+      message: message.to_string(),
+    }
+  }
+}
+
+pub fn set_data_store(o: &DataStoreValues) -> ResultStatus {
   let DataStoreValues { data } = o;
 
-  let config_file_path = get_config_file_path()?;
+  match get_config_file_path() {
+    None => ResultStatus::failure("Failed to get config file path"),
+    Some(config_file_path) => {
+      println!("config_file_path: {:?}", config_file_path);
 
-  let mut config_file = OpenOptions::new()
-    .read(true)
-    .write(true)
-    .create(true)
-    .open(config_file_path)
-    .ok()?;
+      match OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(config_file_path)
+      {
+        Err(e) => ResultStatus::failure(&format!("Failed to open config file: {}", e)),
+        Ok(mut config_file) => match serde_json::to_string_pretty(&data) {
+          Err(e) => ResultStatus::failure(&format!("Failed to serialize data: {}", e)),
+          Ok(config_text) => {
+            println!("config_text: {}", config_text);
 
-  let config_text = serde_json::to_string_pretty(&data).ok()?;
-
-  config_file.write_all(config_text.as_bytes()).ok()?;
-
-  Some(())
+            match config_file.write_all(config_text.as_bytes()) {
+              Err(e) => ResultStatus::failure(&format!("Failed to write to config file: {}", e)),
+              Ok(_) => ResultStatus::success("Data store updated"),
+            }
+          }
+        },
+      }
+    }
+  }
 }
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub struct ConfigValueOptions {
-  pub key: String,
+pub enum UserConfigResult {
+  Error(String),
+  Config(HashMap<String, String>),
 }
 
-pub fn get_config_value(option: &ConfigValueOptions) -> Option<String> {
-  let ConfigValueOptions { key } = option;
-
-  let config = load_config()?;
-
-  config.get(key).cloned()
-}
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct SetConfigOptions {
-  pub key: String,
-  pub value: String,
-}
-
-pub fn set_config_value(option: &SetConfigOptions) -> Option<()> {
-  let SetConfigOptions { key, value } = option;
-
-  let mut config = load_config()?;
-  config.insert(key.clone(), value.clone());
-
-  let config_file_path = get_config_file_path()?;
-
-  let mut config_file = OpenOptions::new()
-    .read(true)
-    .write(true)
-    .create(true)
-    .open(config_file_path)
-    .ok()?;
-
-  let config_text = serde_json::to_string_pretty(&config).ok()?;
-
-  config_file.write_all(config_text.as_bytes()).ok()?;
-
-  Some(())
-}
-
-fn load_config() -> Option<HashMap<String, String>> {
-  let config_file_path = get_config_file_path()?;
-
-  let file = File::open(config_file_path).ok()?;
-
-  let mut reader = BufReader::new(file);
-  let mut text = String::new();
-  reader.read_to_string(&mut text).ok()?;
-
-  serde_json::from_str::<HashMap<String, String>>(&text).ok()
+fn load_config() -> UserConfigResult {
+  match get_config_file_path() {
+    None => UserConfigResult::Error("Failed to get config file path".to_string()),
+    Some(config_file_path) => match File::open(config_file_path) {
+      Err(e) => UserConfigResult::Error(format!("Failed to open config file: {}", e)),
+      Ok(file) => {
+        let mut reader = BufReader::new(file);
+        let mut text = String::new();
+        match reader.read_to_string(&mut text) {
+          Err(e) => UserConfigResult::Error(format!("Failed to read config file: {}", e)),
+          Ok(_) => match serde_json::from_str::<HashMap<String, String>>(&text) {
+            Err(e) => UserConfigResult::Error(format!("Failed to parse config file: {}", e)),
+            Ok(config) => UserConfigResult::Config(config),
+          },
+        }
+      }
+    },
+  }
 }
 
 fn get_config_file_path() -> Option<PathBuf> {

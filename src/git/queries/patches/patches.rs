@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::dprintln;
 use loggers::elapsed;
 
 use crate::git::git_types::{Commit, Patch};
@@ -14,10 +15,9 @@ use crate::parser::parse_all;
 
 #[elapsed]
 pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<String, Vec<Patch>>> {
-  let mut commits_without_patches: Vec<&Commit> = Vec::new();
-  let mut stashes_or_merges_without_patches: Vec<&Commit> = Vec::new();
-
-  let mut new_patches: HashMap<String, Vec<Patch>> = HashMap::new();
+  let mut commits_without_patches = Vec::<&Commit>::new();
+  let mut stashes_or_merges_without_patches = Vec::<&Commit>::new();
+  let mut new_patches = HashMap::<String, Vec<Patch>>::new();
 
   if let Some(patches) = load_patches_cache(repo_path) {
     for c in commits.iter() {
@@ -31,17 +31,36 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<St
     }
   } else {
     // No existing patch cache.
-    commits_without_patches.extend(
-      commits
-        .iter()
-        .filter(|c| !c.is_merge && c.stash_id.is_none()),
-    );
+    for c in commits {
+      if c.stash_id.is_none() && !c.is_merge {
+        commits_without_patches.push(c);
+      } else {
+        stashes_or_merges_without_patches.push(c);
+      }
+    }
+  }
 
-    stashes_or_merges_without_patches.extend(
-      commits
-        .iter()
-        .filter(|c| c.is_merge || c.stash_id.is_some()),
-    );
+  if cfg!(debug_assertions) {
+    let num_commits_with_no_patches = new_patches.iter().filter(|(_, p)| p.is_empty()).count();
+
+    println!("******* {} commits_without_patches, {} stashes_or_merges_without_patches, {} commits with 0 *******",
+              commits_without_patches.len(), stashes_or_merges_without_patches.len(), num_commits_with_no_patches);
+
+    if num_commits_with_no_patches > 0 {
+      println!(
+        "Commits with no patches: {:?}",
+        new_patches
+          .iter()
+          .filter(|(_, p)| p.is_empty())
+          .map(|(id, _)| id)
+          .collect::<Vec<&String>>()
+      );
+    }
+  }
+
+  if commits_without_patches.is_empty() && stashes_or_merges_without_patches.is_empty() {
+    // All patches were loaded from cache.
+    return Some(new_patches);
   }
 
   if !commits_without_patches.is_empty() {
@@ -59,7 +78,7 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<St
       // TODO: Some commits have no patches. We should probably save it anyway?
       new_patches.insert(c.id.clone(), Vec::new());
       // Maybe not if we aren't sure our method is correct?
-      // dprintln!("Failed to get patches for commit {}", c.id);
+      dprintln!("Failed to get patches for commit {}", c.id);
     }
   }
 
@@ -107,6 +126,7 @@ fn load_all_patches_for_normal_commits(
       "log",
       "--remotes",
       "--branches",
+      "--all",
       "--name-status",
       "--pretty=format:%H,",
       // Can't get correct patch info for merges with this command.

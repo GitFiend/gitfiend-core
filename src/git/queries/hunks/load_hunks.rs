@@ -1,3 +1,4 @@
+use crate::dprintln;
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch, PatchType};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::COMMIT_0_ID;
@@ -17,7 +18,7 @@ pub struct ReqHunkOptions {
 }
 
 pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
-  println!("{:?}", load_hunks_args(&options.commit, &options.patch));
+  dprintln!("{:?}", load_hunks_args(&options.commit, &options.patch));
 
   let out = run_git::run_git(RunGitOptions {
     repo_path: &options.repo_path,

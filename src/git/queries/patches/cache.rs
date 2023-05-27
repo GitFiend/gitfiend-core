@@ -31,10 +31,9 @@ pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>
   }
 
   let cache_dir = get_cache_dir()?;
-  let file_name = generate_file_name(repo_path);
-
   create_dir_all(&cache_dir).ok()?;
 
+  let file_name = generate_file_name(repo_path);
   let cache_file = cache_dir.join(file_name);
 
   let maybe_patches = read_patches_from_file(cache_file).ok();

@@ -65,11 +65,9 @@ PARSE FAILURE AT POSITION {}:
 #[macro_export]
 macro_rules! map {
   ($parser:expr, $function:expr) => {
-    |input: &mut crate::parser::input::Input| {
-      let result = $parser(input);
-
-      if result.is_some() {
-        Some($function(result.unwrap()))
+    |input: &mut $crate::parser::input::Input| {
+      if let Some(result) = $parser(input) {
+        Some($function(result))
       } else {
         None
       }
@@ -84,7 +82,7 @@ mod tests {
 
   #[test]
   fn test_map() {
-    let my_parser = map!(word!("omg"), |result: &str| String::from(result));
+    let my_parser = map!(word!("omg"), String::from);
 
     let res = parse_all(my_parser, "omg");
 
@@ -93,7 +91,7 @@ mod tests {
 
   #[test]
   fn test_map2() {
-    let my_parser = map!(character!('c'), |result: char| String::from(result));
+    let my_parser = map!(character!('c'), String::from);
 
     let res = parse_all(my_parser, "c");
 

@@ -1,9 +1,9 @@
 use crate::git::git_types::{WipPatch, WipPatchType};
 use crate::git::queries::patches::file_is_image;
 use crate::git::queries::wip::wip_patch_parsers::P_WIP_PATCHES;
-use crate::git::run_git::run_git;
 use crate::git::run_git::RunGitOptions;
-use crate::parser::parse_all;
+use crate::git::run_git::{run_git_err, GitOut};
+use crate::parser::{parse_all_err, run_parser_err};
 use crate::server::git_request::ReqOptions;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -14,15 +14,15 @@ pub struct WipPatchInfo {
   pub un_staged: WipPatchType,
 }
 
-pub fn load_wip_patches(options: &ReqOptions) -> Option<Vec<WipPatch>> {
-  let out = run_git(RunGitOptions {
+pub fn load_wip_patches(options: &ReqOptions) -> Result<Vec<WipPatch>, String> {
+  let GitOut { stdout, .. } = run_git_err(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["status", "--porcelain", "-uall", "-z"],
   })?;
 
-  let info = parse_all(P_WIP_PATCHES, &out)?;
+  let info = parse_all_err(P_WIP_PATCHES, &stdout)?;
 
-  Some(get_patches_from_info(info))
+  Ok(get_patches_from_info(info))
 }
 
 fn get_patches_from_info(info: Vec<WipPatchInfo>) -> Vec<WipPatch> {

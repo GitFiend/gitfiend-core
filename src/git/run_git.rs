@@ -39,6 +39,30 @@ where
   None
 }
 
+pub struct GitOut {
+  pub stdout: String,
+  pub stderr: String,
+}
+
+pub fn run_git_err<I, S>(options: RunGitOptions<I, S>) -> Result<GitOut, String>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
+  let out = Command::new(Path::new(GIT_PATH.as_path()))
+    .args(options.args)
+    .current_dir(options.repo_path)
+    .output()
+    .map_err(|e| e.to_string())?;
+
+  let Output { stdout, stderr, .. } = &out;
+
+  Ok(GitOut {
+    stdout: String::from_utf8_lossy(stdout).to_string(),
+    stderr: String::from_utf8_lossy(stderr).to_string(),
+  })
+}
+
 pub fn run_git_buffer<I, S>(options: RunGitOptions<I, S>) -> Option<Vec<u8>>
 where
   I: IntoIterator<Item = S>,

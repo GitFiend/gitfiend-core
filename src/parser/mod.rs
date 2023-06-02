@@ -17,6 +17,17 @@ pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
   )
 }
 
+pub fn parse_all_err<T>(parser: Parser<T>, text: &str) -> Result<T, String> {
+  run_parser_err(
+    parser,
+    text,
+    ParseOptions {
+      must_parse_all: true,
+      print_error: false,
+    },
+  )
+}
+
 // Beware: Doesn't complain.
 pub fn parse_part<T>(parser: Parser<T>, text: &str) -> Option<T> {
   run_parser(
@@ -41,25 +52,59 @@ pub fn run_parser<T>(parser: Parser<T>, text: &str, options: ParseOptions) -> Op
 
   if options.must_parse_all && !input.end() {
     if options.print_error {
-      eprintln!(
-        r#"
-PARSE FAILURE AT POSITION {}:
-  SUCCESSFULLY PARSED:
-  "{}"
-  
-  FAILED AT:
-  "{}"
-"#,
-        input.attempted_position,
-        input.successfully_parsed(),
-        input.unparsed()
-      );
+      eprintln!("{}", get_error_message(&input));
     }
 
     return None;
   }
 
   result
+}
+
+pub fn run_parser_err<T>(
+  parser: Parser<T>,
+  text: &str,
+  options: ParseOptions,
+) -> Result<T, String> {
+  let mut input = Input::new(text);
+
+  if let Some(res) = parser(&mut input) {
+    if options.must_parse_all && !input.end() {
+      let message = get_error_message(&input);
+
+      if options.print_error {
+        println!("{}", message);
+      }
+
+      return Err(message);
+    }
+
+    return Ok(res);
+  }
+
+  let message = get_error_message(&input);
+
+  if options.print_error {
+    println!("{}", message);
+  }
+
+  Err(message)
+}
+
+fn get_error_message(input: &Input) -> String {
+  format!(
+    r#"
+PARSE FAILURE AT POSITION {}:
+      SUCCESSFULLY PARSED:
+    "{}"
+
+    FAILED AT:
+    "{}"
+    "#,
+    input.attempted_position,
+    input.successfully_parsed(),
+    input.unparsed()
+  )
 }
 
 #[macro_export]

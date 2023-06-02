@@ -5,3 +5,4 @@ pub(crate) mod credentials;
 pub(crate) mod fake_action;
 pub(crate) mod fetch;
 pub(crate) mod stash;
+pub(crate) mod add;

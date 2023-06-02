@@ -1,3 +1,4 @@
+use crate::git::actions::add::git_add_files;
 use crate::{dprintln, handle_function_request};
 use std::process::exit;
 use tiny_http::{Response, Server};
@@ -125,6 +126,7 @@ pub fn start_async_server() {
           // Actions
           command,
           commands,
+          git_add_files,
           stash_changes,
           fetch_all,
           clone_repo,

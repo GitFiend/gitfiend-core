@@ -3,7 +3,7 @@ use crate::git::queries::patches::file_is_image;
 use crate::git::queries::wip::wip_patch_parsers::P_WIP_PATCHES;
 use crate::git::run_git::RunGitOptions;
 use crate::git::run_git::{run_git_err, GitOut};
-use crate::parser::{parse_all_err, run_parser_err};
+use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
 
 #[derive(Debug, PartialEq, Eq)]

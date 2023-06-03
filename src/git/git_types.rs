@@ -182,12 +182,15 @@ pub enum WipPatchType {
   Question,
   #[serde(rename = " ")]
   Empty,
+  #[serde(rename = "!")]
+  Ignored,
   A,
   C,
   D,
   M,
   R,
   U,
+  T,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

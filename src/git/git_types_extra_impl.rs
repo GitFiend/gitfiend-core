@@ -23,12 +23,14 @@ impl fmt::Display for WipPatchType {
     match *self {
       WipPatchType::Question => write!(f, "?"),
       WipPatchType::Empty => write!(f, " "),
+      WipPatchType::Ignored => write!(f, "!"),
       WipPatchType::A => write!(f, "A"),
       WipPatchType::C => write!(f, "C"),
       WipPatchType::D => write!(f, "D"),
       WipPatchType::M => write!(f, "M"),
       WipPatchType::R => write!(f, "R"),
       WipPatchType::U => write!(f, "U"),
+      WipPatchType::T => write!(f, "T"),
     }
   }
 }

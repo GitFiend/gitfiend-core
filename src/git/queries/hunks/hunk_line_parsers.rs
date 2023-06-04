@@ -144,28 +144,19 @@ impl HunkLine {
       line_ending: String::from("\n"),
     }
   }
-}
 
-// const P_HUNK_LINE2: Parser<HunkLine> = map!(
-//   or!(
-//     P_LINE_BREAK,
-//     P_UNCHANGED_LINE,
-//     P_ADDED_LINE,
-//     P_REMOVED_LINE,
-//     P_NO_NEW_LINE
-//   ),
-//   |line: Line| {
-//     HunkLine {
-//       status: line.status,
-//       old_num: None,
-//       new_num: None,
-//       hunk_index: -1,
-//       text: line.text,
-//       index: 0,
-//       line_ending: line.line_ending,
-//     }
-//   }
-// );
+  pub fn skip_line(hunk_index: i32) -> HunkLine {
+    HunkLine {
+      status: HunkLineStatus::Skip,
+      old_num: None,
+      new_num: None,
+      hunk_index,
+      text: String::from(""),
+      index: 0,
+      line_ending: String::from("\n"),
+    }
+  }
+}
 
 pub const P_HUNK_LINES: Parser<Vec<Line>> = many!(P_HUNK_LINE);
 

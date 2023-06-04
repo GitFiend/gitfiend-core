@@ -1,10 +1,9 @@
-use crate::dprintln;
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch, PatchType};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::COMMIT_0_ID;
 use crate::git::run_git;
-use crate::git::run_git::RunGitOptions;
-use crate::parser::parse_all;
+use crate::git::run_git::{GitOut, RunGitOptions};
+use crate::parser::{parse_all, parse_all_err};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -18,8 +17,6 @@ pub struct ReqHunkOptions {
 }
 
 pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
-  dprintln!("{:?}", load_hunks_args(&options.commit, &options.patch));
-
   let out = run_git::run_git(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options.commit, &options.patch),
@@ -29,6 +26,20 @@ pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)
   let hunk_lines = flatten_hunks(hunks.clone());
 
   Some((hunks, hunk_lines))
+}
+
+pub fn load_hunks_split(
+  options: &ReqHunkOptions,
+) -> Result<(Vec<Hunk>, Vec<HunkLine>, Vec<HunkLine>), String> {
+  let GitOut { stdout, .. } = run_git::run_git_err(RunGitOptions {
+    repo_path: &options.repo_path,
+    args: load_hunks_args(&options.commit, &options.patch),
+  })?;
+
+  let hunks = parse_all_err(P_HUNKS, &stdout)?;
+  let (hunk_lines_left, hunk_lines_right) = flatten_hunks_split(hunks.clone());
+
+  Ok((hunks, hunk_lines_left, hunk_lines_right))
 }
 
 pub fn load_hunks_args(commit: &Commit, patch: &Patch) -> Vec<String> {
@@ -63,29 +74,7 @@ pub fn load_hunks_args(commit: &Commit, patch: &Patch) -> Vec<String> {
   args
 }
 
-// pub fn load_hunks_args(commit: &Commit, patch: &Patch) -> [String; 4] {
-//   let diff = "diff".to_string();
-//   let dashes = "--".to_string();
-//
-//   let old_file = patch.old_file.clone();
-//
-//   let Commit {
-//     id,
-//     parent_ids,
-//     is_merge,
-//     ..
-//   } = commit;
-//
-//   if *is_merge {
-//     [diff, format!("{}^@", id), dashes, old_file]
-//   } else if !commit.parent_ids.is_empty() {
-//     [diff, format!("{}..{}", parent_ids[0], id), dashes, old_file]
-//   } else {
-//     [diff, format!("{}..{}", COMMIT_0_ID, id), dashes, old_file]
-//   }
-// }
-
-pub fn flatten_hunks(hunks: Vec<Hunk>) -> Vec<HunkLine> {
+fn flatten_hunks(hunks: Vec<Hunk>) -> Vec<HunkLine> {
   let mut lines: Vec<HunkLine> = Vec::new();
 
   if hunks.is_empty() {
@@ -110,4 +99,51 @@ pub fn flatten_hunks(hunks: Vec<Hunk>) -> Vec<HunkLine> {
   lines.push(HunkLine::header_from_type(HunkLineStatus::HeaderStart, -1));
 
   lines
+}
+
+pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
+  let mut left = Vec::<HunkLine>::new();
+  let mut right = Vec::<HunkLine>::new();
+
+  if hunks.is_empty() {
+    return (left, right);
+  }
+
+  for hunk in hunks {
+    left.push(HunkLine::header_from_type(
+      HunkLineStatus::HeaderStart,
+      hunk.index,
+    ));
+    right.push(HunkLine::header_from_type(
+      HunkLineStatus::HeaderStart,
+      hunk.index,
+    ));
+
+    left.push(HunkLine::header_from_type(
+      HunkLineStatus::HeaderEnd,
+      hunk.index,
+    ));
+    right.push(HunkLine::header_from_type(
+      HunkLineStatus::HeaderEnd,
+      hunk.index,
+    ));
+
+    for line in hunk.lines {
+      if line.status == HunkLineStatus::Removed {
+        right.push(HunkLine::skip_line(line.hunk_index));
+        left.push(line);
+      } else if line.status == HunkLineStatus::Added {
+        left.push(HunkLine::skip_line(line.hunk_index));
+        right.push(line);
+      } else {
+        left.push(line.clone());
+        right.push(line);
+      }
+    }
+  }
+
+  left.push(HunkLine::header_from_type(HunkLineStatus::HeaderStart, -1));
+  right.push(HunkLine::header_from_type(HunkLineStatus::HeaderStart, -1));
+
+  (left, right)
 }

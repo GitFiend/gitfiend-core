@@ -18,7 +18,7 @@ use crate::git::queries::commits::{
 };
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::hunks::images::load_commit_image;
-use crate::git::queries::hunks::load_hunks::load_hunks;
+use crate::git::queries::hunks::load_hunks::{load_hunks, load_hunks_split};
 use crate::git::queries::patches::patches_for_commit::load_patches_for_commit;
 use crate::git::queries::refs::head_info::calc_head_info;
 use crate::git::queries::refs::ref_diffs::calc_ref_diffs;
@@ -84,6 +84,7 @@ pub fn start_async_server() {
           load_top_commit_for_branch,
           commit_ids_between_commits,
           load_hunks,
+          load_hunks_split,
           is_merge_in_progress,
           is_rebase_in_progress,
           load_wip_patches,

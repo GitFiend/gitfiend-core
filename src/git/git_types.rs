@@ -165,6 +165,7 @@ pub enum HunkLineStatus {
   Unchanged,
   HeaderStart,
   HeaderEnd,
+  Skip,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

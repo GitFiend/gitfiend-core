@@ -12,7 +12,8 @@ const P_WORK_STATUS_PART: Parser<char> = or!(
   character!('D'),
   character!('M'),
   character!('R'),
-  character!('U')
+  character!('U'),
+  character!('T')
 );
 
 /*
@@ -35,6 +36,7 @@ impl WipPatchType {
       'M' => WipPatchType::M,
       'R' => WipPatchType::R,
       'U' => WipPatchType::U,
+      'T' => WipPatchType::T,
       _ => WipPatchType::Empty,
     }
   }
@@ -190,6 +192,33 @@ mod tests {
           staged: WipPatchType::C,
           un_staged: WipPatchType::Empty,
           old_file: String::from("582160ee-5216-4dc6-bf74-1c1fce4978eb.txt"),
+          new_file: String::from("582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt")
+        },
+        WipPatchInfo {
+          staged: WipPatchType::D,
+          un_staged: WipPatchType::U,
+          old_file: String::from("folder/has a space/test2.js"),
+          new_file: String::from("folder/has a space/test2.js")
+        }
+      ]
+    );
+  }
+
+  #[test]
+  fn test_p_wip_patches2() {
+    let out = parse_all(
+      P_WIP_PATCHES,
+      "T  582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt\0DU folder/has a space/test2.js\0",
+    );
+    assert!(out.is_some());
+
+    assert_eq!(
+      out.unwrap(),
+      [
+        WipPatchInfo {
+          staged: WipPatchType::T,
+          un_staged: WipPatchType::Empty,
+          old_file: String::from("582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt"),
           new_file: String::from("582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt")
         },
         WipPatchInfo {

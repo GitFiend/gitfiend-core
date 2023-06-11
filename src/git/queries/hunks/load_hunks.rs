@@ -128,14 +128,30 @@ pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
       hunk.index,
     ));
 
+    let mut left_count = 0;
+    let mut right_count = 0;
+
     for line in hunk.lines {
       if line.status == HunkLineStatus::Removed {
-        right.push(HunkLine::skip_line(line.hunk_index));
         left.push(line);
+        left_count += 1;
       } else if line.status == HunkLineStatus::Added {
-        left.push(HunkLine::skip_line(line.hunk_index));
         right.push(line);
+        right_count += 1;
       } else {
+        if right_count > left_count {
+          for _ in 0..(right_count - left_count) {
+            left.push(HunkLine::skip_line(hunk.index));
+            left_count += 1;
+          }
+        }
+        if left_count > right_count {
+          for _ in 0..(left_count - right_count) {
+            right.push(HunkLine::skip_line(hunk.index));
+            right_count += 1;
+          }
+        }
+
         left.push(line.clone());
         right.push(line);
       }

@@ -109,33 +109,23 @@ pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
     return (left, right);
   }
 
-  for hunk in hunks {
-    left.push(HunkLine::header_from_type(
-      HunkLineStatus::HeaderStart,
-      hunk.index,
-    ));
-    right.push(HunkLine::header_from_type(
-      HunkLineStatus::HeaderStart,
-      hunk.index,
-    ));
+  use HunkLineStatus::*;
 
-    left.push(HunkLine::header_from_type(
-      HunkLineStatus::HeaderEnd,
-      hunk.index,
-    ));
-    right.push(HunkLine::header_from_type(
-      HunkLineStatus::HeaderEnd,
-      hunk.index,
-    ));
+  for hunk in hunks {
+    left.push(HunkLine::header_from_type(HeaderStart, hunk.index));
+    right.push(HunkLine::header_from_type(HeaderStart, hunk.index));
+
+    left.push(HunkLine::header_from_type(HeaderEnd, hunk.index));
+    right.push(HunkLine::header_from_type(HeaderEnd, hunk.index));
 
     let mut left_count = 0;
     let mut right_count = 0;
 
     for line in hunk.lines {
-      if line.status == HunkLineStatus::Removed {
+      if line.status == Removed {
         left.push(line);
         left_count += 1;
-      } else if line.status == HunkLineStatus::Added {
+      } else if line.status == Added {
         right.push(line);
         right_count += 1;
       } else {
@@ -158,8 +148,21 @@ pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
     }
   }
 
-  left.push(HunkLine::header_from_type(HunkLineStatus::HeaderStart, -1));
-  right.push(HunkLine::header_from_type(HunkLineStatus::HeaderStart, -1));
+  left.push(HunkLine::header_from_type(HeaderStart, -1));
+  right.push(HunkLine::header_from_type(HeaderStart, -1));
+
+  if !left
+    .iter()
+    .any(|line| line.status == Added || line.status == Removed || line.status == Unchanged)
+  {
+    left.clear();
+  }
+  if !right
+    .iter()
+    .any(|line| line.status == Added || line.status == Removed || line.status == Unchanged)
+  {
+    right.clear();
+  }
 
   (left, right)
 }

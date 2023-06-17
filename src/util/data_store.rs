@@ -1,4 +1,5 @@
 use crate::config::{APPLICATION, ORGANISATION, QUALIFIER};
+use crate::dprintln;
 use crate::server::git_request::ReqOptions;
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
@@ -49,7 +50,7 @@ pub fn set_data_store(o: &DataStoreValues) -> ResultStatus {
   match get_config_file_path() {
     None => ResultStatus::failure("Failed to get config file path"),
     Some(config_file_path) => {
-      println!("config_file_path: {:?}", config_file_path);
+      dprintln!("config_file_path: {:?}", config_file_path);
 
       match OpenOptions::new()
         .read(true)
@@ -61,14 +62,10 @@ pub fn set_data_store(o: &DataStoreValues) -> ResultStatus {
         Err(e) => ResultStatus::failure(&format!("Failed to open config file: {}", e)),
         Ok(mut config_file) => match serde_json::to_string_pretty(&data) {
           Err(e) => ResultStatus::failure(&format!("Failed to serialize data: {}", e)),
-          Ok(config_text) => {
-            println!("config_text: {}", config_text);
-
-            match config_file.write_all(config_text.as_bytes()) {
-              Err(e) => ResultStatus::failure(&format!("Failed to write to config file: {}", e)),
-              Ok(_) => ResultStatus::success("Data store updated"),
-            }
-          }
+          Ok(config_text) => match config_file.write_all(config_text.as_bytes()) {
+            Err(e) => ResultStatus::failure(&format!("Failed to write to config file: {}", e)),
+            Ok(_) => ResultStatus::success("Data store updated"),
+          },
         },
       }
     }

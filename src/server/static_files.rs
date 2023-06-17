@@ -1,3 +1,4 @@
+use crate::dprintln;
 use serde::Deserialize;
 use std::env;
 use std::fs::File;
@@ -7,6 +8,7 @@ use std::str::FromStr;
 use tiny_http::{Header, Request, Response};
 use ts_rs::TS;
 
+// TODO: If there's an error then a response won't be sent. This probably leaks memory.
 pub fn handle_resource_request(request: Request) -> Option<()> {
   let dir = get_server_dir()?;
 
@@ -14,8 +16,7 @@ pub fn handle_resource_request(request: Request) -> Option<()> {
   let url = request.url().split('?').next()?;
   let file_path = dir.join(&url[3..]);
 
-  // #[cfg(debug_assertions)]
-  println!("file_path {:?}, exists: {}", file_path, file_path.exists());
+  dprintln!("file_path {:?}, exists: {}", file_path, file_path.exists());
 
   let file = File::open(&file_path).ok()?;
   let mut response = Response::from_file(file);

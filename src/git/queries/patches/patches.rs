@@ -43,11 +43,11 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<St
   if cfg!(debug_assertions) {
     let num_commits_with_no_patches = new_patches.iter().filter(|(_, p)| p.is_empty()).count();
 
-    println!("******* {} commits_without_patches, {} stashes_or_merges_without_patches, {} commits with 0 *******",
+    dprintln!("******* {} commits_without_patches, {} stashes_or_merges_without_patches, {} commits with 0 *******",
               commits_without_patches.len(), stashes_or_merges_without_patches.len(), num_commits_with_no_patches);
 
     if num_commits_with_no_patches > 0 {
-      println!(
+      dprintln!(
         "Commits with no patches: {:?}",
         new_patches
           .iter()

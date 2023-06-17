@@ -1,3 +1,4 @@
+use crate::dprintln;
 use crate::parser::input::Input;
 
 pub(crate) mod input;
@@ -73,7 +74,7 @@ pub fn run_parser_err<T>(
       let message = get_error_message(&input);
 
       if options.print_error {
-        println!("{}", message);
+        dprintln!("{}", message);
       }
 
       return Err(message);
@@ -85,7 +86,7 @@ pub fn run_parser_err<T>(
   let message = get_error_message(&input);
 
   if options.print_error {
-    println!("{}", message);
+    dprintln!("{}", message);
   }
 
   Err(message)

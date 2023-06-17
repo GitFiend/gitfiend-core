@@ -28,9 +28,9 @@ pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)
   Some((hunks, hunk_lines))
 }
 
-pub fn load_hunks_split(
-  options: &ReqHunkOptions,
-) -> Result<(Vec<Hunk>, Vec<HunkLine>, Vec<HunkLine>), String> {
+type HunkLinesSplit = (Vec<Hunk>, Vec<HunkLine>, Vec<HunkLine>);
+
+pub fn load_hunks_split(options: &ReqHunkOptions) -> Result<HunkLinesSplit, String> {
   let GitOut { stdout, .. } = run_git::run_git_err(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options.commit, &options.patch),
@@ -144,6 +144,19 @@ pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
 
         left.push(line.clone());
         right.push(line);
+      }
+    }
+
+    if right_count > left_count {
+      for _ in 0..(right_count - left_count) {
+        left.push(HunkLine::skip_line(hunk.index));
+        left_count += 1;
+      }
+    }
+    if left_count > right_count {
+      for _ in 0..(left_count - right_count) {
+        right.push(HunkLine::skip_line(hunk.index));
+        right_count += 1;
       }
     }
   }

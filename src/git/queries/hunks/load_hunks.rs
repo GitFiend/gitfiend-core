@@ -113,9 +113,8 @@ pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
 
   for hunk in hunks {
     left.push(HunkLine::header_from_type(HeaderStart, hunk.index));
-    right.push(HunkLine::header_from_type(HeaderStart, hunk.index));
-
     left.push(HunkLine::header_from_type(HeaderEnd, hunk.index));
+    right.push(HunkLine::header_from_type(HeaderStart, hunk.index));
     right.push(HunkLine::header_from_type(HeaderEnd, hunk.index));
 
     let mut left_count = 0;
@@ -164,18 +163,27 @@ pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
   left.push(HunkLine::header_from_type(HeaderStart, -1));
   right.push(HunkLine::header_from_type(HeaderStart, -1));
 
-  if !left
-    .iter()
-    .any(|line| line.status == Added || line.status == Removed || line.status == Unchanged)
-  {
-    left.clear();
-  }
-  if !right
-    .iter()
-    .any(|line| line.status == Added || line.status == Removed || line.status == Unchanged)
-  {
-    right.clear();
-  }
+  (clear_lines_if_empty(left), clear_lines_if_empty(right))
+}
 
-  (left, right)
+// If there are no meaningful lines, just return an empty vector.
+fn clear_lines_if_empty(lines: Vec<HunkLine>) -> Vec<HunkLine> {
+  use HunkLineStatus::*;
+
+  if !lines
+    .iter()
+    .any(|line| line.status == Added || line.status == Removed)
+  {
+    let unchanged = lines
+      .iter()
+      .filter(|line| line.status == Unchanged)
+      .collect::<Vec<_>>();
+
+    if unchanged.is_empty()
+      || unchanged.len() == 1 && unchanged[0].text.contains("No newline at end of file")
+    {
+      return Vec::new();
+    }
+  }
+  lines
 }

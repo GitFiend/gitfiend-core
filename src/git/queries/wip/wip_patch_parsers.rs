@@ -230,4 +230,50 @@ mod tests {
       ]
     );
   }
+
+  #[test]
+  fn test_p_wip_patches3() {
+    let text = " M .DS_Store\0 D LabBook/.ztr-directory\0 M LabBook/2023-06-18_CRISPR23-code.md\0?? Icon\\r\\\0?? LabBook/2023-06-26_TEST.md\0";
+
+    let out = parse_all(P_WIP_PATCHES, text);
+    assert!(out.is_some());
+
+    use WipPatchType::*;
+
+    assert_eq!(
+      out.unwrap(),
+      [
+        WipPatchInfo {
+          staged: Empty,
+          un_staged: M,
+          old_file: String::from(".DS_Store"),
+          new_file: String::from(".DS_Store")
+        },
+        WipPatchInfo {
+          staged: Empty,
+          un_staged: D,
+          old_file: String::from("LabBook/.ztr-directory"),
+          new_file: String::from("LabBook/.ztr-directory")
+        },
+        WipPatchInfo {
+          staged: Empty,
+          un_staged: M,
+          old_file: String::from("LabBook/2023-06-18_CRISPR23-code.md"),
+          new_file: String::from("LabBook/2023-06-18_CRISPR23-code.md")
+        },
+        WipPatchInfo {
+          staged: Question,
+          un_staged: Question,
+          old_file: String::from("Icon\\r\\"),
+          new_file: String::from("Icon\\r\\")
+        },
+        WipPatchInfo {
+          staged: Question,
+          un_staged: Question,
+          old_file: String::from("LabBook/2023-06-26_TEST.md"),
+          new_file: String::from("LabBook/2023-06-26_TEST.md")
+        },
+      ]
+    );
+  }
 }

@@ -18,8 +18,9 @@ pub const UNTIL_LINE_END: Parser<String> = until_parser!(LINE_END);
 // pub const UNTIL_LINE_END_KEEP: Parser<(String, &str)> =
 //   and!(until_parser_keep!(LINE_END), LINE_END);
 
-pub const UNTIL_NUL: Parser<String> =
-  until_parser!(conditional_char!(|c: char| { c.is_control() }));
+pub const UNTIL_NUL: Parser<String> = until_parser!(conditional_char!(|c: char| {
+  c.is_control() && !c.is_whitespace()
+}));
 
 // pub const UNTIL_END: Parser<String> = optional_take_char_while!(|c: char| { c != char::from(0) });
 
@@ -38,6 +39,19 @@ mod tests {
     let result = parse_all(parser, "abcd55");
 
     assert_eq!(result.unwrap(), "abcd55");
+  }
+
+  #[test]
+  fn is_this_whitespace() {
+    let c = '\r';
+
+    assert!(c.is_whitespace());
+    assert!(c.is_control());
+
+    let c = '\0';
+
+    assert!(!c.is_whitespace());
+    assert!(c.is_control());
   }
 
   #[test]

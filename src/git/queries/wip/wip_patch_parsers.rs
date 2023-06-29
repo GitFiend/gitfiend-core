@@ -233,7 +233,7 @@ mod tests {
 
   #[test]
   fn test_p_wip_patches3() {
-    let text = " M .DS_Store\0 D LabBook/.ztr-directory\0 M LabBook/2023-06-18_CRISPR23-code.md\0?? Icon\\r\\\0?? LabBook/2023-06-26_TEST.md\0";
+    let text = " M .DS_Store\0 D LabBook/.ztr-directory\0 M LabBook/2023-06-18_CRISPR23-code.md\0?? Icon\r\0?? LabBook/2023-06-26_TEST.md\0";
 
     let out = parse_all(P_WIP_PATCHES, text);
     assert!(out.is_some());
@@ -264,8 +264,8 @@ mod tests {
         WipPatchInfo {
           staged: Question,
           un_staged: Question,
-          old_file: String::from("Icon\\r\\"),
-          new_file: String::from("Icon\\r\\")
+          old_file: String::from("Icon\r"),
+          new_file: String::from("Icon\r")
         },
         WipPatchInfo {
           staged: Question,

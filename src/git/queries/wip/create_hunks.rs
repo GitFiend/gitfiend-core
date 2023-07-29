@@ -88,11 +88,10 @@ fn set_line_ranges(hunk: &mut Hunk) {
 }
 
 fn set_indices(hunks: &mut Vec<Hunk>) {
-  for i in 0..hunks.len() {
-    hunks[i].index = i as i32;
-
-    for j in 0..hunks[i].lines.len() {
-      hunks[i].lines[j].hunk_index = i as i32;
+  for (i, hunk) in hunks.iter_mut().enumerate() {
+    hunk.index = i as i32;
+    for line in &mut hunk.lines {
+      line.hunk_index = i as i32;
     }
   }
 }

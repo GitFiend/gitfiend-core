@@ -27,6 +27,11 @@ pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> Option<(Vec<Hunk>, u32)> 
   Some(convert_lines_to_hunks(lines))
 }
 
+// TODO
+fn _split_hunk_lines(_lines: &Vec<HunkLine>) {
+  //
+}
+
 pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> Option<Vec<HunkLine>> {
   let ReqWipHunksOptions {
     patch,

@@ -10,6 +10,8 @@ use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;
 use std::ops::Add;
 use std::path::Path;
+use syntect::highlighting::ThemeSet;
+use syntect::parsing::SyntaxSet;
 use ts_rs::TS;
 
 #[derive(Debug, Deserialize, TS)]
@@ -24,7 +26,38 @@ pub struct ReqWipHunksOptions {
 pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> Option<(Vec<Hunk>, u32)> {
   let lines = load_wip_hunk_lines(options)?;
 
+  try_colour(&lines, &options.patch);
+
   Some(convert_lines_to_hunks(lines))
+}
+
+fn try_colour(lines: &Vec<HunkLine>, patch: &WipPatch) {
+  let ps = SyntaxSet::load_defaults_newlines();
+  let ts = ThemeSet::load_defaults();
+
+  let file_extension = Path::new(&patch.new_file)
+    .extension()
+    .unwrap()
+    .to_str()
+    .unwrap();
+
+  println!("extension: {}", file_extension);
+
+  if let Some(syntax) = ps.find_syntax_by_extension(file_extension) {
+    let mut highlighter =
+      syntect::easy::HighlightLines::new(syntax, &ts.themes["base16-ocean.dark"]);
+
+    for line in lines {
+      if let Ok(highlighted_line) = highlighter.highlight_line(&line.text, &ps) {
+        for (style, text) in highlighted_line {
+          print!("{:?}", style.foreground);
+          print!("{}", text);
+          print!("{:?}", style.foreground);
+        }
+        // println!("{:?}", highlighted_line);
+      }
+    }
+  }
 }
 
 // TODO

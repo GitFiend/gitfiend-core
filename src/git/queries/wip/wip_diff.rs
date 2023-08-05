@@ -1,4 +1,5 @@
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
+use crate::git::queries::syntax_colouring::COLOURING;
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
@@ -10,8 +11,6 @@ use similar::{ChangeTag, TextDiff};
 use std::fs::read_to_string;
 use std::ops::Add;
 use std::path::Path;
-use syntect::highlighting::ThemeSet;
-use syntect::parsing::SyntaxSet;
 use ts_rs::TS;
 
 #[derive(Debug, Deserialize, TS)]
@@ -31,30 +30,44 @@ pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> Option<(Vec<Hunk>, u32)> 
   Some(convert_lines_to_hunks(lines))
 }
 
+pub fn load_wip_hunks_coloured(options: &ReqWipHunksOptions) -> Option<()> {
+  let lines = load_wip_hunk_lines(options)?;
+  // let hunks = convert_lines_to_hunks(lines);
+
+  try_colour(&lines, &options.patch);
+
+  Some(())
+}
+
 fn try_colour(lines: &Vec<HunkLine>, patch: &WipPatch) {
-  let ps = SyntaxSet::load_defaults_newlines();
-  let ts = ThemeSet::load_defaults();
+  if let Ok(colouring) = COLOURING.read() {
+    // let ps = SyntaxSet::load_defaults_newlines();
+    // let ts = ThemeSet::load_defaults();
 
-  let file_extension = Path::new(&patch.new_file)
-    .extension()
-    .unwrap()
-    .to_str()
-    .unwrap();
+    let syntax_set = &colouring.syntax_set;
+    let theme_set = &colouring.theme_set;
 
-  println!("extension: {}", file_extension);
+    let file_extension = Path::new(&patch.new_file)
+      .extension()
+      .unwrap()
+      .to_str()
+      .unwrap();
 
-  if let Some(syntax) = ps.find_syntax_by_extension(file_extension) {
-    let mut highlighter =
-      syntect::easy::HighlightLines::new(syntax, &ts.themes["base16-ocean.dark"]);
+    println!("extension: {}", file_extension);
 
-    for line in lines {
-      if let Ok(highlighted_line) = highlighter.highlight_line(&line.text, &ps) {
-        for (style, text) in highlighted_line {
-          print!("{:?}", style.foreground);
-          print!("{}", text);
-          print!("{:?}", style.foreground);
+    if let Some(syntax) = syntax_set.find_syntax_by_extension(file_extension) {
+      let mut highlighter =
+        syntect::easy::HighlightLines::new(syntax, &theme_set.themes["base16-ocean.dark"]);
+
+      for line in lines {
+        if let Ok(highlighted_line) = highlighter.highlight_line(&line.text, syntax_set) {
+          for (style, text) in highlighted_line {
+            print!("{:?}", style.foreground);
+            print!("{}", text);
+            print!("{:?}", style.foreground);
+          }
+          // println!("{:?}", highlighted_line);
         }
-        // println!("{:?}", highlighted_line);
       }
     }
   }

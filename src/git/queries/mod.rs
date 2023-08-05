@@ -17,6 +17,7 @@ pub(crate) mod scan_workspace;
 pub(crate) mod search;
 pub(crate) mod stashes;
 mod stashes_test;
+mod syntax_colouring;
 pub(crate) mod unpushed_commits;
 pub(crate) mod wip;
 

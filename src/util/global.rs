@@ -12,9 +12,18 @@ macro_rules! global {
   };
 }
 
-pub struct Global<T: Clone> {
+pub struct Global<T> {
   pub data: Lazy<RwLock<T>>,
 }
+
+#[macro_export]
+macro_rules! glo {
+  ($value: expr) => {
+    once_cell::sync::Lazy::<RwLock<_>>::new(|| std::sync::RwLock::new($value))
+  };
+}
+
+pub type Glo<T> = Lazy<RwLock<T>>;
 
 impl<T: Clone> Global<T> {
   pub fn set(&self, new_data: T) {

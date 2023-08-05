@@ -25,7 +25,7 @@ pub struct ReqWipHunksOptions {
 pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> Option<(Vec<Hunk>, u32)> {
   let lines = load_wip_hunk_lines(options)?;
 
-  try_colour(&lines, &options.patch);
+  // try_colour(&lines, &options.patch);
 
   Some(convert_lines_to_hunks(lines))
 }

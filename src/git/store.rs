@@ -4,8 +4,8 @@ use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
 use crate::git::repo_watcher::{clear_repo_changed_status, get_watched_repos};
 use crate::server::git_request::ReqOptions;
-use crate::util::global::Global;
-use crate::{dprintln, global, time_block};
+use crate::util::global::{Glo, Global};
+use crate::{dprintln, glo, global, time_block};
 use ahash::AHashMap;
 use std::collections::HashMap;
 use std::env;
@@ -22,7 +22,7 @@ static PATCHES: Global<(RepoPath, HashMap<PatchPath, Vec<Patch>>)> =
   global!((RepoPath::new(), HashMap::new()));
 
 // Key is 2 commit ids joined.
-pub static REF_DIFFS: Global<AHashMap<String, u32>> = global!(AHashMap::new());
+pub static REF_DIFFS: Glo<AHashMap<String, u32>> = glo!(AHashMap::new());
 
 // This probably needs to be per repo. We could then watch for changes?
 pub static CONFIG: Global<AHashMap<RepoPath, GitConfig>> = global!(AHashMap::new());

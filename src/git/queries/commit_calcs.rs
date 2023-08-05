@@ -3,7 +3,6 @@ use ahash::{AHashMap, AHashSet};
 use crate::git::git_types::Commit;
 use crate::git::run_git::{run_git, RunGitOptions};
 use crate::git::store::REF_DIFFS;
-use crate::util::global::Global;
 
 fn _get_commit_map(commits: &[Commit]) -> AHashMap<&String, &Commit> {
   commits.iter().map(|c| (&c.id, c)).collect()
@@ -36,11 +35,14 @@ pub fn find_commit_ancestors<'a>(
   ancestors
 }
 
-impl Global<AHashMap<String, u32>> {
-  fn get_diff(&self, key: &str) -> Option<u32> {
-    Some(*REF_DIFFS.get()?.get(key)?)
-  }
-}
+// impl Global<AHashMap<String, u32>> {
+//   fn get_diff(&self, key: &str) -> Option<u32> {
+//     if let Ok(diffs) = REF_DIFFS.read() {
+//       return Some(*diffs.get(key)?);
+//     }
+//     None
+//   }
+// }
 
 // How many commits ahead is a. The order matters.
 pub fn count_commits_between_commit_ids(
@@ -50,9 +52,15 @@ pub fn count_commits_between_commit_ids(
 ) -> u32 {
   let key = format!("{}{}", a_id, b_id);
 
-  if let Some(count) = REF_DIFFS.get_diff(&key) {
-    return count;
+  if let Ok(count) = REF_DIFFS.read() {
+    if let Some(count) = count.get(&key) {
+      return *count;
+    }
   }
+
+  // if let Some(count) = REF_DIFFS.get_diff(&key) {
+  //   return count;
+  // }
 
   if let Some(a) = commits.get(a_id) {
     if let Some(b) = commits.get(b_id) {
@@ -74,7 +82,10 @@ pub fn count_commits_between_commit_ids(
         }
       }
 
-      REF_DIFFS.insert(key, num);
+      if let Ok(mut diffs) = REF_DIFFS.write() {
+        diffs.insert(key, num);
+      }
+      // REF_DIFFS.insert(key, num);
 
       return num;
     }
@@ -145,8 +156,12 @@ mod tests {
 
   #[test]
   fn test_ref_diffs() {
-    REF_DIFFS.insert("OMG".to_string(), 1);
+    if let Ok(mut diffs) = REF_DIFFS.write() {
+      diffs.insert("OMG".to_string(), 1);
+    }
+    // REF_DIFFS.insert("OMG".to_string(), 1);
 
-    assert!(REF_DIFFS.get_diff("OMG").is_some());
+    assert!(REF_DIFFS.read().unwrap().get("OMG").is_some());
+    // assert!(REF_DIFFS.get_diff("OMG").is_some());
   }
 }

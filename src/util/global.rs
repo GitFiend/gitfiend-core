@@ -19,7 +19,7 @@ pub struct Global<T> {
 #[macro_export]
 macro_rules! glo {
   ($value: expr) => {
-    once_cell::sync::Lazy::<RwLock<_>>::new(|| std::sync::RwLock::new($value))
+    once_cell::sync::Lazy::<std::sync::RwLock<_>>::new(|| std::sync::RwLock::new($value))
   };
 }
 

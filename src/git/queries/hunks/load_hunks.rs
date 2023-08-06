@@ -3,7 +3,7 @@ use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::COMMIT_0_ID;
 use crate::git::run_git;
 use crate::git::run_git::{GitOut, RunGitOptions};
-use crate::parser::{parse_all, parse_all_err};
+use crate::parser::parse_all_err;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -16,16 +16,28 @@ pub struct ReqHunkOptions {
   pub patch: Patch,
 }
 
-pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
-  let out = run_git::run_git(RunGitOptions {
+// pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
+//   let out = run_git::run_git(RunGitOptions {
+//     repo_path: &options.repo_path,
+//     args: load_hunks_args(&options.commit, &options.patch),
+//   })?;
+//
+//   let hunks = parse_all(P_HUNKS, &out)?;
+//   let hunk_lines = flatten_hunks(hunks.clone());
+//
+//   Some((hunks, hunk_lines))
+// }
+
+pub fn load_hunks(options: &ReqHunkOptions) -> Result<(Vec<Hunk>, Vec<HunkLine>), String> {
+  let GitOut { stdout, .. } = run_git::run_git_err(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options.commit, &options.patch),
   })?;
 
-  let hunks = parse_all(P_HUNKS, &out)?;
+  let hunks = parse_all_err(P_HUNKS, &stdout)?;
   let hunk_lines = flatten_hunks(hunks.clone());
 
-  Some((hunks, hunk_lines))
+  Ok((hunks, hunk_lines))
 }
 
 type HunkLinesSplit = (Vec<Hunk>, Vec<HunkLine>, Vec<HunkLine>);

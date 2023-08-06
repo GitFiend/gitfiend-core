@@ -18,8 +18,11 @@ type PatchPath = String;
 static COMMITS_AND_REFS: Global<AHashMap<RepoPath, (Vec<Commit>, Vec<RefInfo>)>> =
   global!(AHashMap::new());
 
-static PATCHES: Global<(RepoPath, HashMap<PatchPath, Vec<Patch>>)> =
-  global!((RepoPath::new(), HashMap::new()));
+static PATCHES: Glo<(RepoPath, HashMap<PatchPath, Vec<Patch>>)> =
+  glo!((RepoPath::new(), HashMap::new()));
+
+// static PATCHES2: Glo<Arc<(RepoPath, HashMap<PatchPath, Vec<Patch>>)>> =
+//   glo!(Arc::new((RepoPath::new(), HashMap::new())));
 
 // Key is 2 commit ids joined.
 pub static REF_DIFFS: Glo<AHashMap<String, u32>> = glo!(AHashMap::new());
@@ -80,19 +83,43 @@ pub fn clear_unwatched_repos_from_commits(watched_repos: &HashMap<String, bool>)
 
 pub fn insert_patches(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) {
   time_block!("insert_patches", {
-    PATCHES.set((repo_path.to_string(), patches.to_owned()));
+    if let Ok(mut saved_patches) = PATCHES.write() {
+      *saved_patches = (repo_path.to_owned(), patches.to_owned());
+    }
+
+    // PATCHES.set((repo_path.to_string(), patches.to_owned()));
   });
 }
 
 pub fn get_patches(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
-  if let Some((path, patches)) = PATCHES.get() {
-    if path == repo_path && !patches.is_empty() {
-      return Some(patches);
+  println!("TRYING TO GET PATCHES FOR: {}", repo_path);
+
+  if let Ok(stored) = PATCHES.read() {
+    // let (path, patches) = &stored;
+
+    if stored.0 == repo_path && !stored.1.is_empty() {
+      println!("Found {} patches for repo: {}", stored.1.len(), repo_path);
+      return Some(stored.1.clone());
     }
   }
 
   None
 }
+
+// pub fn get_patches_ref(repo_path: &str) -> Option<Arc<(RepoPath, HashMap<PatchPath, Vec<Patch>>)>> {
+//   println!("TRYING TO GET PATCHES FOR: {}", repo_path);
+//
+//   if let Ok(stored) = PATCHES2.read() {
+//     // let (path, patches) = &stored;
+//
+//     if stored.0 == repo_path && !stored.1.is_empty() {
+//       println!("Found {} patches for repo: {}", stored.1.len(), repo_path);
+//       return Some(stored.clone());
+//     }
+//   }
+//
+//   None
+// }
 
 pub fn clear_cache(_: &ReqOptions) {
   clear_completed_searches();

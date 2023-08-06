@@ -41,23 +41,6 @@ impl<T: Clone> Global<T> {
   }
 }
 
-impl<V> Global<Vec<V>>
-where
-  V: Clone,
-{
-  // pub fn push(&self, value: V) {
-  //   if let Ok(mut data) = self.data.write() {
-  //     data.push(value);
-  //   }
-  // }
-
-  // pub fn clear(&self) {
-  //   if let Ok(mut data) = self.data.write() {
-  //     data.clear()
-  //   }
-  // }
-}
-
 impl<K, V> Global<AHashMap<K, V>>
 where
   K: Hash + Clone + Eq,
@@ -82,19 +65,6 @@ where
     }
     None
   }
-
-  // pub fn clear(&self) {
-  //   if let Ok(mut data) = self.data.write() {
-  //     data.clear()
-  //   }
-  // }
-  //
-  // pub fn len(&self) -> Option<usize> {
-  //   if let Ok(data) = self.data.write() {
-  //     return Some(data.len());
-  //   }
-  //   None
-  // }
 }
 
 #[cfg(test)]

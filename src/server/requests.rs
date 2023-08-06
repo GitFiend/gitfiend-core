@@ -17,6 +17,7 @@ use crate::git::queries::commits::{
   load_top_commit_for_branch,
 };
 use crate::git::queries::config::load_full_config;
+use crate::git::queries::hunks::html_code::get_patch_as_html;
 use crate::git::queries::hunks::images::load_commit_image;
 use crate::git::queries::hunks::load_hunks::{load_hunks, load_hunks_split};
 use crate::git::queries::patches::patches_for_commit::load_patches_for_commit;
@@ -105,6 +106,8 @@ pub fn start_async_server() {
           calc_head_info,
           repo_has_changed,
           auto_complete,
+
+          get_patch_as_html,
 
           // TODO: Will this work in a sand-boxed mac app?
           path_exists,

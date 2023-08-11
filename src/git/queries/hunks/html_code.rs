@@ -2,6 +2,14 @@ use crate::git::git_types::{HunkLine, HunkLineStatus, Patch, PatchType};
 use crate::git::queries::hunks::load_hunks::{load_hunks, ReqHunkOptions};
 use std::fmt::Display;
 
+#[macro_export]
+macro_rules! f {
+    ($($arg:tt)*) => {{
+        let res = std::fmt::format(format_args!($($arg)*));
+        res
+    }}
+}
+
 pub fn get_patch_as_html(options: &ReqHunkOptions) -> Result<String, String> {
   let (_, hunk_lines) = load_hunks(options)?;
 
@@ -20,13 +28,24 @@ fn generate_lines(hunk_lines: &Vec<HunkLine>, patch: &Patch) -> String {
   for hunk_line in hunk_lines {
     add_margin_line(patch, hunk_line, &mut margin, margin_width);
 
-    lines.push_str(&format!("{}\n", hunk_line.text));
+    lines.push_str(&f!("{}\n", escape_html(&hunk_line.text)));
+    // lines.push_str(&f!("{}\n", hunk_line.text));
   }
 
-  format!(
+  f!(
     "<div class=\"margin\">{}</div><div class=\"code\">{}</div>",
-    margin, lines
+    margin,
+    lines
   )
+}
+
+fn escape_html(line: &str) -> String {
+  line
+    .replace('&', "&amp;")
+    .replace('<', "&lt;")
+    .replace('>', "&gt;")
+    .replace('\"', "&quot;")
+    .replace('\'', "&#39;")
 }
 
 fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_width: usize) {
@@ -34,7 +53,7 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
 
   match patch.patch_type {
     PatchType::A => {
-      let num = format!(
+      let num = f!(
         "<div>{} {:>margin_width$}</div>\n",
         empty_space,
         s(line.new_num, "+")
@@ -42,7 +61,7 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
       *margin += &num;
     }
     PatchType::D => {
-      *margin += &format!(
+      *margin += &f!(
         "<div>{:>margin_width$} {}</div>\n",
         s(line.old_num, "-"),
         empty_space
@@ -53,7 +72,7 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
 
       match status {
         HunkLineStatus::Added => {
-          let num = format!(
+          let num = f!(
             "<div>{} {:>margin_width$}</div>\n",
             empty_space,
             s(line.new_num, "+")
@@ -61,7 +80,7 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
           *margin += &num;
         }
         HunkLineStatus::Removed => {
-          let num = format!(
+          let num = f!(
             "<div>{:>margin_width$} {}</div>\n",
             s(line.old_num, "-"),
             empty_space

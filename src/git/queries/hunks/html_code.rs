@@ -29,7 +29,6 @@ fn generate_lines(hunk_lines: &Vec<HunkLine>, patch: &Patch) -> String {
     add_margin_line(patch, hunk_line, &mut margin, margin_width);
 
     lines.push_str(&f!("{}\n", escape_html(&hunk_line.text)));
-    // lines.push_str(&f!("{}\n", hunk_line.text));
   }
 
   f!(
@@ -53,19 +52,11 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
 
   match patch.patch_type {
     PatchType::A => {
-      let num = f!(
-        "<div>{} {:>margin_width$}</div>\n",
-        empty_space,
-        s(line.new_num, "+")
-      );
+      let num = f!("<div>{:>margin_width$}</div>\n", s(line.new_num, "+"));
       *margin += &num;
     }
     PatchType::D => {
-      *margin += &f!(
-        "<div>{:>margin_width$} {}</div>\n",
-        s(line.old_num, "-"),
-        empty_space
-      );
+      *margin += &f!("<div>{:>margin_width$}</div>\n", s(line.old_num, "-"),);
     }
     _ => {
       let HunkLine { status, .. } = line;
@@ -92,9 +83,15 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
           *margin += &pad_left(s(line.new_num, ""), margin_width + 1);
           *margin += "\n";
         }
-        HunkLineStatus::HeaderStart => {}
-        HunkLineStatus::HeaderEnd => {}
-        HunkLineStatus::Skip => {}
+        HunkLineStatus::HeaderStart => {
+          *margin += "\n";
+        }
+        HunkLineStatus::HeaderEnd => {
+          *margin += "\n";
+        }
+        HunkLineStatus::Skip => {
+          *margin += "\n";
+        }
       }
     }
   }
@@ -132,15 +129,15 @@ fn calc_num_chars(num: i32) -> usize {
 }
 
 fn pad_left(s: String, len: usize) -> String {
-  format!("{:>len$}", s)
+  f!("{:>len$}", s)
 }
 
 fn pad_right(s: String, len: usize) -> String {
-  format!("{:width$}", s, width = len)
+  f!("{:width$}", s, width = len)
 }
 
 fn make_spaces(len: usize) -> String {
-  format!("{:>width$}", "", width = len)
+  f!("{:>width$}", "", width = len)
 }
 
 #[cfg(test)]
@@ -156,7 +153,7 @@ mod tests {
 
   #[test]
   fn test_num_chars() {
-    // assert_eq!(1, calc_num_chars(0));
+    assert_eq!(1, calc_num_chars(0));
     assert_eq!(2, calc_num_chars(10));
   }
 }

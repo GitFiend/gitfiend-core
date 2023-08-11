@@ -24,7 +24,7 @@ fn generate_lines(hunk_lines: &Vec<HunkLine>, patch: &Patch) -> String {
   }
 
   format!(
-    "<div class=\"margin\">{}</div><div class\"code\">{}</div>",
+    "<div class=\"margin\">{}</div><div class=\"code\">{}</div>",
     margin, lines
   )
 }

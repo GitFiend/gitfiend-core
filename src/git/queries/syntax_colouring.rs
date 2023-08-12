@@ -39,6 +39,12 @@ impl Colouring {
     self.set_theme(theme);
     let h = self.get_highlighter(file_extension);
 
+    println!(
+      "file_ext: {}, highlighter loaded: {}",
+      file_extension,
+      h.is_some()
+    );
+
     ColourLine {
       colouring: self,
       highlight: h,
@@ -47,7 +53,12 @@ impl Colouring {
 
   // HighlightLines isn't thread safe, so can't be stored in a global.
   pub fn get_highlighter(&self, file_extension: &str) -> Option<HighlightLines> {
-    let syntax = self.syntax_set.find_syntax_by_extension(file_extension)?;
+    let ext = match file_extension {
+      "ts" => "js",
+      _ => file_extension,
+    };
+
+    let syntax = self.syntax_set.find_syntax_by_extension(ext)?;
 
     let theme_str = if self.theme == ThemeColour::Dark {
       "base16-ocean.dark"

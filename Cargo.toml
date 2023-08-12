@@ -19,6 +19,7 @@ mime_guess = "2.0.4"
 loggers = {path = "./loggers"}
 notify = "6.0.1"
 syntect = "5.1.0"
+maud = "0.25.0"
 
 [profile.dev]
 opt-level = 1

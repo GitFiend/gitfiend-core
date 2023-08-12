@@ -16,18 +16,6 @@ pub struct ReqHunkOptions {
   pub patch: Patch,
 }
 
-// pub fn load_hunks(options: &ReqHunkOptions) -> Option<(Vec<Hunk>, Vec<HunkLine>)> {
-//   let out = run_git::run_git(RunGitOptions {
-//     repo_path: &options.repo_path,
-//     args: load_hunks_args(&options.commit, &options.patch),
-//   })?;
-//
-//   let hunks = parse_all(P_HUNKS, &out)?;
-//   let hunk_lines = flatten_hunks(hunks.clone());
-//
-//   Some((hunks, hunk_lines))
-// }
-
 pub fn load_hunks(options: &ReqHunkOptions) -> Result<(Vec<Hunk>, Vec<HunkLine>), String> {
   let GitOut { stdout, .. } = run_git::run_git_err(RunGitOptions {
     repo_path: &options.repo_path,

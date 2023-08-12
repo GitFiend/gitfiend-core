@@ -1,6 +1,10 @@
-use crate::git::git_types::{HunkLine, HunkLineStatus, Patch, PatchType};
+use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch, PatchType};
 use crate::git::queries::hunks::load_hunks::{load_hunks, ReqHunkOptions};
+use crate::git::queries::syntax_colouring::{ColourLine, ThemeColour, COLOURING};
+use maud::html;
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use ts_rs::TS;
 
 #[macro_export]
 macro_rules! f {
@@ -10,16 +14,46 @@ macro_rules! f {
     }}
 }
 
-pub fn get_patch_as_html(options: &ReqHunkOptions) -> Result<String, String> {
-  let (_, hunk_lines) = load_hunks(options)?;
+#[derive(Debug, Deserialize, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ReqPatchCodeOptions {
+  pub repo_path: String,
+  pub commit: Commit,
+  pub patch: Patch,
+  pub theme: ThemeColour,
+}
 
-  let lines = generate_lines(&hunk_lines, &options.patch);
+pub fn get_patch_as_html(options: &ReqPatchCodeOptions) -> Result<String, String> {
+  let ReqPatchCodeOptions {
+    repo_path,
+    commit,
+    patch,
+    theme,
+  } = options;
+
+  let (hunks, hunk_lines) = load_hunks(&ReqHunkOptions {
+    repo_path: repo_path.clone(),
+    commit: commit.clone(),
+    patch: patch.clone(),
+  })?;
+
+  let mut colouring = COLOURING.write().map_err(|e| e.to_string())?;
+
+  let mut c = colouring.get_colour_line(theme, &patch.get_file_extension());
+
+  let lines = generate_lines(&hunk_lines, &options.patch, &hunks, &mut c);
 
   Ok(lines)
 }
 
 // Paginate if too large?
-fn generate_lines(hunk_lines: &Vec<HunkLine>, patch: &Patch) -> String {
+fn generate_lines(
+  hunk_lines: &Vec<HunkLine>,
+  patch: &Patch,
+  hunks: &[Hunk],
+  colour: &mut ColourLine,
+) -> String {
   let mut margin = String::new();
   let mut lines = String::new();
 
@@ -27,10 +61,10 @@ fn generate_lines(hunk_lines: &Vec<HunkLine>, patch: &Patch) -> String {
 
   for hunk_line in hunk_lines {
     add_margin_line(patch, hunk_line, &mut margin, margin_width);
-
-    lines.push_str(&f!("{}\n", escape_html(&hunk_line.text)));
+    add_line(&mut lines, hunk_line.get_hunk(hunks), hunk_line, colour);
   }
 
+  // language=HTML
   f!(
     "<div class=\"margin\">{}</div><div class=\"code\">{}</div>",
     margin,
@@ -38,13 +72,51 @@ fn generate_lines(hunk_lines: &Vec<HunkLine>, patch: &Patch) -> String {
   )
 }
 
-fn escape_html(line: &str) -> String {
-  line
-    .replace('&', "&amp;")
-    .replace('<', "&lt;")
-    .replace('>', "&gt;")
-    .replace('\"', "&quot;")
-    .replace('\'', "&#39;")
+fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour: &mut ColourLine) {
+  use HunkLineStatus::*;
+
+  match line.status {
+    Added => {
+      if let Some(hunk) = hunk {
+        let coloured = colour.colour(&line.text);
+        println!("{:?}", coloured);
+        // if let Some(highlighter) = highlighter {
+        //   if let Some(line) = highlighter.highlight_line(&line.text) {
+        //     //
+        //   }
+        // }
+
+        // language=HTML
+        *lines += &f!("<div class=\"added\">{}</div>\n", escape_html(&line.text));
+      } else {
+        eprintln!("hunk not found");
+      }
+    }
+    Removed => {
+      if let Some(hunk) = hunk {
+        // LANGUAGE=html
+        *lines += &f!("<div class=\"removed\">{}</div>\n", escape_html(&line.text));
+      } else {
+        eprintln!("hunk not found");
+      }
+    }
+    Unchanged => {
+      if let Some(hunk) = hunk {
+        lines.push_str(&f!("{}\n", escape_html(&line.text)));
+      } else {
+        eprintln!("hunk not found");
+      }
+    }
+    HeaderStart => {
+      *lines += "\n";
+    }
+    HeaderEnd => {
+      *lines += "\n";
+    }
+    Skip => {
+      *lines += "\n";
+    }
+  }
 }
 
 fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_width: usize) {
@@ -52,10 +124,17 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
 
   match patch.patch_type {
     PatchType::A => {
+      let thing = html! {
+        div {(s(line.new_num, "+"))}
+      }
+      .into_string();
+
+      // language=HTML
       let num = f!("<div>{:>margin_width$}</div>\n", s(line.new_num, "+"));
       *margin += &num;
     }
     PatchType::D => {
+      // language=HTML
       *margin += &f!("<div>{:>margin_width$}</div>\n", s(line.old_num, "-"),);
     }
     _ => {
@@ -63,6 +142,7 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
 
       match status {
         HunkLineStatus::Added => {
+          // language=HTML
           let num = f!(
             "<div>{} {:>margin_width$}</div>\n",
             empty_space,
@@ -71,6 +151,7 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
           *margin += &num;
         }
         HunkLineStatus::Removed => {
+          // language=HTML
           let num = f!(
             "<div>{:>margin_width$} {}</div>\n",
             s(line.old_num, "-"),
@@ -122,6 +203,15 @@ fn get_margin_width(lines: &[HunkLine]) -> usize {
   }
 
   max + 1
+}
+
+fn escape_html(line: &str) -> String {
+  line
+    .replace('&', "&amp;")
+    .replace('<', "&lt;")
+    .replace('>', "&gt;")
+    .replace('\"', "&quot;")
+    .replace('\'', "&#39;")
 }
 
 fn calc_num_chars(num: i32) -> usize {

@@ -1,6 +1,10 @@
-use crate::git::git_types::{Hunk, HunkRange, PatchType, RefLocation, WipPatchType};
+use crate::git::git_types::{
+  Hunk, HunkLine, HunkRange, Patch, PatchType, RefLocation, WipPatchType,
+};
+use std::ffi::OsStr;
 use std::fmt;
 use std::fmt::Formatter;
+use std::path::Path;
 
 impl fmt::Display for PatchType {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
@@ -56,11 +60,36 @@ impl Hunk {
   }
 }
 
+impl HunkLine {
+  pub fn get_hunk<'a>(&self, hunks: &'a [Hunk]) -> Option<&'a Hunk> {
+    if self.hunk_index >= 0 {
+      return hunks.get(self.hunk_index as usize);
+    }
+    None
+  }
+}
+
 impl HunkRange {
   pub fn new() -> HunkRange {
     HunkRange {
       start: 0,
       length: 0,
     }
+  }
+}
+
+impl Patch {
+  pub fn get_file_extension(&self) -> String {
+    let file_name = if self.new_file.is_empty() {
+      &self.old_file
+    } else {
+      &self.new_file
+    };
+
+    Path::new(file_name)
+      .extension()
+      .and_then(OsStr::to_str)
+      .unwrap_or("")
+      .to_string()
   }
 }

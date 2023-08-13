@@ -1,9 +1,6 @@
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch, PatchType};
 use crate::git::queries::hunks::load_hunks::{load_hunks, ReqHunkOptions};
-use crate::git::queries::syntax_colouring::{
-  colour_to_hue, scale_colour, ColourLine, ThemeColour, COLOURING,
-};
-use maud::html;
+use crate::git::queries::syntax_colouring::{colour_to_hue, ColourLine, ThemeColour, COLOURING};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use syntect::highlighting::{Color, Style};
@@ -69,7 +66,7 @@ fn generate_lines(
 
   // language=HTML
   f!(
-    "<div class=\"margin\">{}</div><div class=\"code\">{}</div>",
+    "<div class='margin'>{}</div><div class='code'>{}</div>",
     margin,
     lines
   )
@@ -80,17 +77,17 @@ fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour: &m
   let text = if let Ok(parts) = colour.colour(&f!("{}\n", line.text)) {
     build_line(parts, &colour.colouring.theme)
   } else {
-    line.text.clone()
+    line.text.replace('\n', "")
   };
 
   match line.status {
     Added => {
       // language=HTML
-      *lines += &f!("<div class=\"added\">{}</div>\n", text);
+      *lines += &f!("<div class='added'>{}</div>", text);
     }
     Removed => {
-      // LANGUAGE=html
-      *lines += &f!("<div class=\"removed\">{}</div>\n", text);
+      // language=HTML
+      *lines += &f!("<div class='removed'>{}</div>", text);
     }
     Unchanged => {
       lines.push_str(&f!("{}\n", text));
@@ -110,32 +107,24 @@ fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour: &m
 fn build_line(parts: Vec<(Style, &str)>, theme: &ThemeColour) -> String {
   let mut line = String::new();
 
-  println!("last: {:?}", parts.last().unwrap().1);
-
   for (style, text) in parts {
-    // if text != "\n" {
     line += &f!(
-      "<span style=\"color: {}\">{}</span>",
+      // language=HTML
+      "<span style='color: {};'>{}</span>",
       colour_to_style(style.foreground, theme),
       escape_html(&text.replace('\n', ""))
     );
-    // }
   }
 
   line
 }
 
 fn colour_to_style(colour: Color, theme: &ThemeColour) -> String {
-  // println!("hue: {}", colour_to_hue(colour));
-  // let colour = scale_colour(colour, theme);
-
-  // let Color { r, g, b, a } = colour;
   if *theme == ThemeColour::Light {
-    f!("hsl({}, {}, {})", colour_to_hue(colour), "60%", "40%")
+    f!("hsl({}, 60%, 40%)", colour_to_hue(colour))
   } else {
-    f!("hsl({}, {}, {})", colour_to_hue(colour), "75%", "75%")
+    f!("hsl({}, 75%, 75%)", colour_to_hue(colour))
   }
-  // f!("rgba({},{},{},1)", r, g, b)
 }
 
 fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_width: usize) {
@@ -143,18 +132,19 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
 
   match patch.patch_type {
     PatchType::A => {
-      let thing = html! {
-        div {(s(line.new_num, "+"))}
-      }
-      .into_string();
-
       // language=HTML
-      let num = f!("<div>{:>margin_width$}</div>\n", s(line.new_num, "+"));
+      let num = f!(
+        "<div class='added'>{:>margin_width$}</div>",
+        s(line.new_num, "+")
+      );
       *margin += &num;
     }
     PatchType::D => {
       // language=HTML
-      *margin += &f!("<div>{:>margin_width$}</div>\n", s(line.old_num, "-"),);
+      *margin += &f!(
+        "<div class='removed'>{:>margin_width$}</div>",
+        s(line.old_num, "-"),
+      );
     }
     _ => {
       let HunkLine { status, .. } = line;
@@ -163,7 +153,7 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
         HunkLineStatus::Added => {
           // language=HTML
           let num = f!(
-            "<div>{} {:>margin_width$}</div>\n",
+            "<div class='added'>{} {:>margin_width$}</div>",
             empty_space,
             s(line.new_num, "+")
           );
@@ -172,7 +162,7 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
         HunkLineStatus::Removed => {
           // language=HTML
           let num = f!(
-            "<div>{:>margin_width$} {}</div>\n",
+            "<div class='removed'>{:>margin_width$} {}</div>",
             s(line.old_num, "-"),
             empty_space
           );
@@ -241,22 +231,17 @@ fn pad_left(s: String, len: usize) -> String {
   f!("{:>len$}", s)
 }
 
-fn pad_right(s: String, len: usize) -> String {
-  f!("{:width$}", s, width = len)
-}
-
 fn make_spaces(len: usize) -> String {
   f!("{:>width$}", "", width = len)
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::hunks::html_code::{calc_num_chars, make_spaces, pad_left, pad_right};
+  use crate::git::queries::hunks::html_code::{calc_num_chars, make_spaces, pad_left};
 
   #[test]
   fn test_pad() {
     assert_eq!("   abc", &pad_left(String::from("abc"), 6));
-    assert_eq!("abc   ", &pad_right(String::from("abc"), 6));
     assert_eq!("   ", make_spaces(3));
   }
 

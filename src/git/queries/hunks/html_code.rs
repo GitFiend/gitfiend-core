@@ -1,9 +1,12 @@
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch, PatchType};
 use crate::git::queries::hunks::load_hunks::{load_hunks, ReqHunkOptions};
-use crate::git::queries::syntax_colouring::{ColourLine, ThemeColour, COLOURING};
+use crate::git::queries::syntax_colouring::{
+  colour_to_hue, scale_colour, ColourLine, ThemeColour, COLOURING,
+};
 use maud::html;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use syntect::highlighting::{Color, Style};
 use ts_rs::TS;
 
 #[macro_export]
@@ -74,38 +77,23 @@ fn generate_lines(
 
 fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour: &mut ColourLine) {
   use HunkLineStatus::*;
+  let text = if let Ok(parts) = colour.colour(&f!("{}\n", line.text)) {
+    build_line(parts, &colour.colouring.theme)
+  } else {
+    line.text.clone()
+  };
 
   match line.status {
     Added => {
-      if let Some(hunk) = hunk {
-        let coloured = colour.colour(&line.text);
-        println!("{:?}", coloured);
-        // if let Some(highlighter) = highlighter {
-        //   if let Some(line) = highlighter.highlight_line(&line.text) {
-        //     //
-        //   }
-        // }
-
-        // language=HTML
-        *lines += &f!("<div class=\"added\">{}</div>\n", escape_html(&line.text));
-      } else {
-        eprintln!("hunk not found");
-      }
+      // language=HTML
+      *lines += &f!("<div class=\"added\">{}</div>\n", text);
     }
     Removed => {
-      if let Some(hunk) = hunk {
-        // LANGUAGE=html
-        *lines += &f!("<div class=\"removed\">{}</div>\n", escape_html(&line.text));
-      } else {
-        eprintln!("hunk not found");
-      }
+      // LANGUAGE=html
+      *lines += &f!("<div class=\"removed\">{}</div>\n", text);
     }
     Unchanged => {
-      if let Some(hunk) = hunk {
-        lines.push_str(&f!("{}\n", escape_html(&line.text)));
-      } else {
-        eprintln!("hunk not found");
-      }
+      lines.push_str(&f!("{}\n", text));
     }
     HeaderStart => {
       *lines += "\n";
@@ -117,6 +105,37 @@ fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour: &m
       *lines += "\n";
     }
   }
+}
+
+fn build_line(parts: Vec<(Style, &str)>, theme: &ThemeColour) -> String {
+  let mut line = String::new();
+
+  println!("last: {:?}", parts.last().unwrap().1);
+
+  for (style, text) in parts {
+    // if text != "\n" {
+    line += &f!(
+      "<span style=\"color: {}\">{}</span>",
+      colour_to_style(style.foreground, theme),
+      escape_html(&text.replace('\n', ""))
+    );
+    // }
+  }
+
+  line
+}
+
+fn colour_to_style(colour: Color, theme: &ThemeColour) -> String {
+  // println!("hue: {}", colour_to_hue(colour));
+  // let colour = scale_colour(colour, theme);
+
+  // let Color { r, g, b, a } = colour;
+  if *theme == ThemeColour::Light {
+    f!("hsl({}, {}, {})", colour_to_hue(colour), "60%", "40%")
+  } else {
+    f!("hsl({}, {}, {})", colour_to_hue(colour), "75%", "75%")
+  }
+  // f!("rgba({},{},{},1)", r, g, b)
 }
 
 fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_width: usize) {

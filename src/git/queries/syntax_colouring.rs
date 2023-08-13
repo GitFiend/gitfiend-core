@@ -2,7 +2,7 @@ use crate::glo;
 use crate::util::global::Glo;
 use serde::{Deserialize, Serialize};
 use syntect::easy::HighlightLines;
-use syntect::highlighting::{Style, ThemeSet};
+use syntect::highlighting::{Color, Style, ThemeSet};
 use syntect::parsing::SyntaxSet;
 use ts_rs::TS;
 
@@ -60,6 +60,12 @@ impl Colouring {
 
     let syntax = self.syntax_set.find_syntax_by_extension(ext)?;
 
+    self
+      .theme_set
+      .themes
+      .keys()
+      .for_each(|k| println!("theme: {}", k));
+
     let theme_str = if self.theme == ThemeColour::Dark {
       "base16-ocean.dark"
     } else {
@@ -74,8 +80,8 @@ impl Colouring {
 }
 
 pub struct ColourLine<'a> {
-  colouring: &'a Colouring,
-  highlight: Option<HighlightLines<'a>>,
+  pub colouring: &'a Colouring,
+  pub highlight: Option<HighlightLines<'a>>,
 }
 
 impl<'a> ColourLine<'a> {
@@ -88,4 +94,70 @@ impl<'a> ColourLine<'a> {
 
     Err(String::from("Highlighter isn't loaded for this file"))
   }
+}
+
+pub fn scale_colour(colour: Color, theme: &ThemeColour) -> Color {
+  let Color { r, g, b, .. } = colour;
+
+  let sum: u32 = r as u32 + g as u32 + b as u32;
+
+  let max = r.max(g).max(b);
+  let min = r.min(g).min(b);
+
+  println!("sum: {}, max: {}", sum, r.max(g).max(b));
+
+  if theme == &ThemeColour::Light {
+    if min > 0 {
+      let scale = 255.0 / min as f32;
+      println!("diff: {}", min);
+
+      return Color {
+        r: ((r - min) as f32 * scale) as u8,
+        g: ((g - min) as f32 * scale) as u8,
+        b: ((b - min) as f32 * scale) as u8,
+        a: 255,
+      };
+    }
+  } else if max < 255 {
+    let scale = 255.0 / max as f32;
+    println!("scale: {}", scale);
+
+    return Color {
+      r: (r as f32 * scale).round() as u8,
+      g: (g as f32 * scale).round() as u8,
+      b: (b as f32 * scale).round() as u8,
+      a: 255,
+    };
+  }
+
+  colour
+}
+
+pub fn colour_to_hue(colour: Color) -> f32 {
+  let Color { r, g, b, .. } = colour;
+
+  let r = r as f32;
+  let g = g as f32;
+  let b = b as f32;
+
+  let c_min = r.min(g).min(b);
+  let c_max = r.max(g).max(b);
+  let delta = c_max - c_min;
+
+  let mut hue = if delta == 0. {
+    0.
+  } else if c_max == r {
+    60. * (((g - b) / delta) % 6.)
+  } else if c_max == g {
+    60. * (((b - r) / delta) + 2.)
+  } else {
+    60. * (((r - g) / delta) + 4.)
+  }
+  .round();
+
+  if hue < 0. {
+    hue += 360.;
+  }
+
+  hue
 }

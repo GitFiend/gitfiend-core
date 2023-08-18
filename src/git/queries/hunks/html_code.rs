@@ -1,18 +1,11 @@
-use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch, PatchType};
+use crate::f;
+use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::load_hunks::{load_hunks, ReqHunkOptions};
 use crate::git::queries::syntax_colouring::{colour_to_hue, ColourLine, ThemeColour, COLOURING};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use syntect::highlighting::{Color, Style};
 use ts_rs::TS;
-
-#[macro_export]
-macro_rules! f {
-    ($($arg:tt)*) => {{
-        let res = std::fmt::format(format_args!($($arg)*));
-        res
-    }}
-}
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -90,13 +83,23 @@ fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour: &m
       *lines += &f!("<div class='removed'>{}</div>", text);
     }
     Unchanged => {
-      lines.push_str(&f!("{}\n", text));
+      lines.push_str(&f!("{} \n", text));
     }
     HeaderStart => {
-      *lines += "\n";
+      // *lines += "\n";
+      // language=HTML
+      *lines += "<div class='headerStart'></div>"
     }
     HeaderEnd => {
-      *lines += "\n";
+      if let Some(hunk) = hunk {
+        // *lines += &gen_header_ranges(hunk);
+        // language=HTML
+        *lines += &f!("<div class='headerEnd'>{}</div>", gen_header_ranges(hunk));
+      } else {
+        // language=HTML
+        *lines += "<div class='headerEnd'></div>"
+      }
+      // *lines += "\n";
     }
     Skip => {
       *lines += "\n";
@@ -130,61 +133,58 @@ fn colour_to_style(colour: Color, theme: &ThemeColour) -> String {
 fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_width: usize) {
   let empty_space = make_spaces(margin_width);
 
-  match patch.patch_type {
-    PatchType::A => {
+  let HunkLine { status, .. } = line;
+
+  match status {
+    HunkLineStatus::Added => {
       // language=HTML
       let num = f!(
-        "<div class='added'>{:>margin_width$}</div>",
+        "<div class='added'> {} {:>margin_width$}</div>",
+        empty_space,
         s(line.new_num, "+")
       );
       *margin += &num;
     }
-    PatchType::D => {
+    HunkLineStatus::Removed => {
       // language=HTML
-      *margin += &f!(
-        "<div class='removed'>{:>margin_width$}</div>",
+      let num = f!(
+        "<div class='removed'> {:>margin_width$} {}</div>",
         s(line.old_num, "-"),
+        empty_space
       );
+      *margin += &num;
     }
-    _ => {
-      let HunkLine { status, .. } = line;
-
-      match status {
-        HunkLineStatus::Added => {
-          // language=HTML
-          let num = f!(
-            "<div class='added'>{} {:>margin_width$}</div>",
-            empty_space,
-            s(line.new_num, "+")
-          );
-          *margin += &num;
-        }
-        HunkLineStatus::Removed => {
-          // language=HTML
-          let num = f!(
-            "<div class='removed'>{:>margin_width$} {}</div>",
-            s(line.old_num, "-"),
-            empty_space
-          );
-          *margin += &num;
-        }
-        HunkLineStatus::Unchanged => {
-          *margin += &pad_left(s(line.old_num, ""), margin_width);
-          *margin += &pad_left(s(line.new_num, ""), margin_width + 1);
-          *margin += "\n";
-        }
-        HunkLineStatus::HeaderStart => {
-          *margin += "\n";
-        }
-        HunkLineStatus::HeaderEnd => {
-          *margin += "\n";
-        }
-        HunkLineStatus::Skip => {
-          *margin += "\n";
-        }
-      }
+    HunkLineStatus::Unchanged => {
+      *margin += &pad_left(s(line.old_num, ""), margin_width + 1);
+      *margin += &pad_left(s(line.new_num, ""), margin_width + 1);
+      *margin += " \n";
+    }
+    HunkLineStatus::HeaderStart => {
+      *margin += " \n";
+    }
+    HunkLineStatus::HeaderEnd => {
+      *margin += " \n";
+    }
+    HunkLineStatus::Skip => {
+      *margin += " \n";
     }
   }
+}
+
+fn gen_header_ranges(hunk: &Hunk) -> String {
+  let Hunk {
+    old_line_range,
+    new_line_range,
+    ..
+  } = hunk;
+
+  f!(
+    "@@ -{},{} +{},{} @@",
+    old_line_range.start,
+    old_line_range.length,
+    new_line_range.start,
+    new_line_range.length
+  )
 }
 
 fn s<T: Display>(s: Option<T>, prefix: &str) -> String {

@@ -35,25 +35,20 @@ pub fn get_patch_as_html(options: &ReqPatchCodeOptions) -> Result<String, String
 
   let mut c = colouring.get_colour_line(theme, &patch.get_file_extension());
 
-  let lines = generate_lines(&hunk_lines, &options.patch, &hunks, &mut c);
+  let lines = generate_lines(&hunk_lines, &hunks, &mut c);
 
   Ok(lines)
 }
 
 // Paginate if too large?
-fn generate_lines(
-  hunk_lines: &Vec<HunkLine>,
-  patch: &Patch,
-  hunks: &[Hunk],
-  colour: &mut ColourLine,
-) -> String {
+fn generate_lines(hunk_lines: &Vec<HunkLine>, hunks: &[Hunk], colour: &mut ColourLine) -> String {
   let mut margin = String::new();
   let mut lines = String::new();
 
   let margin_width = get_margin_width(hunk_lines);
 
   for hunk_line in hunk_lines {
-    add_margin_line(patch, hunk_line, &mut margin, margin_width);
+    add_margin_line(hunk_line, &mut margin, margin_width);
     add_line(&mut lines, hunk_line.get_hunk(hunks), hunk_line, colour);
   }
 
@@ -75,31 +70,24 @@ fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour: &m
 
   match line.status {
     Added => {
-      // language=HTML
-      *lines += &f!("<div class='added'>{}</div>", text);
+      *lines += &div("added", &text);
     }
     Removed => {
-      // language=HTML
-      *lines += &f!("<div class='removed'>{}</div>", text);
+      *lines += &div("removed", &text);
     }
     Unchanged => {
-      lines.push_str(&f!("{} \n", text));
+      // lines.push_str(&f!("{} \n", text));
+      *lines += &div("none", &text);
     }
     HeaderStart => {
-      // *lines += "\n";
-      // language=HTML
-      *lines += "<div class='headerStart'></div>"
+      *lines += &div("headerStart", "");
     }
     HeaderEnd => {
       if let Some(hunk) = hunk {
-        // *lines += &gen_header_ranges(hunk);
-        // language=HTML
-        *lines += &f!("<div class='headerEnd'>{}</div>", gen_header_ranges(hunk));
+        *lines += &div("headerEnd", &gen_header_ranges(hunk));
       } else {
-        // language=HTML
-        *lines += "<div class='headerEnd'></div>"
+        *lines += &div("headerEnd", "");
       }
-      // *lines += "\n";
     }
     Skip => {
       *lines += "\n";
@@ -124,35 +112,29 @@ fn build_line(parts: Vec<(Style, &str)>, theme: &ThemeColour) -> String {
 
 fn colour_to_style(colour: Color, theme: &ThemeColour) -> String {
   if *theme == ThemeColour::Light {
-    f!("hsl({}, 60%, 40%)", colour_to_hue(colour))
+    f!("hsl({}, 85%, 30%)", colour_to_hue(colour))
   } else {
-    f!("hsl({}, 75%, 75%)", colour_to_hue(colour))
+    f!("hsl({}, 85%, 85%)", colour_to_hue(colour))
   }
 }
 
-fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_width: usize) {
+fn add_margin_line(line: &HunkLine, margin: &mut String, margin_width: usize) {
   let empty_space = make_spaces(margin_width);
 
   let HunkLine { status, .. } = line;
 
   match status {
     HunkLineStatus::Added => {
-      // language=HTML
-      let num = f!(
-        "<div class='added'> {} {:>margin_width$}</div>",
-        empty_space,
-        s(line.new_num, "+")
+      *margin += &div(
+        "added",
+        &f!(" {} {:>margin_width$} ", empty_space, s(line.new_num, "+")),
       );
-      *margin += &num;
     }
     HunkLineStatus::Removed => {
-      // language=HTML
-      let num = f!(
-        "<div class='removed'> {:>margin_width$} {}</div>",
-        s(line.old_num, "-"),
-        empty_space
+      *margin += &div(
+        "removed",
+        &f!(" {:>margin_width$} {} ", s(line.old_num, "-"), empty_space),
       );
-      *margin += &num;
     }
     HunkLineStatus::Unchanged => {
       *margin += &pad_left(s(line.old_num, ""), margin_width + 1);
@@ -160,10 +142,10 @@ fn add_margin_line(patch: &Patch, line: &HunkLine, margin: &mut String, margin_w
       *margin += " \n";
     }
     HunkLineStatus::HeaderStart => {
-      *margin += " \n";
+      *margin += &div("headerStart", "");
     }
     HunkLineStatus::HeaderEnd => {
-      *margin += " \n";
+      *margin += &div("headerEnd", "");
     }
     HunkLineStatus::Skip => {
       *margin += " \n";
@@ -213,6 +195,16 @@ fn get_margin_width(lines: &[HunkLine]) -> usize {
 
   max + 1
 }
+
+fn div(class_name: &str, content: &str) -> String {
+  // language=HTML
+  f!("<div class='{}'>{}</div>", class_name, content)
+}
+
+// fn span(class_name: &str, content: &str) -> String {
+//   // language=HTML
+//   f!("<span class='{}'>{}</span>", class_name, content)
+// }
 
 fn escape_html(line: &str) -> String {
   line

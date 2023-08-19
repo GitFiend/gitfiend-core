@@ -8,4 +8,5 @@ export interface ReqPatchCodeOptions {
   commit: Commit;
   patch: Patch;
   theme: ThemeColour;
+  split: boolean;
 }

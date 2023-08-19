@@ -1,5 +1,5 @@
-use crate::glo;
 use crate::util::global::Glo;
+use crate::{f, glo};
 use serde::{Deserialize, Serialize};
 use syntect::easy::HighlightLines;
 use syntect::highlighting::{Color, Style, ThemeSet};
@@ -131,6 +131,14 @@ pub fn scale_colour(colour: Color, theme: &ThemeColour) -> Color {
   }
 
   colour
+}
+
+pub fn colour_to_style(colour: Color, theme: &ThemeColour) -> String {
+  if *theme == ThemeColour::Light {
+    f!("hsl({}, 100%, 30%)", colour_to_hue(colour))
+  } else {
+    f!("hsl({}, 100%, 80%)", colour_to_hue(colour))
+  }
 }
 
 pub fn colour_to_hue(colour: Color) -> f32 {

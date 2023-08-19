@@ -174,7 +174,7 @@ fn gen_header_ranges(hunk: &Hunk) -> String {
   )
 }
 
-fn s<T: Display>(s: Option<T>, prefix: &str) -> String {
+pub fn s<T: Display>(s: Option<T>, prefix: &str) -> String {
   s.map(|n| prefix.to_string() + &n.to_string())
     .unwrap_or(String::new())
 }
@@ -219,11 +219,11 @@ fn calc_num_chars(num: i32) -> usize {
   num.to_string().len()
 }
 
-fn pad_left(s: String, len: usize) -> String {
+pub fn pad_left(s: String, len: usize) -> String {
   f!("{:>len$}", s)
 }
 
-fn make_spaces(len: usize) -> String {
+pub fn make_spaces(len: usize) -> String {
   f!("{:>width$}", "", width = len)
 }
 

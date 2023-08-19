@@ -103,7 +103,7 @@ pub fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour
       }
     }
     Skip => {
-      *lines += "\n";
+      *lines += &div("empty", "");
     }
   }
 }
@@ -153,7 +153,7 @@ pub fn add_margin_line(margin: &mut String, line: &HunkLine, margin_width: usize
       *margin += &div("headerEnd", "");
     }
     HunkLineStatus::Skip => {
-      *margin += " \n";
+      *margin += &div("empty", "");
     }
   }
 }

@@ -56,12 +56,24 @@ pub fn get_patch_as_html(options: &ReqPatchCodeOptions) -> Result<String, String
 
 // Paginate if too large?
 fn generate_lines(hunk_lines: &Vec<HunkLine>, hunks: &[Hunk], colour: &mut ColourLine) -> String {
+  use HunkLineStatus::*;
+
   let mut margin = String::new();
   let mut lines = String::new();
 
   let margin_width = get_margin_width(hunk_lines);
 
   for hunk_line in hunk_lines {
+    match hunk_line.status {
+      HeaderStart => {
+        colour.end_fragment();
+      }
+      HeaderEnd => {
+        colour.start_fragment();
+      }
+      _ => {}
+    }
+
     add_margin_line(&mut margin, hunk_line, margin_width);
     add_line(&mut lines, hunk_line.get_hunk(hunks), hunk_line, colour);
   }

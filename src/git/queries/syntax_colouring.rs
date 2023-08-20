@@ -48,6 +48,7 @@ impl Colouring {
     ColourLine {
       colouring: self,
       highlight: h,
+      extension: file_extension.to_string(),
     }
   }
 
@@ -82,6 +83,7 @@ impl Colouring {
 pub struct ColourLine<'a> {
   pub colouring: &'a Colouring,
   pub highlight: Option<HighlightLines<'a>>,
+  pub extension: String,
 }
 
 impl<'a> ColourLine<'a> {
@@ -94,44 +96,53 @@ impl<'a> ColourLine<'a> {
 
     Err(String::from("Highlighter isn't loaded for this file"))
   }
-}
 
-pub fn scale_colour(colour: Color, theme: &ThemeColour) -> Color {
-  let Color { r, g, b, .. } = colour;
-
-  let sum: u32 = r as u32 + g as u32 + b as u32;
-
-  let max = r.max(g).max(b);
-  let min = r.min(g).min(b);
-
-  println!("sum: {}, max: {}", sum, r.max(g).max(b));
-
-  if theme == &ThemeColour::Light {
-    if min > 0 {
-      let scale = 255.0 / min as f32;
-      println!("diff: {}", min);
-
-      return Color {
-        r: ((r - min) as f32 * scale) as u8,
-        g: ((g - min) as f32 * scale) as u8,
-        b: ((b - min) as f32 * scale) as u8,
-        a: 255,
-      };
-    }
-  } else if max < 255 {
-    let scale = 255.0 / max as f32;
-    println!("scale: {}", scale);
-
-    return Color {
-      r: (r as f32 * scale).round() as u8,
-      g: (g as f32 * scale).round() as u8,
-      b: (b as f32 * scale).round() as u8,
-      a: 255,
-    };
+  // We are trying to highlight fragments of code the have missing context. Fake up the context.
+  pub fn start_fragment(&mut self) {
+    let _ = self.colour("{\n");
   }
 
-  colour
+  pub fn end_fragment(&mut self) {
+    let _ = self.colour("}\n");
+  }
 }
+
+// pub fn scale_colour(colour: Color, theme: &ThemeColour) -> Color {
+//   let Color { r, g, b, .. } = colour;
+//
+//   let sum: u32 = r as u32 + g as u32 + b as u32;
+//
+//   let max = r.max(g).max(b);
+//   let min = r.min(g).min(b);
+//
+//   println!("sum: {}, max: {}", sum, r.max(g).max(b));
+//
+//   if theme == &ThemeColour::Light {
+//     if min > 0 {
+//       let scale = 255.0 / min as f32;
+//       println!("diff: {}", min);
+//
+//       return Color {
+//         r: ((r - min) as f32 * scale) as u8,
+//         g: ((g - min) as f32 * scale) as u8,
+//         b: ((b - min) as f32 * scale) as u8,
+//         a: 255,
+//       };
+//     }
+//   } else if max < 255 {
+//     let scale = 255.0 / max as f32;
+//     println!("scale: {}", scale);
+//
+//     return Color {
+//       r: (r as f32 * scale).round() as u8,
+//       g: (g as f32 * scale).round() as u8,
+//       b: (b as f32 * scale).round() as u8,
+//       a: 255,
+//     };
+//   }
+//
+//   colour
+// }
 
 pub fn colour_to_style(colour: Color, theme: &ThemeColour) -> String {
   if *theme == ThemeColour::Light {

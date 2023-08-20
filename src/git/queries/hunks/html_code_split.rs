@@ -50,23 +50,20 @@ fn gen_side(
     let hunk = line.get_hunk(hunks);
 
     match &line.status {
-      Added => {
-        add_margin_line(&mut margin, line, margin_width, side);
-        add_line(&mut lines, hunk, line, colour);
+      HeaderStart => {
+        colour.end_fragment();
       }
-      Removed => {
-        add_margin_line(&mut margin, line, margin_width, side);
-        add_line(&mut lines, hunk, line, colour);
+      HeaderEnd => {
+        colour.start_fragment();
       }
-      _ => {
-        add_margin_line(&mut margin, line, margin_width, side);
-        add_line(&mut lines, hunk, line, colour);
-      }
+      _ => {}
     }
+
+    add_margin_line(&mut margin, line, margin_width, side);
+    add_line(&mut lines, hunk, line, colour);
   }
 
   lines += &div("fillWidth", &make_spaces(char_width));
-  // lines += &make_spaces(char_width);
 
   (margin, lines)
 }

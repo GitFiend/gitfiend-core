@@ -1,6 +1,8 @@
 use crate::f;
 use crate::git::git_types::{Hunk, HunkLine, HunkLineStatus};
-use crate::git::queries::hunks::html_code::{add_line, div, get_margin_width, pad_left, s};
+use crate::git::queries::hunks::html_code::{
+  add_line, div, get_margin_width, make_spaces, pad_left, s,
+};
 use crate::git::queries::syntax_colouring::ColourLine;
 
 pub fn generate_lines_split(
@@ -10,9 +12,10 @@ pub fn generate_lines_split(
   colour: &mut ColourLine,
 ) -> String {
   println!("{} {}", hl_left.len(), hl_right.len());
+  let char_width = get_longest_line(hl_left, hl_right);
 
-  let (left_margin, left_lines) = gen_side(hl_left, hunks, colour, Side::Left);
-  let (right_margin, right_lines) = gen_side(hl_right, hunks, colour, Side::Right);
+  let (left_margin, left_lines) = gen_side(hl_left, hunks, colour, Side::Left, char_width);
+  let (right_margin, right_lines) = gen_side(hl_right, hunks, colour, Side::Right, char_width);
 
   let mut left = div("margin", &left_margin);
   left += &div("code", &left_lines);
@@ -34,6 +37,7 @@ fn gen_side(
   hunks: &[Hunk],
   colour: &mut ColourLine,
   side: Side,
+  char_width: usize,
 ) -> (String, String) {
   use HunkLineStatus::*;
 
@@ -60,6 +64,9 @@ fn gen_side(
       }
     }
   }
+
+  lines += &div("fillWidth", &make_spaces(char_width));
+  // lines += &make_spaces(char_width);
 
   (margin, lines)
 }
@@ -100,4 +107,13 @@ fn add_margin_line(margin: &mut String, line: &HunkLine, margin_width: usize, si
       *margin += &div("empty", "");
     }
   }
+}
+
+fn get_longest_line(left: &[HunkLine], right: &[HunkLine]) -> usize {
+  left
+    .iter()
+    .chain(right.iter())
+    .map(|hl| hl.text.len())
+    .max_by(|a, b| a.cmp(b))
+    .unwrap_or(0)
 }

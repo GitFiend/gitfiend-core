@@ -56,16 +56,11 @@ impl Colouring {
   pub fn get_highlighter(&self, file_extension: &str) -> Option<HighlightLines> {
     let ext = match file_extension {
       "ts" => "js",
+      "tsx" => "js",
       _ => file_extension,
     };
 
     let syntax = self.syntax_set.find_syntax_by_extension(ext)?;
-
-    self
-      .theme_set
-      .themes
-      .keys()
-      .for_each(|k| println!("theme: {}", k));
 
     let theme_str = if self.theme == ThemeColour::Dark {
       "base16-ocean.dark"
@@ -77,6 +72,19 @@ impl Colouring {
       syntax,
       &self.theme_set.themes[theme_str],
     ))
+  }
+
+  pub fn _get_supported_things(self) -> (Vec<String>, Vec<String>) {
+    let themes = self.theme_set.themes.keys().cloned().collect();
+
+    let extensions = self
+      .syntax_set
+      .syntaxes()
+      .iter()
+      .flat_map(|s| s.file_extensions.clone())
+      .collect();
+
+    (themes, extensions)
   }
 }
 

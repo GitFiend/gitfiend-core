@@ -91,7 +91,7 @@ pub fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour
   let text = if let Ok(parts) = colour.colour(&f!("{}\n", line.text)) {
     build_line(parts, &colour.colouring.theme)
   } else {
-    line.text.replace('\n', "")
+    escape_xml(&line.text.replace('\n', ""))
   };
 
   match line.status {
@@ -128,7 +128,7 @@ fn build_line(parts: Vec<(Style, &str)>, theme: &ThemeColour) -> String {
       // language=HTML
       "<span style='color: {};'>{}</span>",
       colour_to_style(style.foreground, theme),
-      escape_html(&text.replace('\n', ""))
+      escape_xml(&text.replace('\n', ""))
     );
   }
 
@@ -136,35 +136,36 @@ fn build_line(parts: Vec<(Style, &str)>, theme: &ThemeColour) -> String {
 }
 
 pub fn add_margin_line(margin: &mut String, line: &HunkLine, margin_width: usize) {
+  use HunkLineStatus::*;
   let empty_space = make_spaces(margin_width);
 
   let HunkLine { status, .. } = line;
 
   match status {
-    HunkLineStatus::Added => {
+    Added => {
       *margin += &div(
         "added",
         &f!(" {} {:>margin_width$} ", empty_space, s(line.new_num, "+")),
       );
     }
-    HunkLineStatus::Removed => {
+    Removed => {
       *margin += &div(
         "removed",
         &f!(" {:>margin_width$} {} ", s(line.old_num, "-"), empty_space),
       );
     }
-    HunkLineStatus::Unchanged => {
+    Unchanged => {
       *margin += &pad_left(s(line.old_num, ""), margin_width + 1);
       *margin += &pad_left(s(line.new_num, ""), margin_width + 1);
       *margin += " \n";
     }
-    HunkLineStatus::HeaderStart => {
+    HeaderStart => {
       *margin += &div("headerStart", "");
     }
-    HunkLineStatus::HeaderEnd => {
+    HeaderEnd => {
       *margin += &div("headerEnd", "");
     }
-    HunkLineStatus::Skip => {
+    Skip => {
       *margin += &div("empty", "");
     }
   }
@@ -218,7 +219,7 @@ pub fn div(class_name: &str, content: &str) -> String {
   f!("<div class='{}'>{}</div>", class_name, content)
 }
 
-fn escape_html(line: &str) -> String {
+fn escape_xml(line: &str) -> String {
   line
     .replace('&', "&amp;")
     .replace('<', "&lt;")

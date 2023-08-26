@@ -1,5 +1,5 @@
 use crate::util::global::Glo;
-use crate::{f, glo};
+use crate::{dprintln, f, glo};
 use serde::{Deserialize, Serialize};
 use syntect::easy::HighlightLines;
 use syntect::highlighting::{Color, Style, ThemeSet};
@@ -39,7 +39,7 @@ impl Colouring {
     self.set_theme(theme);
     let h = self.get_highlighter(file_extension);
 
-    println!(
+    dprintln!(
       "file_ext: {}, highlighter loaded: {}",
       file_extension,
       h.is_some()
@@ -57,6 +57,7 @@ impl Colouring {
     let ext = match file_extension {
       "ts" => "js",
       "tsx" => "js",
+      "iml" => "xml",
       _ => file_extension,
     };
 

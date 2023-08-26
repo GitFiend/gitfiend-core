@@ -13,15 +13,15 @@ pub fn is_rebase_in_progress(options: &ReqOptions) -> bool {
     .exists()
 }
 
-// Returns the commit id of the branch we tried to merge
-// into our current if we have a conflict.
-pub fn is_merge_in_progress(options: &ReqOptions) -> Option<String> {
-  let ReqOptions { repo_path } = options;
+// // Returns the commit id of the branch we tried to merge
+// // into our current if we have a conflict.
+// pub fn is_merge_in_progress(options: &ReqOptions) -> Option<String> {
+//   let ReqOptions { repo_path } = options;
+//
+//   read_merge_head(repo_path)
+// }
 
-  read_merge_head(repo_path)
-}
-
-fn read_merge_head(repo_path: &str) -> Option<String> {
+pub fn read_merge_head(repo_path: &str) -> Option<String> {
   let text = fs::read_to_string(Path::new(repo_path).join(".git").join("MERGE_HEAD")).ok()?;
 
   Some(text.trim().to_string())

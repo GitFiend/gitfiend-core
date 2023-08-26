@@ -1,10 +1,13 @@
 use crate::git::git_types::{WipPatch, WipPatchType};
 use crate::git::queries::patches::file_is_image;
+use crate::git::queries::wip::read_merge_head;
 use crate::git::queries::wip::wip_patch_parsers::P_WIP_PATCHES;
 use crate::git::run_git::RunGitOptions;
 use crate::git::run_git::{run_git_err, GitOut};
 use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
+use serde::Serialize;
+use ts_rs::TS;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct WipPatchInfo {
@@ -14,7 +17,14 @@ pub struct WipPatchInfo {
   pub un_staged: WipPatchType,
 }
 
-pub fn load_wip_patches(options: &ReqOptions) -> Result<Vec<WipPatch>, String> {
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct WipPatches {
+  pub patches: Vec<WipPatch>,
+  pub conflict_commit_id: Option<String>,
+}
+
+pub fn load_wip_patches(options: &ReqOptions) -> Result<WipPatches, String> {
   let GitOut { stdout, .. } = run_git_err(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["status", "--porcelain", "-uall", "-z"],
@@ -22,10 +32,24 @@ pub fn load_wip_patches(options: &ReqOptions) -> Result<Vec<WipPatch>, String> {
 
   let info = parse_all_err(P_WIP_PATCHES, &stdout)?;
 
-  Ok(get_patches_from_info(info))
+  let (patches, conflicted) = get_patches_from_info(info);
+
+  if conflicted {
+    if let Some(id) = read_merge_head(&options.repo_path) {
+      return Ok(WipPatches {
+        patches,
+        conflict_commit_id: Some(id),
+      });
+    }
+  }
+
+  Ok(WipPatches {
+    patches,
+    conflict_commit_id: None,
+  })
 }
 
-fn get_patches_from_info(info: Vec<WipPatchInfo>) -> Vec<WipPatch> {
+fn get_patches_from_info(info: Vec<WipPatchInfo>) -> (Vec<WipPatch>, bool) {
   let mut patches: Vec<WipPatch> = Vec::new();
   let mut have_conflict = false;
 
@@ -55,14 +79,14 @@ fn get_patches_from_info(info: Vec<WipPatchInfo>) -> Vec<WipPatch> {
     })
   }
 
-  if have_conflict {
-    // We aren't interested in any other patches when there's a conflict.
-    return patches.into_iter().filter(|p| p.conflicted).collect();
-  }
-
   patches.sort_by_key(|p| p.new_file.to_lowercase());
 
-  patches
+  if have_conflict {
+    // We aren't interested in any other patches when there's a conflict.
+    return (patches.into_iter().filter(|p| p.conflicted).collect(), true);
+  }
+
+  (patches, false)
 }
 
 fn is_conflicted(left: &WipPatchType, right: &WipPatchType) -> bool {

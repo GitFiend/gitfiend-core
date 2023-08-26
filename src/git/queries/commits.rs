@@ -68,6 +68,7 @@ pub struct ReqCommitsOptions2 {
   pub filters: Vec<CommitFilter>,
   pub fast: bool, // Fast means to use the cache only, don't run git command.
   pub skip_stashes: bool,
+  // pub head_only: bool
 }
 
 pub fn load_commits_and_refs(options: &ReqCommitsOptions2) -> Option<(Vec<Commit>, Vec<RefInfo>)> {

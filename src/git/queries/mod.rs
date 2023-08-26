@@ -20,5 +20,6 @@ mod stashes_test;
 mod syntax_colouring;
 pub(crate) mod unpushed_commits;
 pub(crate) mod wip;
+pub mod ws_repo;
 
 pub const COMMIT_0_ID: &str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";

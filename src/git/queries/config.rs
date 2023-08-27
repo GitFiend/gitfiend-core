@@ -10,7 +10,6 @@ use crate::{character, map};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::time::Instant;
 
 impl GitConfig {
   pub fn new() -> GitConfig {
@@ -69,7 +68,7 @@ const P_HEADING: Parser<String> = or!(P_HEADING_1, P_HEADING_2);
 //   merge = refs/heads/mac-app
 const P_ROW: Parser<String> = map!(
   and!(WS, ANY_WORD, WS, character!('='), WS, UNTIL_LINE_END),
-  |res: (String, String, String, char, String, String)| { f!("{}={}", res.1, res.5) }
+  |res: (String, String, String, char, String, String)| { f!("{}={}\n", res.1, res.5) }
 );
 
 const P_SECTION: Parser<String> = map!(and!(P_HEADING, many!(P_ROW)), |(header, rows): (
@@ -80,7 +79,7 @@ const P_SECTION: Parser<String> = map!(and!(P_HEADING, many!(P_ROW)), |(header, 
     .into_iter()
     .map(|row| f!("{}.{}", header, row))
     .collect::<Vec<String>>()
-    .join("\n")
+    .join("")
 });
 
 const P_CONFIG2: Parser<String> = map!(many!(P_SECTION), |sections: Vec<String>| {

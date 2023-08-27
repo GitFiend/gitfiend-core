@@ -1,6 +1,7 @@
 use crate::parser::Parser;
 use crate::{
-  and, conditional_char, map, optional_take_char_while, or, take_char_while, until_parser, word,
+  and, character, conditional_char, map, optional_take_char_while, or, take_char_while,
+  until_parser, word,
 };
 
 pub const ANY_WORD: Parser<String> = take_char_while!(|c: char| { c.is_alphanumeric() });
@@ -8,6 +9,16 @@ pub const UNSIGNED_INT: Parser<String> = take_char_while!(|c: char| { c.is_numer
 pub const SIGNED_INT: Parser<String> = map!(
   and!(or!(word!("-"), word!("+"), WS_STR), UNSIGNED_INT),
   |res: (&str, String)| { res.0.to_string() + &res.1 }
+);
+
+// TODO: Handle more cases.
+pub const STRING_LITERAL: Parser<String> = map!(
+  and!(
+    character!('"'),
+    take_char_while!(|c: char| c != '"'),
+    character!('"')
+  ),
+  |res: (char, String, char)| { res.1 }
 );
 
 pub const WS: Parser<String> = optional_take_char_while!(|c: char| { c.is_whitespace() });

@@ -1,18 +1,13 @@
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
-use std::time::Instant;
-
 use crate::git::git_types::GitConfig;
-use crate::git::queries::commit_filters::CommitFilter::File;
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::git::store::CONFIG;
-use crate::map;
-use crate::parser::standard_parsers::UNTIL_LINE_END;
+use crate::parser::standard_parsers::{ANY_WORD, STRING_LITERAL, UNTIL_LINE_END, WS};
 use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
-use crate::{and, many, until_str, word};
+use crate::{and, f, many, or, until_str, word};
+use crate::{character, map};
+use std::collections::HashMap;
 
 impl GitConfig {
   pub fn new() -> GitConfig {
@@ -48,6 +43,26 @@ impl GitConfig {
   }
 }
 
+// const P_CONFIG2 =
+
+const P_HEADING_1: Parser<String> = map!(
+  and!(character!('['), ANY_WORD, character!(']')),
+  |res: (char, String, char)| { res.1 }
+);
+
+const P_HEADING_2: Parser<String> = map!(
+  and!(
+    character!('['),
+    ANY_WORD,
+    WS,
+    STRING_LITERAL,
+    character!(']')
+  ),
+  |res: (char, String, String, String, char)| { f!("{}.{}", res.1, res.3) }
+);
+
+const P_HEADING: Parser<String> = or!(P_HEADING_1, P_HEADING_2);
+
 const P_CONFIG: Parser<HashMap<String, String>> = map!(
   many!(and!(until_str!("="), UNTIL_LINE_END)),
   |result: Vec<(String, String)>| { result.into_iter().collect::<HashMap<String, String>>() }
@@ -67,20 +82,20 @@ const P_REMOTE_NAME: Parser<String> = map!(
 pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
   let ReqOptions { repo_path } = options;
 
-  let config_path = Path::new(repo_path).join(".git").join("config");
-  println!("config exists: {}, {:?}", config_path.exists(), config_path);
+  // let config_path = Path::new(repo_path).join(".git").join("config");
+  // println!("config exists: {}, {:?}", config_path.exists(), config_path);
+  //
+  // let t2 = Instant::now();
+  // if let Ok(text) = fs::read_to_string(config_path) {}
+  // println!("time to read text config: {}ms", t2.elapsed().as_millis());
 
-  let t2 = Instant::now();
-  if let Ok(text) = fs::read_to_string(config_path) {}
-  println!("time to read text config: {}ms", t2.elapsed().as_millis());
-
-  let t2 = Instant::now();
+  // let t2 = Instant::now();
   let result_text = run_git::run_git(RunGitOptions {
     repo_path,
     args: ["config", "--list"],
   });
 
-  println!("time to load git config: {}ms", t2.elapsed().as_millis());
+  // println!("time to load git config: {}ms", t2.elapsed().as_millis());
 
   let config_result = parse_all(P_CONFIG, result_text?.as_str());
   let entries = config_result?;
@@ -115,7 +130,7 @@ mod tests {
   use std::collections::HashMap;
 
   use crate::git::git_types::GitConfig;
-  use crate::git::queries::config::{load_full_config, P_CONFIG, P_REMOTE_NAME};
+  use crate::git::queries::config::{load_full_config, P_CONFIG, P_HEADING, P_REMOTE_NAME};
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
 
@@ -196,5 +211,24 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
     };
 
     assert_eq!(config.get_remote_for_branch("a"), "origin2");
+  }
+
+  #[test]
+  fn test_p_heading() {
+    let result = parse_all(P_HEADING, "[core]");
+    assert!(result.is_some());
+    assert_eq!(result.unwrap(), "core");
+
+    let result = parse_all(P_HEADING, "[remote \"origin\"]");
+    assert!(result.is_some());
+    assert_eq!(result.unwrap(), "remote.origin");
+
+    let result = parse_all(P_HEADING, "[branch \"my-branch-name\"]");
+    assert!(result.is_some());
+    assert_eq!(result.unwrap(), "branch.my-branch-name");
+
+    let result = parse_all(P_HEADING, "[branch \"feature/my-branch-name\"]");
+    assert!(result.is_some());
+    assert_eq!(result.unwrap(), "branch.feature/my-branch-name");
   }
 }

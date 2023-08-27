@@ -11,6 +11,7 @@ use crate::git::queries::refs::ref_diffs::calc_remote_ref_diffs;
 use crate::git::store;
 use crate::git::store::{RepoPath, CONFIG};
 use crate::server::git_request::ReqOptions;
+use crate::server::request_util::R;
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -51,7 +52,7 @@ pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
         });
       }
     }
-  } else if let Some((mut head_commit, i)) = calc_head_fallback(repo_path) {
+  } else if let Some((mut head_commit, i)) = calc_head_fallback(repo_path).ok() {
     let head_ref = &mut head_commit.refs[i];
 
     if let Some((remote_ahead, remote_commit, remote_behind, remote_ref)) =
@@ -128,19 +129,21 @@ fn calc_head_info_from_commits(commits: Vec<Commit>, refs: Vec<RefInfo>) -> Opti
 
 // We return an index to the ref in the commit. This is so we can
 // set sibling id later and not have separate instances of the same RefInfo
-fn calc_head_fallback(repo_path: &str) -> Option<(CommitInfo, usize)> {
-  if let Some(commit) = load_head_commit(&ReqOptions {
+pub fn calc_head_fallback(repo_path: &str) -> R<(CommitInfo, usize)> {
+  let commit = load_head_commit(&ReqOptions {
     repo_path: repo_path.to_string(),
-  }) {
-    if let Some(i) = commit.refs.iter().position(|r| r.head) {
-      return Some((commit, i));
-    }
-  }
+  })?;
 
-  None
+  let i = commit
+    .refs
+    .iter()
+    .position(|r| r.head)
+    .ok_or("calc_head_fallback: Head index not found")?;
+
+  Ok((commit, i))
 }
 
-fn calc_remote_fallback(
+pub fn calc_remote_fallback(
   repo_path: &RepoPath,
   head_ref: &mut RefInfo,
 ) -> Option<(u32, Commit, u32, RefInfo)> {

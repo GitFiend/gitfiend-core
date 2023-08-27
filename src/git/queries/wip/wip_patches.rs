@@ -6,6 +6,7 @@ use crate::git::run_git::RunGitOptions;
 use crate::git::run_git::{run_git_err, GitOut};
 use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
+use crate::server::request_util::R;
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -24,7 +25,7 @@ pub struct WipPatches {
   pub conflict_commit_id: Option<String>,
 }
 
-pub fn load_wip_patches(options: &ReqOptions) -> Result<WipPatches, String> {
+pub fn load_wip_patches(options: &ReqOptions) -> R<WipPatches> {
   let GitOut { stdout, .. } = run_git_err(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["status", "--porcelain", "-uall", "-z"],

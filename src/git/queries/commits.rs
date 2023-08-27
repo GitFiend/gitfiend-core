@@ -7,11 +7,12 @@ use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT
 use crate::git::queries::refs::head_info::{calc_head_info, HeadInfo};
 use crate::git::queries::refs::{finish_properties_on_refs, get_ref_info_from_commits};
 use crate::git::queries::stashes::load_stashes;
-use crate::git::run_git::{run_git, RunGitOptions};
+use crate::git::run_git::{run_git, run_git_err, RunGitOptions};
 use crate::git::store;
 use crate::git::store::RepoPath;
-use crate::parser::parse_all;
+use crate::parser::{parse_all, parse_all_err};
 use crate::server::git_request::ReqOptions;
+use crate::server::request_util::R;
 use crate::{dprintln, time_result};
 use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
@@ -44,8 +45,8 @@ pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> Option<CommitIn
   parse_all(P_COMMIT_ROW, out?.as_str())
 }
 
-pub fn load_head_commit(options: &ReqOptions) -> Option<CommitInfo> {
-  let out = run_git(RunGitOptions {
+pub fn load_head_commit(options: &ReqOptions) -> R<CommitInfo> {
+  let out = run_git_err(RunGitOptions {
     args: [
       "log",
       "--decorate=full",
@@ -54,9 +55,9 @@ pub fn load_head_commit(options: &ReqOptions) -> Option<CommitInfo> {
       "--date=raw",
     ],
     repo_path: &options.repo_path,
-  });
+  })?;
 
-  parse_all(P_COMMIT_ROW, out?.as_str())
+  parse_all_err(P_COMMIT_ROW, out.stdout.as_str())
 }
 
 #[derive(Debug, Clone, Deserialize, TS)]

@@ -65,3 +65,5 @@ macro_rules! handle_function_request {
     }
   }};
 }
+
+pub type R<T> = Result<T, String>;

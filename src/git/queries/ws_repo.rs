@@ -4,6 +4,7 @@ use crate::git::queries::commits::convert_commit;
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::refs::head_info::{calc_head_fallback, calc_remote_fallback, HeadInfo};
 use crate::git::queries::wip::wip_patches::{load_wip_patches, WipPatches};
+use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
 use serde::Serialize;
@@ -39,6 +40,8 @@ pub fn load_ws_repo(options: &ReqOptions) -> R<WsRepoState> {
       remote_ahead,
       remote_behind,
     };
+
+    clear_repo_changed_status(options);
 
     return Ok(WsRepoState {
       patches,

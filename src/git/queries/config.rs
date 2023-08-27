@@ -1,6 +1,10 @@
 use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
+use std::time::Instant;
 
 use crate::git::git_types::GitConfig;
+use crate::git::queries::commit_filters::CommitFilter::File;
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::git::store::CONFIG;
@@ -63,10 +67,20 @@ const P_REMOTE_NAME: Parser<String> = map!(
 pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
   let ReqOptions { repo_path } = options;
 
+  let config_path = Path::new(repo_path).join(".git").join("config");
+  println!("config exists: {}, {:?}", config_path.exists(), config_path);
+
+  let t2 = Instant::now();
+  if let Ok(text) = fs::read_to_string(config_path) {}
+  println!("time to read text config: {}ms", t2.elapsed().as_millis());
+
+  let t2 = Instant::now();
   let result_text = run_git::run_git(RunGitOptions {
     repo_path,
     args: ["config", "--list"],
   });
+
+  println!("time to load git config: {}ms", t2.elapsed().as_millis());
 
   let config_result = parse_all(P_CONFIG, result_text?.as_str());
   let entries = config_result?;

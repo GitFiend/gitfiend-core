@@ -1,4 +1,3 @@
-use crate::f;
 use crate::server::request_util::R;
 use std::fs::{read_dir, read_to_string};
 use std::io;

@@ -41,9 +41,6 @@ pub fn load_wip_hunks_coloured(options: &ReqWipHunksOptions) -> Option<()> {
 
 fn try_colour(lines: &[HunkLine], patch: &WipPatch) {
   if let Ok(colouring) = COLOURING.read() {
-    // let ps = SyntaxSet::load_defaults_newlines();
-    // let ts = ThemeSet::load_defaults();
-
     let syntax_set = &colouring.syntax_set;
     let theme_set = &colouring.theme_set;
 

@@ -90,6 +90,23 @@ macro_rules! conditional_char {
   };
 }
 
+#[macro_export]
+macro_rules! conditional_char2 {
+  ($name: ident, $function: expr) => {
+    |input: &mut $crate::parser::input::Input| -> Option<char> {
+      let $name = input.next_char();
+
+      if $function {
+        input.advance();
+
+        Some($name)
+      } else {
+        None
+      }
+    }
+  };
+}
+
 // Fails if no chars consumed. Successful conditional doesn't consume text.
 #[macro_export]
 macro_rules! take_char_while {
@@ -163,7 +180,7 @@ macro_rules! until_str {
 // All text is consumed, but end parser result is not included (TODO: Check this)
 #[macro_export]
 macro_rules! until_parser {
-  ($parser:expr) => {
+  ($parser: expr) => {
     |input: &mut $crate::parser::input::Input| -> Option<String> {
       let start_pos = input.position;
       let mut current_pos = start_pos;

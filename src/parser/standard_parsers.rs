@@ -1,7 +1,7 @@
 use crate::parser::Parser;
 use crate::{
-  and, character, conditional_char, map, optional_take_char_while, or, take_char_while,
-  until_parser, word,
+  and, character, conditional_char, conditional_char2, map, map2, optional_take_char_while, or,
+  take_char_while, until_parser, word,
 };
 
 pub const ANY_WORD: Parser<String> = take_char_while!(|c: char| { c.is_alphanumeric() });
@@ -12,26 +12,28 @@ pub const SIGNED_INT: Parser<String> = map!(
 );
 
 // TODO: Handle more cases.
-pub const STRING_LITERAL: Parser<String> = map!(
+pub const STRING_LITERAL: Parser<String> = map2!(
   and!(
     character!('"'),
     take_char_while!(|c: char| c != '"'),
     character!('"')
   ),
-  |res: (char, String, char)| { res.1 }
+  res,
+  res.1
 );
 
+const NUL: Parser<char> = conditional_char2!(c, c.is_control() && !c.is_whitespace());
+
 pub const WS: Parser<String> = optional_take_char_while!(|c: char| { c.is_whitespace() });
-pub const WS_STR: Parser<&str> = map!(WS, |_: String| { "" });
+pub const WS_STR: Parser<&str> = map2!(WS, _result, "");
 
 pub const LINE_END: Parser<&str> = or!(word!("\n"), word!("\r\n"));
 pub const UNTIL_LINE_END: Parser<String> = until_parser!(LINE_END);
 // pub const UNTIL_LINE_END_KEEP: Parser<(String, &str)> =
 //   and!(until_parser_keep!(LINE_END), LINE_END);
 
-pub const UNTIL_NUL: Parser<String> = until_parser!(conditional_char!(|c: char| {
-  c.is_control() && !c.is_whitespace()
-}));
+pub const UNTIL_NUL: Parser<String> =
+  until_parser!(conditional_char2!(c, c.is_control() && !c.is_whitespace()));
 
 // pub const UNTIL_END: Parser<String> = optional_take_char_while!(|c: char| { c != char::from(0) });
 

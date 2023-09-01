@@ -121,6 +121,19 @@ macro_rules! map {
   };
 }
 
+#[macro_export]
+macro_rules! map2 {
+  ($parser: expr, $name: ident, $map: expr) => {
+    |input: &mut $crate::parser::input::Input| {
+      if let Some($name) = $parser(input) {
+        Some($map)
+      } else {
+        None
+      }
+    }
+  };
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

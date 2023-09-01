@@ -39,7 +39,7 @@ pub fn load_wip_hunks_coloured(options: &ReqWipHunksOptions) -> Option<()> {
   Some(())
 }
 
-fn try_colour(lines: &Vec<HunkLine>, patch: &WipPatch) {
+fn try_colour(lines: &[HunkLine], patch: &WipPatch) {
   if let Ok(colouring) = COLOURING.read() {
     // let ps = SyntaxSet::load_defaults_newlines();
     // let ts = ThemeSet::load_defaults();
@@ -74,7 +74,7 @@ fn try_colour(lines: &Vec<HunkLine>, patch: &WipPatch) {
 }
 
 // TODO
-fn _split_hunk_lines(_lines: &Vec<HunkLine>) {
+fn _split_hunk_lines(_lines: &[HunkLine]) {
   //
 }
 
@@ -124,7 +124,7 @@ struct FileInfo {
   line_ending: String,
 }
 
-fn load_file(repo_path: &String, file_path: &String) -> Option<FileInfo> {
+fn load_file(repo_path: &str, file_path: &str) -> Option<FileInfo> {
   match read_to_string(Path::new(repo_path).join(file_path)) {
     Ok(text) => {
       let line_ending = detect_new_line(&text);
@@ -167,13 +167,9 @@ const LINE_PARSER: Parser<(String, &str)> =
 const LINES_PARSER: Parser<Vec<String>> =
   rep_parser_sep!(until_parser_keep_happy!(LINE_END), or!(LINE_END, WS_STR));
 
-// const MANY_LINE_PARSER: Parser<Vec<(String, &str)>> = many!(LINE_PARSER);
-
 /// Unifies line ending in text to be the provided. Also appends line ending to end.
 fn switch_to_line_ending(text: String, line_ending: &str) -> String {
   if let Some(lines) = parse_all(LINES_PARSER, &text) {
-    // let lines: Vec<String> = result.into_iter().map(|line| line.0).collect();
-
     let joined_text = lines.join(line_ending);
 
     return joined_text.add(line_ending);

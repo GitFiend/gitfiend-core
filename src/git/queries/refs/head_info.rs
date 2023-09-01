@@ -52,7 +52,7 @@ pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
         });
       }
     }
-  } else if let Some((mut head_commit, i)) = calc_head_fallback(repo_path).ok() {
+  } else if let Ok((mut head_commit, i)) = calc_head_fallback(repo_path) {
     let head_ref = &mut head_commit.refs[i];
 
     if let Some((remote_ahead, remote_commit, remote_behind, remote_ref)) =

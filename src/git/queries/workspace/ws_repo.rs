@@ -4,6 +4,7 @@ use crate::git::queries::commits::convert_commit;
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::refs::head_info::{calc_head_fallback, calc_remote_fallback, HeadInfo};
 use crate::git::queries::wip::wip_patches::{load_wip_patches, WipPatches};
+use crate::git::queries::workspace::load_current_branch::{load_current_branch, read_refs};
 use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
@@ -21,6 +22,15 @@ pub struct WsRepoState {
 
 pub fn load_ws_repo(options: &ReqOptions) -> R<WsRepoState> {
   let ReqOptions { repo_path } = options;
+
+  let current_branch = load_current_branch(repo_path)?;
+  println!("Current branch: {}", current_branch);
+
+  read_refs(repo_path, &current_branch);
+
+  // let other_branches =
+  //   read_refs(repo_path, &current_branch).map_err(|e| f!("Failed to read refs: {}", e))?;
+  // println!("{} {:?}", current_branch, other_branches);
 
   let patches = load_wip_patches(options)?;
 

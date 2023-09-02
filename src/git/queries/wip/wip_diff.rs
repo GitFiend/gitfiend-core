@@ -1,3 +1,11 @@
+use std::fs::read_to_string;
+use std::ops::Add;
+use std::path::Path;
+
+use serde::Deserialize;
+use similar::{ChangeTag, TextDiff};
+use ts_rs::TS;
+
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
 use crate::git::queries::syntax_colouring::COLOURING;
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
@@ -5,13 +13,8 @@ use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
-use crate::{and, dprintln, or, rep_parser_sep, until_parser_keep_happy};
-use serde::Deserialize;
-use similar::{ChangeTag, TextDiff};
-use std::fs::read_to_string;
-use std::ops::Add;
-use std::path::Path;
-use ts_rs::TS;
+use crate::server::request_util::R;
+use crate::{and, or, rep_parser_sep, until_parser_keep_happy};
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -22,21 +25,21 @@ pub struct ReqWipHunksOptions {
   pub head_commit: Option<Commit>,
 }
 
-pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> Option<(Vec<Hunk>, u32)> {
+pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> R<(Vec<Hunk>, u32)> {
   let lines = load_wip_hunk_lines(options)?;
 
   // try_colour(&lines, &options.patch);
 
-  Some(convert_lines_to_hunks(lines))
+  Ok(convert_lines_to_hunks(lines))
 }
 
-pub fn load_wip_hunks_coloured(options: &ReqWipHunksOptions) -> Option<()> {
+pub fn load_wip_hunks_coloured(options: &ReqWipHunksOptions) -> R<()> {
   let lines = load_wip_hunk_lines(options)?;
   // let hunks = convert_lines_to_hunks(lines);
 
   try_colour(&lines, &options.patch);
 
-  Some(())
+  Ok(())
 }
 
 fn try_colour(lines: &[HunkLine], patch: &WipPatch) {
@@ -75,7 +78,7 @@ fn _split_hunk_lines(_lines: &[HunkLine]) {
   //
 }
 
-pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> Option<Vec<HunkLine>> {
+pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
   let ReqWipHunksOptions {
     patch,
     repo_path,
@@ -89,13 +92,13 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> Option<Vec<HunkLine>
   } = patch;
 
   if *is_image {
-    return None;
+    return Ok(Vec::new());
   }
 
-  let new_file_info = load_file(repo_path, new_file);
+  let new_file_info = load_file(repo_path, new_file)?;
 
   if *patch_type == WipPatchType::A || head_commit.is_none() {
-    return Some(calc_hunk_line_from_text("", &new_file_info?.text));
+    return Ok(calc_hunk_line_from_text("", &new_file_info.text));
   }
 
   if let Some(commit) = head_commit {
@@ -103,17 +106,15 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> Option<Vec<HunkLine>
       load_unchanged_file(repo_path, patch, commit).unwrap_or_else(|| String::from(""));
 
     if *patch_type == WipPatchType::D {
-      return Some(calc_hunk_line_from_text(&old_text, ""));
+      return Ok(calc_hunk_line_from_text(&old_text, ""));
     }
 
-    if let Some(new_file_info) = new_file_info {
-      old_text = switch_to_line_ending(old_text, &new_file_info.line_ending);
+    old_text = switch_to_line_ending(old_text, &new_file_info.line_ending);
 
-      return Some(calc_hunk_line_from_text(&old_text, &new_file_info.text));
-    }
+    return Ok(calc_hunk_line_from_text(&old_text, &new_file_info.text));
   }
 
-  None
+  Ok(Vec::new())
 }
 
 struct FileInfo {
@@ -121,26 +122,18 @@ struct FileInfo {
   line_ending: String,
 }
 
-fn load_file(repo_path: &str, file_path: &str) -> Option<FileInfo> {
-  match read_to_string(Path::new(repo_path).join(file_path)) {
-    Ok(text) => {
-      let line_ending = detect_new_line(&text);
+fn load_file(repo_path: &str, file_path: &str) -> R<FileInfo> {
+  let text = read_to_string(Path::new(repo_path).join(file_path)).map_err(|e| e.to_string())?;
+  let line_ending = detect_new_line(&text);
 
-      if !text.ends_with(&line_ending) {
-        return Some(FileInfo {
-          text: text.add(&line_ending),
-          line_ending,
-        });
-      }
-
-      return Some(FileInfo { text, line_ending });
-    }
-    Err(e) => {
-      dprintln!("{}", e);
-    }
+  if !text.ends_with(&line_ending) {
+    return Ok(FileInfo {
+      text: text.add(&line_ending),
+      line_ending,
+    });
   }
 
-  None
+  return Ok(FileInfo { text, line_ending });
 }
 
 fn detect_new_line(text: &str) -> String {

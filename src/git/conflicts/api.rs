@@ -12,6 +12,7 @@ use crate::git::conflicts::conflicted_file::{
 use crate::git::git_types::WipPatch;
 use crate::git::queries::refs::P_REF_NAME;
 use crate::parser::parse_all;
+use crate::server::request_util::R;
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -21,15 +22,15 @@ pub struct LoadConflictOptions {
   pub patch: WipPatch,
 }
 
-pub fn load_conflicted_file(options: &LoadConflictOptions) -> Option<ConflictedFile> {
+pub fn load_conflicted_file(options: &LoadConflictOptions) -> R<ConflictedFile> {
   let LoadConflictOptions { repo_path, patch } = options;
 
   let path = Path::new(repo_path).join(&patch.new_file);
-  let text = fs::read_to_string(path).ok()?;
+  let text = fs::read_to_string(path).map_err(|e| e.to_string())?;
 
   let lines = text.lines().collect::<Vec<&str>>();
 
-  Some(conflicted_lines(lines))
+  Ok(conflicted_lines(lines))
 }
 
 const CONFLICT_START: &str = "<<<<<<<";

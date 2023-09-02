@@ -22,7 +22,7 @@ pub const STRING_LITERAL: Parser<String> = map2!(
   res.1
 );
 
-const NUL: Parser<char> = conditional_char2!(c, c.is_control() && !c.is_whitespace());
+// const NUL: Parser<char> = conditional_char2!(c, c.is_control() && !c.is_whitespace());
 
 pub const WS: Parser<String> = optional_take_char_while!(|c: char| { c.is_whitespace() });
 pub const WS_STR: Parser<&str> = map2!(WS, _result, "");

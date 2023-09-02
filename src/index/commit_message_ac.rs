@@ -1,24 +1,25 @@
 use crate::git::git_types::Commit;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::store;
-use crate::global;
 use crate::index::ac_index::ACIndex;
+use crate::server::request_util::R;
 use crate::util::global::Global;
+use crate::{f, global};
 
 pub fn commit_message_ac(
   repo_path: &String,
   current_word: &String,
   max_num: usize,
-) -> Option<Vec<String>> {
+) -> R<Vec<String>> {
   if current_word.is_empty() {
-    return None;
+    return Ok(Vec::new());
   }
 
   let index = get_index(repo_path)?;
 
   let words = index.find_matching(current_word);
 
-  Some(words.into_iter().take(max_num).collect())
+  Ok(words.into_iter().take(max_num).collect())
 }
 
 #[derive(Clone)]
@@ -38,27 +39,26 @@ impl CommitMessageAC {
 
 static INDEX: Global<CommitMessageAC> = global!(CommitMessageAC::new());
 
-fn get_index(repo_path: &String) -> Option<ACIndex> {
+fn get_index(repo_path: &String) -> R<ACIndex> {
   if let Some(index) = INDEX.get() {
     if &index.repo_path == repo_path {
-      return Some(index.index);
+      return Ok(index.index);
     }
   }
 
-  if let Some(index) = build_index(repo_path) {
-    INDEX.set(CommitMessageAC {
-      repo_path: repo_path.clone(),
-      index: index.clone(),
-    });
+  let index = build_index(repo_path)?;
 
-    return Some(index);
-  }
+  INDEX.set(CommitMessageAC {
+    repo_path: repo_path.clone(),
+    index: index.clone(),
+  });
 
-  None
+  Ok(index)
 }
 
-fn build_index(repo_path: &String) -> Option<ACIndex> {
-  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
+fn build_index(repo_path: &String) -> R<ACIndex> {
+  let (commits, refs) = store::get_commits_and_refs(repo_path)
+    .ok_or(f!("build_index: Couldn't get commits and refs."))?;
   let patches = load_patches(repo_path, &commits)?;
 
   let mut index = ACIndex::new();
@@ -85,7 +85,7 @@ fn build_index(repo_path: &String) -> Option<ACIndex> {
     }
   }
 
-  Some(index)
+  Ok(index)
 }
 
 fn get_words_in_commit_message(commit: &Commit) -> Vec<String> {

@@ -1,7 +1,8 @@
 use std::env;
 use std::path::PathBuf;
 
-use crate::dprintln;
+use crate::server::request_util::R;
+use crate::{dprintln, f};
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -12,32 +13,47 @@ pub struct Credentials {
   pub password: String,
 }
 
-pub fn set_credentials(credentials: &Credentials) -> Option<()> {
+pub fn set_credentials(credentials: &Credentials) -> R<()> {
   env::set_var("GITFIEND_USERNAME", &credentials.username);
   env::set_var("GITFIEND_PASSWORD", &credentials.password);
 
-  if let Some(path) = get_ask_pass_path() {
-    dprintln!("Setting GIT_ASKPASS to {:?}", path.to_str());
+  let path = get_ask_pass_path()?;
+  dprintln!("Setting GIT_ASKPASS to {:?}", path.to_str());
 
-    env::set_var("GIT_ASKPASS", path.to_str()?);
-  }
+  env::set_var(
+    "GIT_ASKPASS",
+    path
+      .to_str()
+      .ok_or(f!("set_credentials: Failed to convert path to str"))?,
+  );
 
-  Some(())
+  Ok(())
+
+  // if let Some(path) = get_ask_pass_path() {
+  //   dprintln!("Setting GIT_ASKPASS to {:?}", path.to_str());
+  //
+  //   env::set_var("GIT_ASKPASS", path.to_str()?);
+  // }
+  //
+  // Some(())
 }
 
-pub fn get_ask_pass_path() -> Option<PathBuf> {
+pub fn get_ask_pass_path() -> R<PathBuf> {
   let name = if env::consts::OS == "windows" {
     "ask-pass.exe"
   } else {
     "ask-pass"
   };
 
-  let dir = env::current_dir().ok()?;
+  let dir = env::current_dir().map_err(|e| e.to_string())?;
+
+  let missing_parent = f!("get_ask_pass_path: Couldn't get parent dir.");
 
   #[cfg(debug_assertions)]
-  return Some(
+  return Ok(
     dir
-      .parent()?
+      .parent()
+      .ok_or(&missing_parent)?
       .join("git-fiend")
       .join("src")
       .join("ask-pass")
@@ -47,11 +63,13 @@ pub fn get_ask_pass_path() -> Option<PathBuf> {
   );
 
   #[cfg(not(debug_assertions))]
-  Some(
+  Ok(
     env::current_exe()
-      .ok()?
-      .parent()?
-      .parent()?
+      .map_err(|e| e.to_string())?
+      .parent()
+      .ok_or(&missing_parent)?
+      .parent()
+      .ok_or(&missing_parent)?
       .join("ask-pass")
       .join(name),
   )

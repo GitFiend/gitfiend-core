@@ -3,8 +3,9 @@ use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::git::store::CONFIG;
 use crate::parser::standard_parsers::{ANY_WORD, STRING_LITERAL, UNTIL_LINE_END, WS};
-use crate::parser::{parse_all, run_parser, ParseOptions, Parser};
+use crate::parser::{parse_all_err, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
+use crate::server::request_util::R;
 use crate::{and, f, many, or, until_str, word};
 use crate::{character, map};
 use std::collections::HashMap;
@@ -102,7 +103,7 @@ const P_REMOTE_NAME: Parser<String> = map!(
 );
 
 /// Use this version on focus of GitFiend only. Get it from the store otherwise.
-pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
+pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
   let ReqOptions { repo_path } = options;
 
   let config_path = Path::new(repo_path).join(".git").join("config");
@@ -111,20 +112,23 @@ pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
   // let t2 = Instant::now();
 
   let result_text = if let Ok(text) = fs::read_to_string(config_path) {
-    let r = parse_all(P_CONFIG2, &text);
+    let r = parse_all_err(P_CONFIG2, &text);
     // println!("time to read text config: {}ms", t2.elapsed().as_millis());
     r
   } else {
     // let t2 = Instant::now();
-    run_git::run_git(RunGitOptions {
-      repo_path,
-      args: ["config", "--list"],
-    })
+    Ok(
+      run_git::run_git_err(RunGitOptions {
+        repo_path,
+        args: ["config", "--list"],
+      })?
+      .stdout,
+    )
   };
 
   // println!("time to load git config: {}ms", t2.elapsed().as_millis());
 
-  let config_result = parse_all(P_CONFIG, result_text?.as_str());
+  let config_result = parse_all_err(P_CONFIG, result_text?.as_str());
   let entries = config_result?;
   let mut remotes = HashMap::new();
 
@@ -149,7 +153,7 @@ pub fn load_full_config(options: &ReqOptions) -> Option<GitConfig> {
 
   CONFIG.insert(repo_path.clone(), config.clone());
 
-  Some(config)
+  Ok(config)
 }
 
 #[cfg(test)]
@@ -169,7 +173,7 @@ mod tests {
       repo_path: ".".to_string(),
     });
 
-    assert!(result.is_some());
+    assert!(result.is_ok());
     assert!(!result.unwrap().entries.is_empty());
   }
 

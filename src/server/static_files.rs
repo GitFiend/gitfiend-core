@@ -1,4 +1,5 @@
-use crate::dprintln;
+use crate::server::request_util::R;
+use crate::{dprintln, f};
 use serde::Deserialize;
 use std::env;
 use std::fs::File;
@@ -58,12 +59,21 @@ pub fn path_exists(file_path: &String) -> bool {
   Path::new(file_path).exists()
 }
 
-pub fn temp_dir(_: &String) -> Option<String> {
-  Some(String::from(env::temp_dir().to_str()?))
+pub fn temp_dir(_: &String) -> R<String> {
+  Ok(String::from(
+    env::temp_dir()
+      .to_str()
+      .ok_or(f!("temp_dir: Couldn't convert to str."))?,
+  ))
 }
 
-pub fn file_size(file_path: &String) -> Option<u64> {
-  Some(Path::new(file_path).metadata().ok()?.len())
+pub fn file_size(file_path: &String) -> R<u64> {
+  Ok(
+    Path::new(file_path)
+      .metadata()
+      .map_err(|e| e.to_string())?
+      .len(),
+  )
 }
 
 #[derive(Debug, Deserialize, TS)]
@@ -74,11 +84,13 @@ pub struct WriteFileOpts {
   pub content: String,
 }
 
-pub fn write_file(options: &WriteFileOpts) -> Option<bool> {
+pub fn write_file(options: &WriteFileOpts) -> R<bool> {
   let WriteFileOpts { file_path, content } = options;
 
-  let mut file = File::create(file_path).ok()?;
-  file.write_all(content.as_ref()).ok()?;
+  let mut file = File::create(file_path).map_err(|e| e.to_string())?;
+  file
+    .write_all(content.as_ref())
+    .map_err(|e| e.to_string())?;
 
-  Some(true)
+  Ok(true)
 }

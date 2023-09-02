@@ -1,5 +1,6 @@
 use crate::index::commit_message_ac::commit_message_ac;
 use crate::index::create_branch_ac::create_branch_ac;
+use crate::server::request_util::R;
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -21,7 +22,7 @@ pub enum ACType {
   CreateBranch,
 }
 
-pub fn auto_complete(options: &MessageAC) -> Option<Vec<String>> {
+pub fn auto_complete(options: &MessageAC) -> R<Vec<String>> {
   let MessageAC {
     current_word,
     repo_path,

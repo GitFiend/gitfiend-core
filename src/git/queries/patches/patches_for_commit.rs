@@ -1,6 +1,8 @@
+use crate::f;
 use crate::git::git_types::Patch;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::store;
+use crate::server::request_util::R;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -12,14 +14,21 @@ pub struct ReqPatchesForCommitOpts {
   pub commit_id: String,
 }
 
-pub fn load_patches_for_commit(options: &ReqPatchesForCommitOpts) -> Option<Vec<Patch>> {
+pub fn load_patches_for_commit(options: &ReqPatchesForCommitOpts) -> R<Vec<Patch>> {
   let ReqPatchesForCommitOpts {
     repo_path,
     commit_id,
   } = options;
 
-  let (commits, _) = store::get_commits_and_refs(repo_path)?;
+  let (commits, _) = store::get_commits_and_refs(repo_path)
+    .ok_or(f!("load_patches_for_commit: Couldn't get commits."))?;
+
   let all_patches = load_patches(repo_path, &commits)?;
 
-  Some(all_patches.get(commit_id)?.clone())
+  Ok(
+    all_patches
+      .get(commit_id)
+      .ok_or(f!("load_patches_for_commit: Missing patches for commit."))?
+      .clone(),
+  )
 }

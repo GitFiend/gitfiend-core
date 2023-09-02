@@ -10,11 +10,12 @@ use crate::git::queries::patches::patch_parsers::{
 };
 use crate::git::queries::COMMIT_0_ID;
 use crate::git::run_git;
-use crate::git::run_git::RunGitOptions;
-use crate::parser::parse_all;
+use crate::git::run_git::{run_git_err, RunGitOptions};
+use crate::parser::{parse_all, parse_all_err};
+use crate::server::request_util::R;
 
 #[elapsed]
-pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<String, Vec<Patch>>> {
+pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> R<HashMap<String, Vec<Patch>>> {
   let mut commits_without_patches = Vec::<&Commit>::new();
   let mut stashes_or_merges_without_patches = Vec::<&Commit>::new();
   let mut new_patches = HashMap::<String, Vec<Patch>>::new();
@@ -60,7 +61,7 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<St
 
   if commits_without_patches.is_empty() && stashes_or_merges_without_patches.is_empty() {
     // All patches were loaded from cache.
-    return Some(new_patches);
+    return Ok(new_patches);
   }
 
   if !commits_without_patches.is_empty() {
@@ -72,7 +73,7 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<St
   }
 
   for c in stashes_or_merges_without_patches.into_iter() {
-    if let Some((id, patches)) = load_patches_for_commit(repo_path, c) {
+    if let Ok((id, patches)) = load_patches_for_commit(repo_path, c) {
       new_patches.insert(id, patches);
     } else {
       // TODO: Some commits have no patches. We should probably save it anyway?
@@ -84,7 +85,7 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> Option<HashMap<St
 
   write_patches_cache(repo_path, &new_patches);
 
-  Some(new_patches)
+  Ok(new_patches)
 }
 
 fn load_normal_patches(
@@ -143,7 +144,7 @@ fn load_all_patches_for_normal_commits(
 }
 
 // without cache
-fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> Option<(String, Vec<Patch>)> {
+fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> R<(String, Vec<Patch>)> {
   let diff = String::from("diff");
   let name_status = String::from("--name-status");
   let z = String::from("-z");
@@ -153,7 +154,7 @@ fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> Option<(String, 
       is_merge: true,
       parent_ids,
       ..
-    } => run_git::run_git(RunGitOptions {
+    } => run_git_err(RunGitOptions {
       repo_path,
       // args: [diff, name_status, z, format!("{}^1", id), id.to_string()],
       args: [
@@ -168,19 +169,19 @@ fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> Option<(String, 
       parent_ids,
       id,
       ..
-    } => run_git::run_git(RunGitOptions {
+    } => run_git_err(RunGitOptions {
       repo_path,
       args: [diff, format!("{}..{}", parent_ids[0], id), name_status, z],
     }),
-    Commit { id, .. } => run_git::run_git(RunGitOptions {
+    Commit { id, .. } => run_git_err(RunGitOptions {
       repo_path,
       args: [diff, format!("{}..{}", COMMIT_0_ID, id), name_status, z],
     }),
   };
 
-  let patch_data = parse_all(P_PATCHES, &out?)?;
+  let patch_data = parse_all_err(P_PATCHES, &out?.stdout)?;
 
-  Some((
+  Ok((
     commit.id.clone(),
     patch_data
       .into_iter()

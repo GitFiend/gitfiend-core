@@ -4,6 +4,7 @@ use crate::git::queries::COMMIT_0_ID;
 use crate::git::run_git;
 use crate::git::run_git::{GitOut, RunGitOptions};
 use crate::parser::parse_all_err;
+use crate::server::request_util::R;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -16,7 +17,7 @@ pub struct ReqHunkOptions {
   pub patch: Patch,
 }
 
-pub fn load_hunks(options: &ReqHunkOptions) -> Result<(Vec<Hunk>, Vec<HunkLine>), String> {
+pub fn load_hunks(options: &ReqHunkOptions) -> R<(Vec<Hunk>, Vec<HunkLine>)> {
   let GitOut { stdout, .. } = run_git::run_git_err(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options.commit, &options.patch),
@@ -30,7 +31,7 @@ pub fn load_hunks(options: &ReqHunkOptions) -> Result<(Vec<Hunk>, Vec<HunkLine>)
 
 type HunkLinesSplit = (Vec<Hunk>, Vec<HunkLine>, Vec<HunkLine>);
 
-pub fn load_hunks_split(options: &ReqHunkOptions) -> Result<HunkLinesSplit, String> {
+pub fn load_hunks_split(options: &ReqHunkOptions) -> R<HunkLinesSplit> {
   let GitOut { stdout, .. } = run_git::run_git_err(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options.commit, &options.patch),

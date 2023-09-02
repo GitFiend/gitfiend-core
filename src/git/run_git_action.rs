@@ -7,7 +7,6 @@ use std::{env, thread, time};
 use time::Duration;
 use ts_rs::TS;
 
-use crate::dprintln;
 use crate::git::action_state::{
   add_stderr_log, add_stdout_log, set_action_done, set_action_error, start_action, ActionState,
   ACTIONS,
@@ -16,6 +15,8 @@ use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::{Credential, Git, IO};
 use crate::git::store::get_git_version;
+use crate::server::request_util::R;
+use crate::{dprintln, f};
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -39,8 +40,6 @@ pub struct RunGitActionOptions<'a, const N: usize> {
 }
 
 pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
-  // let id = start_action();
-
   let RunGitActionOptions {
     commands,
     repo_path,
@@ -88,12 +87,12 @@ pub struct PollOptions {
 }
 
 // None result means the action doesn't exist.
-pub fn poll_action2(options: &PollOptions) -> Option<ActionState> {
+pub fn poll_action2(options: &PollOptions) -> R<ActionState> {
   let PollOptions { action_id } = options;
 
   if *action_id == 0 {
-    eprintln!("poll_action2: Requested action id of 0");
-    return None;
+    // eprintln!("poll_action2: Requested action id of 0");
+    return Err(f!("poll_action2: Requested action id of 0"));
   }
 
   if let Some(action) = ACTIONS.get_by_key(action_id) {
@@ -103,16 +102,11 @@ pub fn poll_action2(options: &PollOptions) -> Option<ActionState> {
       // dprintln!("Num actions {:?}", ACTIONS2.len());
     }
 
-    return Some(action);
+    return Ok(action);
   }
 
-  None
+  Err(f!("poll_action2: action not found"))
 }
-
-// let mut cmd = Command::new(_fake_action_script_path().expect("Fake action script path"))
-//   .stdout(Stdio::piped())
-//   .stderr(Stdio::piped())
-//   .spawn()?;
 
 pub fn run_git_action_inner(
   id: u32,

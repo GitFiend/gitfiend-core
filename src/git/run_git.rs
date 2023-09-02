@@ -4,6 +4,7 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 use crate::git::git_settings::GIT_PATH;
+use crate::server::request_util::R;
 
 #[derive(Clone, Debug)]
 pub struct RunGitOptions<'a, I, S>
@@ -44,7 +45,7 @@ pub struct GitOut {
   pub stderr: String,
 }
 
-pub fn run_git_err<I, S>(options: RunGitOptions<I, S>) -> Result<GitOut, String>
+pub fn run_git_err<I, S>(options: RunGitOptions<I, S>) -> R<GitOut>
 where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,

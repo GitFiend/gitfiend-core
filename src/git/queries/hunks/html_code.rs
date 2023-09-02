@@ -3,6 +3,7 @@ use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::html_code_split::generate_lines_split;
 use crate::git::queries::hunks::load_hunks::{load_hunks, load_hunks_split, ReqHunkOptions};
 use crate::git::queries::syntax_colouring::{colour_to_style, ColourLine, ThemeColour, COLOURING};
+use crate::server::request_util::R;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use syntect::highlighting::Style;
@@ -19,7 +20,7 @@ pub struct ReqPatchCodeOptions {
   pub split: bool,
 }
 
-pub fn get_patch_as_html(options: &ReqPatchCodeOptions) -> Result<String, String> {
+pub fn get_patch_as_html(options: &ReqPatchCodeOptions) -> R<String> {
   let ReqPatchCodeOptions {
     repo_path,
     commit,

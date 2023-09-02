@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use crate::f;
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -8,6 +9,7 @@ use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::search::search_code::FileMatch;
 use crate::git::queries::search::SearchOptions;
 use crate::git::store;
+use crate::server::request_util::R;
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Hash, TS)]
 #[ts(export)]
@@ -29,14 +31,15 @@ pub struct CoreSearchResult {
   ref_ids: Vec<String>,
 }
 
-pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> {
+pub fn search_commits(options: &SearchOptions) -> R<Vec<CoreSearchResult>> {
   let SearchOptions {
     repo_path,
     search_text,
     num_results,
   } = options;
 
-  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
+  let (commits, refs) = store::get_commits_and_refs(repo_path)
+    .ok_or(f!("search_commits: Couldn't get commits and refs."))?;
   let patches = load_patches(repo_path, &commits)?;
   let search_text = search_text.to_lowercase();
   let mut results: Vec<CoreSearchResult> = Vec::new();
@@ -65,13 +68,6 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
 
     let matching_patches = get_matching_patches(&search_text, &commit.id, &patches);
 
-    // let ref_ids: Vec<String> = commit
-    //   .refs
-    //   .iter()
-    //   .filter(|r| r.full_name.to_lowercase().contains(&search_text))
-    //   .map(|r| r.id.clone())
-    //   .collect();
-
     let ref_ids: Vec<String> = commit
       .refs
       .iter()
@@ -94,7 +90,7 @@ pub fn search_commits(options: &SearchOptions) -> Option<Vec<CoreSearchResult>> 
     }
   }
 
-  Some(results)
+  Ok(results)
 }
 
 fn get_matching_patches(

@@ -1,3 +1,4 @@
+use crate::f;
 use ahash::AHashMap;
 use serde::Serialize;
 use ts_rs::TS;
@@ -26,23 +27,20 @@ pub struct HeadInfo {
   pub remote_behind: u32,
 }
 
-pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
+pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
   let ReqOptions { repo_path } = options;
 
-  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
-
-  if commits.is_empty() {
-    return None;
-  }
+  let (commits, refs) =
+    store::get_commits_and_refs(repo_path).ok_or(f!("calc_head_info: No commits"))?;
 
   let head_info = calc_head_info_from_commits(commits, refs);
 
   if let Some(mut head_info) = head_info.clone() {
     if head_info.remote_ref.is_none() {
-      if let Some((remote_ahead, remote_commit, remote_behind, remote_ref)) =
+      if let Ok((remote_ahead, remote_commit, remote_behind, remote_ref)) =
         calc_remote_fallback(repo_path, &mut head_info.ref_info)
       {
-        return Some(HeadInfo {
+        return Ok(HeadInfo {
           ref_info: head_info.ref_info.clone(),
           commit: head_info.commit.clone(),
           remote_ref: Some(remote_ref),
@@ -52,13 +50,14 @@ pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
         });
       }
     }
+    return Ok(head_info);
   } else if let Ok((mut head_commit, i)) = calc_head_fallback(repo_path) {
     let head_ref = &mut head_commit.refs[i];
 
-    if let Some((remote_ahead, remote_commit, remote_behind, remote_ref)) =
+    if let Ok((remote_ahead, remote_commit, remote_behind, remote_ref)) =
       calc_remote_fallback(repo_path, head_ref)
     {
-      return Some(HeadInfo {
+      return Ok(HeadInfo {
         ref_info: head_ref.clone(),
         commit: convert_commit(head_commit),
         remote_ref: Some(remote_ref),
@@ -69,11 +68,10 @@ pub fn calc_head_info(options: &ReqOptions) -> Option<HeadInfo> {
     }
   }
 
-  head_info
+  Err(f!("calc_head_info: Failed to get head info"))
 }
 
-// Note: This depends on COMMITS and REF_DIFFS already being loaded.
-// Change this to just take commits? Better to have calls to COMMITS at api level.
+// Returns Option intentionally.
 fn calc_head_info_from_commits(commits: Vec<Commit>, refs: Vec<RefInfo>) -> Option<HeadInfo> {
   let all_refs: AHashMap<String, RefInfo> =
     refs.iter().map(|r| (r.id.clone(), r.clone())).collect();
@@ -146,39 +144,41 @@ pub fn calc_head_fallback(repo_path: &str) -> R<(CommitInfo, usize)> {
 pub fn calc_remote_fallback(
   repo_path: &RepoPath,
   head_ref: &mut RefInfo,
-) -> Option<(u32, Commit, u32, RefInfo)> {
+) -> R<(u32, Commit, u32, RefInfo)> {
   let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
 
   let remote_tracking_branch = config.get_tracking_branch_name(&head_ref.short_name);
 
-  if let Some(mut remote_commit) = load_top_commit_for_branch(&TopCommitOptions {
+  let mut remote_commit = load_top_commit_for_branch(&TopCommitOptions {
     repo_path: repo_path.to_string(),
     branch_name: remote_tracking_branch,
-  }) {
-    if let Some(remote_ref) = remote_commit
-      .refs
-      .iter_mut()
-      .find(|r| r.short_name == head_ref.short_name && r.location == RefLocation::Remote)
-    {
-      head_ref.sibling_id = Some(remote_ref.id.to_string());
-      remote_ref.sibling_id = Some(head_ref.id.to_string());
+  })?;
 
-      let remote_ref = remote_ref.clone();
+  if let Some(remote_ref) = remote_commit
+    .refs
+    .iter_mut()
+    .find(|r| r.short_name == head_ref.short_name && r.location == RefLocation::Remote)
+  {
+    head_ref.sibling_id = Some(remote_ref.id.to_string());
+    remote_ref.sibling_id = Some(head_ref.id.to_string());
 
-      let remote_ahead =
-        count_commits_between_fallback(repo_path, &head_ref.full_name, &remote_ref.full_name);
+    let remote_ref = remote_ref.clone();
 
-      let remote_behind =
-        count_commits_between_fallback(repo_path, &remote_ref.full_name, &head_ref.full_name);
+    let remote_ahead =
+      count_commits_between_fallback(repo_path, &head_ref.full_name, &remote_ref.full_name);
 
-      return Some((
-        remote_ahead,
-        convert_commit(remote_commit),
-        remote_behind,
-        remote_ref,
-      ));
-    }
+    let remote_behind =
+      count_commits_between_fallback(repo_path, &remote_ref.full_name, &head_ref.full_name);
+
+    return Ok((
+      remote_ahead,
+      convert_commit(remote_commit),
+      remote_behind,
+      remote_ref,
+    ));
   }
 
-  None
+  Err(f!(
+    "calc_remote_fallback: Didn't find remote ref in remote commit"
+  ))
 }

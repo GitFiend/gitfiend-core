@@ -33,7 +33,7 @@ pub fn apply_commit_filters(
       CommitFilter::User { author, .. } => get_commits_for_user(author, &commits),
       CommitFilter::Commit { commit_id } => [commit_id.as_str()].into_iter().collect(),
       CommitFilter::File { file_name } => {
-        if let Some(patches) = load_patches(repo_path, &commits) {
+        if let Ok(patches) = load_patches(repo_path, &commits) {
           return commits
             .iter()
             .filter(|c| {

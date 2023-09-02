@@ -34,12 +34,12 @@ pub fn load_ws_repo(options: &ReqOptions) -> R<WsRepoState> {
 
   let patches = load_wip_patches(options)?;
 
-  let config = load_full_config(options).ok_or("Failed to load config")?;
+  let config = load_full_config(options)?;
 
   let (mut head_commit, i) = calc_head_fallback(repo_path)?;
   let head_ref = &mut head_commit.refs[i];
 
-  if let Some((remote_ahead, remote_commit, remote_behind, remote_ref)) =
+  if let Ok((remote_ahead, remote_commit, remote_behind, remote_ref)) =
     calc_remote_fallback(repo_path, head_ref)
   {
     let info = HeadInfo {

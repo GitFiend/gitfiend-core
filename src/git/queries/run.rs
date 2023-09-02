@@ -1,4 +1,5 @@
-use crate::git::run_git::{run_git, RunGitOptions};
+use crate::git::run_git::{ run_git_err, RunGitOptions};
+use crate::server::request_util::R;
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -10,9 +11,12 @@ pub struct RunOptions {
   pub args: Vec<String>,
 }
 
-pub fn run(options: &RunOptions) -> Option<String> {
-  run_git(RunGitOptions {
-    repo_path: &options.repo_path,
-    args: &options.args,
-  })
+pub fn run(options: &RunOptions) -> R<String> {
+  Ok(
+    run_git_err(RunGitOptions {
+      repo_path: &options.repo_path,
+      args: &options.args,
+    })?
+    .stdout,
+  )
 }

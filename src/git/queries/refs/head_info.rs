@@ -35,7 +35,7 @@ pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
 
   let head_info = calc_head_info_from_commits(commits, refs);
 
-  if let Some(mut head_info) = head_info.clone() {
+  if let Some(mut head_info) = head_info {
     if head_info.remote_ref.is_none() {
       if let Ok((remote_ahead, remote_commit, remote_behind, remote_ref)) =
         calc_remote_fallback(repo_path, &mut head_info.ref_info)

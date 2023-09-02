@@ -33,7 +33,7 @@ mod tests {
 
     let result = load_commits(&repo_path, 5);
 
-    assert!(result.is_some());
+    assert!(result.is_ok());
   }
 
   // #[test]

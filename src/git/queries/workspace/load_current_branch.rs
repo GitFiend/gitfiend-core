@@ -1,14 +1,15 @@
-use crate::server::request_util::R;
+use std::collections::HashSet;
 use std::fs::{read_dir, read_to_string};
-use std::io;
 use std::path::{Path, PathBuf};
+
+use crate::server::request_util::R;
 
 pub fn load_current_branch(repo_path: &str) -> R<String> {
   let head = Path::new(repo_path).join(".git").join("HEAD");
 
   if let Ok(text) = read_to_string(head) {
     return if let Some(branch) = text.split(':').last() {
-      Ok(branch.trim().to_string())
+      Ok(branch.trim().replace("refs/heads/", ""))
     } else {
       Err(
         "Failed to load current branch. Failed to parse .git/HEAD. Could be a detached head?"
@@ -24,43 +25,70 @@ pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
   let mut refs = Refs {
     local_id: String::new(),
     remote_id: String::new(),
-    others: Vec::new(),
+    others: HashSet::new(),
   };
 
-  let root_path = Path::new(repo_path).join(".git");
-  let branch = root_path.join(branch_name);
   let path = Path::new(repo_path).join(".git").join("refs");
 
-  read_refs_inner(&path, &branch, &mut refs).map_err(|e| e.to_string())?;
-
-  println!("{:?}", refs);
+  read_refs_inner(&path.join("heads"), branch_name, &mut refs, RefsType::Local)?;
+  read_refs_inner(
+    &path.join("remotes"),
+    branch_name,
+    &mut refs,
+    RefsType::Remote,
+  )?;
 
   Ok(refs)
+}
+
+#[derive(Debug, Clone, Copy)]
+enum RefsType {
+  Local,
+  Remote,
 }
 
 #[derive(Debug)]
 pub struct Refs {
   pub local_id: String,
   pub remote_id: String,
-  pub others: Vec<PathBuf>,
+  pub others: HashSet<String>,
 }
 
 fn read_refs_inner(
   refs_path: &PathBuf,
-  branch_name: &PathBuf,
+  branch_name: &str,
   refs_result: &mut Refs,
-) -> io::Result<()> {
-  for item in read_dir(refs_path)? {
-    let path = item?.path();
+  refs_type: RefsType,
+) -> R<()> {
+  for item in read_dir(refs_path).map_err(|e| e.to_string())? {
+    let path = item.map_err(|e| e.to_string())?.path();
 
     if path.is_file() {
-      if path == *branch_name {
-        refs_result.local_id = read_to_string(path)?.trim().to_string();
+      if path.to_str().unwrap_or("").ends_with(branch_name) {
+        match refs_type {
+          RefsType::Local => {
+            refs_result.local_id = read_to_string(path)
+              .map_err(|e| e.to_string())?
+              .trim()
+              .to_string();
+          }
+          RefsType::Remote => {
+            refs_result.remote_id = read_to_string(path)
+              .map_err(|e| e.to_string())?
+              .trim()
+              .to_string();
+          }
+        }
       } else {
-        refs_result.others.push(path);
+        refs_result.others.insert(
+          PathBuf::from(&path.strip_prefix(refs_path).map_err(|e| e.to_string())?)
+            .to_str()
+            .unwrap_or("")
+            .to_string(),
+        );
       }
     } else if path.is_dir() {
-      read_refs_inner(&path, branch_name, refs_result)?;
+      read_refs_inner(&path, branch_name, refs_result, refs_type)?;
     }
   }
 

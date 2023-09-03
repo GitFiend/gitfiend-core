@@ -31,7 +31,7 @@ use crate::git::queries::unpushed_commits::get_un_pushed_commits;
 use crate::git::queries::wip::is_rebase_in_progress;
 use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
-use crate::git::queries::workspace::ws_repo::{load_ws_repo, load_ws_repo2};
+use crate::git::queries::workspace::ws_repo::load_ws_repo2;
 use crate::git::repo_watcher::{
   clear_repo_changed_status, repo_has_changed, stop_watching_repo, watch_repo,
 };
@@ -80,7 +80,6 @@ pub fn start_async_server() {
           // Queries
           run,
           scan_workspace,
-          load_ws_repo,
           load_ws_repo2,
           load_commits_and_refs,
           load_full_config,
@@ -89,7 +88,6 @@ pub fn start_async_server() {
           commit_ids_between_commits,
           load_hunks,
           load_hunks_split,
-          // is_merge_in_progress,
           is_rebase_in_progress,
           load_wip_patches,
           get_un_pushed_commits,

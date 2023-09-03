@@ -23,20 +23,22 @@ pub fn load_current_branch(repo_path: &str) -> R<String> {
 
 pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
   let mut refs = Refs {
-    local_id: String::new(),
-    remote_id: String::new(),
+    local_id: None,
+    remote_id: None,
     others: HashSet::new(),
   };
 
   let path = Path::new(repo_path).join(".git").join("refs");
 
   read_refs_inner(&path.join("heads"), branch_name, &mut refs, RefsType::Local)?;
-  read_refs_inner(
+
+  // Sometimes remotes folder doesn't exist.
+  let _ = read_refs_inner(
     &path.join("remotes"),
     branch_name,
     &mut refs,
     RefsType::Remote,
-  )?;
+  );
 
   Ok(refs)
 }
@@ -49,8 +51,8 @@ enum RefsType {
 
 #[derive(Debug)]
 pub struct Refs {
-  pub local_id: String,
-  pub remote_id: String,
+  pub local_id: Option<String>,
+  pub remote_id: Option<String>,
   pub others: HashSet<String>,
 }
 
@@ -67,16 +69,20 @@ fn read_refs_inner(
       if path.to_str().unwrap_or("").ends_with(branch_name) {
         match refs_type {
           RefsType::Local => {
-            refs_result.local_id = read_to_string(path)
-              .map_err(|e| e.to_string())?
-              .trim()
-              .to_string();
+            refs_result.local_id = Some(
+              read_to_string(path)
+                .map_err(|e| e.to_string())?
+                .trim()
+                .to_string(),
+            );
           }
           RefsType::Remote => {
-            refs_result.remote_id = read_to_string(path)
-              .map_err(|e| e.to_string())?
-              .trim()
-              .to_string();
+            refs_result.remote_id = Some(
+              read_to_string(path)
+                .map_err(|e| e.to_string())?
+                .trim()
+                .to_string(),
+            );
           }
         }
       } else {

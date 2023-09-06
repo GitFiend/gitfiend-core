@@ -46,8 +46,6 @@ impl GitConfig {
   }
 }
 
-// const P_CONFIG2 =
-
 const P_HEADING_1: Parser<String> = map!(
   and!(character!('['), ANY_WORD, character!(']')),
   |res: (char, String, char)| { res.1 }

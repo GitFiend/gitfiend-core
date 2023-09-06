@@ -134,6 +134,10 @@ fn get_commit_ids_between_commits(
 }
 
 pub fn count_commits_between_fallback(repo_path: &str, commit_id1: &str, commit_id2: &str) -> u32 {
+  if commit_id1 == commit_id2 {
+    return 0;
+  }
+
   let out = run_git(RunGitOptions {
     args: [
       "rev-list",

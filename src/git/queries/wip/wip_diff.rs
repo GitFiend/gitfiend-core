@@ -7,6 +7,7 @@ use similar::{ChangeTag, TextDiff};
 use ts_rs::TS;
 
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
+use crate::git::queries::hunks::load_hunks::flatten_hunks_split;
 use crate::git::queries::syntax_colouring::COLOURING;
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
 use crate::git::run_git;
@@ -31,6 +32,12 @@ pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> R<(Vec<Hunk>, u32)> {
   // try_colour(&lines, &options.patch);
 
   Ok(convert_lines_to_hunks(lines))
+}
+
+pub fn load_wip_hunks_split(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, Vec<HunkLine>)> {
+  let (hunks, _) = load_wip_hunks(options)?;
+
+  Ok(flatten_hunks_split(hunks))
 }
 
 pub fn load_wip_hunks_coloured(options: &ReqWipHunksOptions) -> R<()> {
@@ -71,11 +78,6 @@ fn try_colour(lines: &[HunkLine], patch: &WipPatch) {
       }
     }
   }
-}
-
-// TODO
-fn _split_hunk_lines(_lines: &[HunkLine]) {
-  //
 }
 
 pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
@@ -123,7 +125,8 @@ struct FileInfo {
 }
 
 fn load_file(repo_path: &str, file_path: &str) -> R<FileInfo> {
-  let text = read_to_string(Path::new(repo_path).join(file_path)).map_err(|e| e.to_string())?;
+  let path = Path::new(repo_path).join(file_path);
+  let text = read_to_string(path).map_err(|e| e.to_string())?;
   let line_ending = detect_new_line(&text);
 
   if !text.ends_with(&line_ending) {
@@ -133,7 +136,7 @@ fn load_file(repo_path: &str, file_path: &str) -> R<FileInfo> {
     });
   }
 
-  return Ok(FileInfo { text, line_ending });
+  Ok(FileInfo { text, line_ending })
 }
 
 fn detect_new_line(text: &str) -> String {

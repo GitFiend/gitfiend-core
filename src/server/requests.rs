@@ -1,10 +1,10 @@
-use crate::git::actions::add::git_add_files;
-use crate::{dprintln, handle_function_request};
 use std::process::exit;
+
 use tiny_http::{Response, Server};
 
+use crate::git::actions::add::git_add_files;
 use crate::git::actions::clone::clone_repo;
-use crate::git::actions::command::{command, commands};
+use crate::git::actions::command::command;
 use crate::git::actions::create_repo::create_repo;
 use crate::git::actions::credentials::set_credentials;
 use crate::git::actions::fetch::fetch_all;
@@ -13,8 +13,7 @@ use crate::git::conflicts::api::load_conflicted_file;
 use crate::git::git_version::git_version;
 use crate::git::queries::commits::{
   commit_ids_between_commits, commit_is_ancestor, commit_is_on_branch,
-  get_all_commits_on_current_branch, load_commits_and_refs, load_head_commit,
-  load_top_commit_for_branch,
+  get_all_commits_on_current_branch, load_commits_and_refs,
 };
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::hunks::html_code::get_patch_as_html;
@@ -29,12 +28,12 @@ use crate::git::queries::search::search_commits::search_commits;
 use crate::git::queries::search::search_request::{poll_diff_search, start_diff_search};
 use crate::git::queries::unpushed_commits::get_un_pushed_commits;
 use crate::git::queries::wip::is_rebase_in_progress;
-use crate::git::queries::wip::wip_diff::{load_wip_hunk_lines, load_wip_hunks};
+use crate::git::queries::wip::wip_diff::{
+  load_wip_hunk_lines, load_wip_hunks, load_wip_hunks_split,
+};
 use crate::git::queries::wip::wip_patches::load_wip_patches;
 use crate::git::queries::workspace::ws_repo::load_ws_repo2;
-use crate::git::repo_watcher::{
-  clear_repo_changed_status, repo_has_changed, stop_watching_repo, watch_repo,
-};
+use crate::git::repo_watcher::{clear_repo_changed_status, repo_has_changed, watch_repo};
 use crate::git::run_git_action::poll_action2;
 use crate::git::store::{clear_all_caches, clear_cache, override_git_home};
 use crate::index::auto_complete::auto_complete;
@@ -42,6 +41,7 @@ use crate::server::static_files::{
   file_size, handle_resource_request, path_exists, temp_dir, write_file,
 };
 use crate::util::data_store::{get_data_store, set_data_store};
+use crate::{dprintln, handle_function_request};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;
@@ -83,8 +83,6 @@ pub fn start_async_server() {
           load_ws_repo2,
           load_commits_and_refs,
           load_full_config,
-          load_head_commit,
-          load_top_commit_for_branch,
           commit_ids_between_commits,
           load_hunks,
           load_hunks_split,
@@ -93,6 +91,7 @@ pub fn start_async_server() {
           get_un_pushed_commits,
           load_wip_hunks,
           load_wip_hunk_lines,
+          load_wip_hunks_split,
           git_version,
           calc_ref_diffs,
           start_diff_search,
@@ -124,13 +123,11 @@ pub fn start_async_server() {
           poll_action2,
           override_git_home,
           watch_repo,
-          stop_watching_repo,
           get_data_store,
           set_data_store,
 
           // Actions
           command,
-          commands,
           git_add_files,
           stash_changes,
           fetch_all,

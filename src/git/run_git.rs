@@ -1,10 +1,11 @@
 use crate::dprintln;
+use bstr::BString;
 use std::ffi::OsStr;
 use std::path::Path;
 use std::process::{Command, Output};
 
 use crate::git::git_settings::GIT_PATH;
-use crate::server::request_util::R;
+use crate::server::request_util::{to_r, R};
 
 #[derive(Clone, Debug)]
 pub struct RunGitOptions<'a, I, S>
@@ -64,6 +65,31 @@ where
   })
 }
 
+pub struct GitOut2 {
+  pub stdout: BString,
+  pub stderr: BString,
+}
+
+pub fn run_git_bstr<I, S>(options: RunGitOptions<I, S>) -> R<GitOut2>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
+  let out = Command::new(Path::new(GIT_PATH.as_path()))
+    .args(options.args)
+    .current_dir(options.repo_path)
+    .output()
+    .map_err(to_r)?;
+
+  let Output { stdout, stderr, .. } = out;
+
+  Ok(GitOut2 {
+    stdout: BString::from(stdout),
+    stderr: BString::from(stderr),
+  })
+}
+
+// TODO: Tidy this up.
 pub fn run_git_buffer<I, S>(options: RunGitOptions<I, S>) -> Option<Vec<u8>>
 where
   I: IntoIterator<Item = S>,

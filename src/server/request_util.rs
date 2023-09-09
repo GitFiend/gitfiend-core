@@ -1,3 +1,4 @@
+use std::fmt::Display;
 /*
 TODO: Stop passing options into each request as reference.
 
@@ -67,3 +68,6 @@ macro_rules! handle_function_request {
 }
 
 pub type R<T> = Result<T, String>;
+pub fn to_r<T: Display>(e: T) -> String {
+  e.to_string()
+}

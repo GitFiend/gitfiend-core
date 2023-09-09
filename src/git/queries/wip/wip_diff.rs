@@ -18,7 +18,7 @@ use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
 use crate::server::request_util::{to_r, R};
 use crate::{and, or, rep_parser_sep, until_parser_keep_happy};
-use bstr::{BString, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -113,9 +113,10 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
       return Ok(calc_hunk_line_from_text(&old_text, b""));
     }
 
-    old_text = switch_to_line_ending(old_text, new_file_info.line_ending);
+    // TODO
+    // old_text = switch_to_line_ending(old_text, new_file_info.line_ending);
 
-    return Ok(calc_hunk_line_from_text(&old_text, &new_file_info.text));
+    return Ok(calc_hunk_line_from_text(&old_text, &new_file_info.content));
   }
 
   Ok(Vec::new())
@@ -145,8 +146,8 @@ fn load_file(repo_path: &str, file_path: &str) -> R<FileInfo> {
 
 #[derive(Debug)]
 struct FileInfo2 {
-  content: Vec<u8>,
-  line_ending: &'static [u8],
+  content: BString,
+  line_ending: &'static BStr,
 }
 
 fn show(bs: &[u8]) -> String {
@@ -170,8 +171,8 @@ fn load_file_2(repo_path: &str, file_path: &str) -> R<FileInfo2> {
   println!("{:?}", show(&content));
 
   Ok(FileInfo2 {
-    content,
-    line_ending,
+    content: BString::from(content),
+    line_ending: line_ending.into(),
   })
 }
 
@@ -216,15 +217,15 @@ const LINES_PARSER: Parser<Vec<String>> =
   rep_parser_sep!(until_parser_keep_happy!(LINE_END), or!(LINE_END, WS_STR));
 
 /// Unifies line ending in text to be the provided. Also appends line ending to end.
-fn switch_to_line_ending(text: Vec<u8>, line_ending: &[u8]) -> Vec<u8> {
-  if let Some(lines) = parse_all(LINES_PARSER, &text) {
-    let joined_text = lines.join(line_ending);
-
-    return joined_text.add(line_ending);
-  }
-
-  text
-}
+// fn switch_to_line_ending(text: BString, line_ending: &BStr) -> Vec<u8> {
+//   if let Some(lines) = parse_all(LINES_PARSER, &text) {
+//     let joined_text = lines.join(line_ending);
+//
+//     return joined_text.add(line_ending);
+//   }
+//
+//   text
+// }
 
 pub fn calc_hunk_line_from_text(a: &[u8], b: &[u8]) -> Vec<HunkLine> {
   let diff = TextDiff::from_lines(a, b);

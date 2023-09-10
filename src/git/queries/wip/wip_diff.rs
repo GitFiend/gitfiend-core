@@ -1,16 +1,13 @@
-use std::ascii::escape_default;
-use std::fs::{read, read_to_string};
-use std::ops::Add;
+use std::fs::read;
 use std::path::Path;
-use std::str::from_utf8;
 
 use serde::Deserialize;
 use similar::{ChangeTag, TextDiff};
 use ts_rs::TS;
 
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
+use crate::git::queries::hunks::encode_text;
 use crate::git::queries::hunks::load_hunks::flatten_hunks_split;
-use crate::git::queries::syntax_colouring::COLOURING;
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
 use crate::git::run_git;
 use crate::git::run_git::{run_git_bstr, RunGitOptions};
@@ -41,46 +38,6 @@ pub fn load_wip_hunks_split(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, V
   let (hunks, _) = load_wip_hunks(options)?;
 
   Ok(flatten_hunks_split(hunks))
-}
-
-pub fn load_wip_hunks_coloured(options: &ReqWipHunksOptions) -> R<()> {
-  let lines = load_wip_hunk_lines(options)?;
-  // let hunks = convert_lines_to_hunks(lines);
-
-  try_colour(&lines, &options.patch);
-
-  Ok(())
-}
-
-fn try_colour(lines: &[HunkLine], patch: &WipPatch) {
-  if let Ok(colouring) = COLOURING.read() {
-    let syntax_set = &colouring.syntax_set;
-    let theme_set = &colouring.theme_set;
-
-    let file_extension = Path::new(&patch.new_file)
-      .extension()
-      .unwrap()
-      .to_str()
-      .unwrap();
-
-    println!("extension: {}", file_extension);
-
-    if let Some(syntax) = syntax_set.find_syntax_by_extension(file_extension) {
-      let mut highlighter =
-        syntect::easy::HighlightLines::new(syntax, &theme_set.themes["base16-ocean.dark"]);
-
-      for line in lines {
-        if let Ok(highlighted_line) = highlighter.highlight_line(&line.text, syntax_set) {
-          for (style, text) in highlighted_line {
-            print!("{:?}", style.foreground);
-            print!("{}", text);
-            print!("{:?}", style.foreground);
-          }
-          // println!("{:?}", highlighted_line);
-        }
-      }
-    }
-  }
 }
 
 pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
@@ -122,27 +79,27 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
   Ok(Vec::new())
 }
 
-struct FileInfo {
-  text: String,
-  line_ending: String,
-}
-
-fn load_file(repo_path: &str, file_path: &str) -> R<FileInfo> {
-  println!("{:?}", load_file_2(repo_path, file_path)?);
-
-  let path = Path::new(repo_path).join(file_path);
-  let text = read_to_string(path).map_err(|e| e.to_string())?;
-  let line_ending = detect_new_line(&text);
-
-  if !text.ends_with(&line_ending) {
-    return Ok(FileInfo {
-      text: text.add(&line_ending),
-      line_ending,
-    });
-  }
-
-  Ok(FileInfo { text, line_ending })
-}
+// struct FileInfo {
+//   text: String,
+//   line_ending: String,
+// }
+//
+// fn load_file(repo_path: &str, file_path: &str) -> R<FileInfo> {
+//   println!("{:?}", load_file_2(repo_path, file_path)?);
+//
+//   let path = Path::new(repo_path).join(file_path);
+//   let text = read_to_string(path).map_err(|e| e.to_string())?;
+//   let line_ending = detect_new_line(&text);
+//
+//   if !text.ends_with(&line_ending) {
+//     return Ok(FileInfo {
+//       text: text.add(&line_ending),
+//       line_ending,
+//     });
+//   }
+//
+//   Ok(FileInfo { text, line_ending })
+// }
 
 #[derive(Debug)]
 struct FileInfo2 {
@@ -150,14 +107,14 @@ struct FileInfo2 {
   line_ending: &'static BStr,
 }
 
-fn show(bs: &[u8]) -> String {
-  let mut visible = String::new();
-  for &b in bs {
-    let part: Vec<u8> = escape_default(b).collect();
-    visible.push_str(from_utf8(&part).unwrap());
-  }
-  visible
-}
+// fn show(bs: &[u8]) -> String {
+//   let mut visible = String::new();
+//   for &b in bs {
+//     let part: Vec<u8> = escape_default(b).collect();
+//     visible.push_str(from_utf8(&part).unwrap());
+//   }
+//   visible
+// }
 
 fn load_file_2(repo_path: &str, file_path: &str) -> R<FileInfo2> {
   let path = Path::new(repo_path).join(file_path);
@@ -168,7 +125,7 @@ fn load_file_2(repo_path: &str, file_path: &str) -> R<FileInfo2> {
     content.extend(line_ending);
   }
 
-  println!("{:?}", show(&content));
+  // println!("{:?}", show(&content));
 
   Ok(FileInfo2 {
     content: BString::from(content),
@@ -210,10 +167,10 @@ fn detect_new_line(text: &str) -> String {
   String::from(if r > (n / 2) { "\r\n" } else { "\n" })
 }
 
-const LINE_PARSER: Parser<(String, &str)> =
+const LINE_PARSER: Parser<(BString, &[u8])> =
   and!(until_parser_keep_happy!(LINE_END), or!(LINE_END, WS_STR));
 
-const LINES_PARSER: Parser<Vec<String>> =
+const LINES_PARSER: Parser<Vec<BString>> =
   rep_parser_sep!(until_parser_keep_happy!(LINE_END), or!(LINE_END, WS_STR));
 
 /// Unifies line ending in text to be the provided. Also appends line ending to end.
@@ -256,12 +213,12 @@ pub fn calc_hunk_line_from_text(a: &[u8], b: &[u8]) -> Vec<HunkLine> {
       }
     }
 
-    let line_text = change.to_string();
-    let parts = parse_all(LINE_PARSER, &line_text).unwrap_or((String::from(""), ""));
+    // let line_text = change
+    let parts = parse_all(LINE_PARSER, change.value()).unwrap_or((BString::from(""), b""));
 
     lines.push(HunkLine {
-      text: parts.0,
-      line_ending: parts.1.to_string(),
+      text: encode_text(parts.0),
+      line_ending: encode_text(parts.1),
       status: get_status_from_change_tag(&change.tag()),
       hunk_index: -1,
       index: lines.len() as u32,
@@ -273,52 +230,6 @@ pub fn calc_hunk_line_from_text(a: &[u8], b: &[u8]) -> Vec<HunkLine> {
   lines
 }
 
-// pub fn calc_hunk_line_from_text(a: &str, b: &str) -> Vec<HunkLine> {
-//   let diff = TextDiff::from_lines(a, b);
-//
-//   let mut lines = Vec::<HunkLine>::new();
-//
-//   let mut running_old_num = 0;
-//   let mut running_new_num = 0;
-//
-//   for change in diff.iter_all_changes() {
-//     let mut old_num: Option<i32> = None;
-//     let mut new_num: Option<i32> = None;
-//
-//     match change.tag() {
-//       ChangeTag::Insert => {
-//         running_new_num += 1;
-//         new_num = Some(running_new_num);
-//       }
-//       ChangeTag::Delete => {
-//         running_old_num += 1;
-//         old_num = Some(running_old_num);
-//       }
-//       ChangeTag::Equal => {
-//         running_old_num += 1;
-//         running_new_num += 1;
-//         old_num = Some(running_old_num);
-//         new_num = Some(running_new_num);
-//       }
-//     }
-//
-//     let line_text = change.to_string();
-//     let parts = parse_all(LINE_PARSER, &line_text).unwrap_or((String::from(""), ""));
-//
-//     lines.push(HunkLine {
-//       text: parts.0,
-//       line_ending: parts.1.to_string(),
-//       status: get_status_from_change_tag(&change.tag()),
-//       hunk_index: -1,
-//       index: lines.len() as u32,
-//       old_num,
-//       new_num,
-//     });
-//   }
-//
-//   lines
-// }
-//
 fn get_status_from_change_tag(tag: &ChangeTag) -> HunkLineStatus {
   match tag {
     ChangeTag::Insert => HunkLineStatus::Added,
@@ -403,20 +314,20 @@ export interface AnimationTime {
 
   #[test]
   fn test_many_line_parser() {
-    let res = parse_all(LINES_PARSER, "asdf\nasdf");
+    let res = parse_all(LINES_PARSER, b"asdf\nasdf");
 
     assert!(res.is_some());
     assert_eq!(res.unwrap().len(), 2);
 
-    let res = parse_all(LINES_PARSER, "asdf\nasdf\n");
+    let res = parse_all(LINES_PARSER, b"asdf\nasdf\n");
 
     assert!(res.is_some());
 
-    let res = parse_all(LINES_PARSER, "asdfr\nasdfr\n");
+    let res = parse_all(LINES_PARSER, b"asdfr\nasdfr\n");
 
     assert!(res.is_some());
 
-    let res = parse_all(LINES_PARSER, "asdfr");
+    let res = parse_all(LINES_PARSER, b"asdfr");
 
     assert!(res.is_some());
   }

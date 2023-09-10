@@ -5,6 +5,7 @@ use crate::parser::standard_parsers::{UNSIGNED_INT, UNTIL_NUL, WS};
 use crate::parser::Parser;
 use crate::{and, map, until_parser};
 use crate::{character, or};
+use bstr::BString;
 
 #[derive(Debug, PartialEq)]
 pub struct PatchData {
@@ -14,26 +15,26 @@ pub struct PatchData {
   id: String,
 }
 
-pub const P_PATCHES_WITH_COMMIT_ID: Parser<(String, Vec<Patch>)> = map!(
+pub const P_PATCHES_WITH_COMMIT_ID: Parser<(BString, Vec<Patch>)> = map!(
   and!(
     until_parser!(and!(character!(','), WS)),
     P_PATCHES,
     or!(UNTIL_NUL, WS)
   ),
-  |result: (String, Vec<PatchData>, String)| {
+  |result: (BString, Vec<PatchData>, BString)| {
     let (commit_id, patches, ..) = result;
 
     (
       commit_id.clone(),
       patches
         .into_iter()
-        .map(|data| map_data_to_patch(data, commit_id.clone()))
+        .map(|data| map_data_to_patch(data, commit_id.to_string()))
         .collect(),
     )
   }
 );
 
-pub const P_MANY_PATCHES_WITH_COMMIT_IDS: Parser<Vec<(String, Vec<Patch>)>> =
+pub const P_MANY_PATCHES_WITH_COMMIT_IDS: Parser<Vec<(BString, Vec<Patch>)>> =
   many!(P_PATCHES_WITH_COMMIT_ID);
 
 pub fn map_data_to_patch(data: PatchData, commit_id: String) -> Patch {
@@ -66,11 +67,11 @@ const P_RENAME_PATCH: Parser<PatchData> = map!(
     UNTIL_NUL,
     UNTIL_NUL
   ),
-  |result: ((char, String), String, String, String)| {
+  |result: ((char, BString), BString, BString, BString)| {
     PatchData {
       patch_type: PatchType::R,
-      old_file: result.2.clone(),
-      new_file: result.3.clone(),
+      old_file: result.2.to_string(),
+      new_file: result.3.to_string(),
       id: format!("{}-{}{}", result.3, result.0 .0, result.0 .1),
     }
   }
@@ -83,11 +84,11 @@ const P_COPY_PATCH: Parser<PatchData> = map!(
     UNTIL_NUL,
     UNTIL_NUL
   ),
-  |result: ((char, String), String, String, String)| {
+  |result: ((char, BString), BString, BString, BString)| {
     PatchData {
       patch_type: PatchType::C,
-      old_file: result.2.clone(),
-      new_file: result.3.clone(),
+      old_file: result.2.to_string(),
+      new_file: result.3.to_string(),
       id: format!("{}-{}{}", result.3, result.0 .0, result.0 .1),
     }
   }
@@ -95,16 +96,16 @@ const P_COPY_PATCH: Parser<PatchData> = map!(
 
 const P_OTHER_PATCH: Parser<PatchData> = map!(and!(P_STATUS, UNTIL_NUL, UNTIL_NUL), |result: (
   PatchType,
-  String,
-  String
+  BString,
+  BString
 )| {
   let (t, _, n) = result;
   let type_str = t.to_string();
 
   PatchData {
     patch_type: t,
-    old_file: n.clone(),
-    new_file: n.clone(),
+    old_file: n.to_string(),
+    new_file: n.to_string(),
     id: format!("{}-{}", n, type_str),
   }
 });
@@ -149,7 +150,7 @@ mod tests {
   #[test]
   fn test_p_rename_patch() {
     let log = &format!("R100\0{}\0{}\0", P1, P2);
-    let res = parse_all(P_RENAME_PATCH, log);
+    let res = parse_all(P_RENAME_PATCH, log.as_bytes());
 
     assert!(res.is_some());
     assert_eq!(
@@ -166,7 +167,7 @@ mod tests {
   #[test]
   fn test_p_copy_patch() {
     let log = &format!("C100\0{}\0{}\0", P1, P2);
-    let res = parse_all(P_COPY_PATCH, log);
+    let res = parse_all(P_COPY_PATCH, log.as_bytes());
 
     assert!(res.is_some());
     assert_eq!(
@@ -183,7 +184,7 @@ mod tests {
   #[test]
   fn test_p_other_patch() {
     let log = &format!("M\0{P2}\0");
-    let res = parse_all(P_OTHER_PATCH, log);
+    let res = parse_all(P_OTHER_PATCH, log.as_bytes());
 
     assert!(res.is_some());
     assert_eq!(

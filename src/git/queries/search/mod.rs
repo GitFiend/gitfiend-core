@@ -43,6 +43,8 @@ fn search_cancelled(search_id: u32) -> bool {
 mod tests {
   use crate::git::git_types::Patch;
   use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
+  use bstr::BString;
+  use similar::DiffableStr;
   use std::time::{Duration, Instant};
   use std::{assert_eq, println, thread};
 
@@ -116,7 +118,7 @@ mod tests {
     assert!(r3.is_some());
   }
 
-  pub fn search_diffs(options: &CodeSearchOpts) -> Option<Vec<(String, Vec<Patch>)>> {
+  pub fn search_diffs(options: &CodeSearchOpts) -> Option<Vec<(BString, Vec<Patch>)>> {
     let search_id = get_next_search_id();
     let result = search_code_command(options, search_id)?;
 

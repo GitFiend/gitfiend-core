@@ -19,6 +19,20 @@ macro_rules! and {
   }
 }
 
+// fn character(c: char) -> impl Fn(&mut Input) -> Option<char> {
+//   move |input: &mut Input| -> Option<char> {
+//     if !input.end() {
+//       let r = input.next_char();
+//
+//       if r == c {
+//         input.advance();
+//         return Some(r);
+//       }
+//     }
+//     None
+//   }
+// }
+
 #[macro_export]
 macro_rules! or {
   ( $($p:expr),* ) => {
@@ -58,6 +72,9 @@ macro_rules! word {
   ($text:expr) => {
     |input: &mut $crate::parser::input::Input| {
       let start_pos = input.position;
+
+      #[allow(unused_imports)]
+      use bstr::ByteSlice;
 
       for c in $text.chars() {
         if !input.end() && input.next_char() == c {
@@ -111,7 +128,7 @@ macro_rules! conditional_char2 {
 #[macro_export]
 macro_rules! take_char_while {
   ($function:expr) => {
-    |input: &mut $crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<bstr::BString> {
       let start_pos = input.position;
 
       while !input.end() && $function(input.next_char()) {
@@ -121,7 +138,9 @@ macro_rules! take_char_while {
       if start_pos == input.position {
         None
       } else {
-        Some(String::from_iter(&input.code[start_pos..input.position]))
+        Some(bstr::BString::from_iter(
+          (&input.code[start_pos..input.position]).iter().cloned(),
+        ))
       }
     }
   };
@@ -132,7 +151,7 @@ macro_rules! take_char_while {
 #[macro_export]
 macro_rules! optional_take_char_while {
   ($function:expr) => {
-    |input: &mut $crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<bstr::BString> {
       let start_pos = input.position;
 
       while !input.end() && $function(input.next_char()) {
@@ -140,9 +159,11 @@ macro_rules! optional_take_char_while {
       }
 
       if start_pos == input.position {
-        Some(String::from(""))
+        Some(BString::from(""))
       } else {
-        Some(String::from_iter(&input.code[start_pos..input.position]))
+        Some(bstr::BString::from_iter(
+          (&input.code[start_pos..input.position]).iter().cloned(),
+        ))
       }
     }
   };
@@ -152,7 +173,10 @@ macro_rules! optional_take_char_while {
 #[macro_export]
 macro_rules! until_str {
   ($str:expr) => {
-    |input: &mut $crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<bstr::BString> {
+      #[allow(unused_imports)]
+      use bstr::ByteSlice;
+
       let char_vec: Vec<char> = $str.chars().collect();
       let str_len = $str.len();
       let start_pos = input.position;
@@ -164,7 +188,7 @@ macro_rules! until_str {
         if &input.code[p..p + str_len] == char_vec {
           input.set_position(p + str_len);
 
-          return Some(String::from_iter(&input.code[start_pos..p]));
+          return Some(BString::from_iter(input.code[start_pos..p].iter().cloned()));
         }
 
         input.advance();
@@ -181,7 +205,7 @@ macro_rules! until_str {
 #[macro_export]
 macro_rules! until_parser {
   ($parser: expr) => {
-    |input: &mut $crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<BString> {
       let start_pos = input.position;
       let mut current_pos = start_pos;
 
@@ -196,7 +220,9 @@ macro_rules! until_parser {
         input.advance();
       }
 
-      return Some(String::from_iter(&input.code[start_pos..current_pos]));
+      return Some(BString::from_iter(
+        input.code[start_pos..current_pos].iter().cloned(),
+      ));
     }
   };
 }
@@ -206,7 +232,7 @@ macro_rules! until_parser {
 #[macro_export]
 macro_rules! until_parser_keep {
   ($parser:expr) => {
-    |input: &mut $crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<bstr::BString> {
       let start_pos = input.position;
 
       while !input.end() {
@@ -216,7 +242,9 @@ macro_rules! until_parser_keep {
         if result.is_some() {
           input.set_position(current_pos);
 
-          return Some(String::from_iter(&input.code[start_pos..current_pos]));
+          return Some(BString::from_iter(
+            input.code[start_pos..current_pos].iter().cloned(),
+          ));
         }
 
         input.advance();
@@ -233,7 +261,7 @@ macro_rules! until_parser_keep {
 #[macro_export]
 macro_rules! until_parser_keep_happy {
   ($parser:expr) => {
-    |input: &mut $crate::parser::input::Input| -> Option<String> {
+    |input: &mut $crate::parser::input::Input| -> Option<bstr::BString> {
       let start_pos = input.position;
 
       while !input.end() {
@@ -249,7 +277,9 @@ macro_rules! until_parser_keep_happy {
         input.advance();
       }
 
-      return Some(String::from_iter(&input.code[start_pos..input.position]));
+      return Some(BString::from_iter(
+        input.code[start_pos..input.position].into_iter().cloned(),
+      ));
     }
   };
 }
@@ -310,6 +340,8 @@ macro_rules! rep_parser_sep {
 
 #[cfg(test)]
 mod tests {
+  use bstr::{BString, B};
+
   use crate::parser::input::Input;
   use crate::parser::standard_parsers::WS;
   use crate::parser::{parse_all, parse_part, run_parser, ParseOptions, Parser};
@@ -317,24 +349,24 @@ mod tests {
   pub const P_3: Parser<char> = character!('3');
   const ALL: Parser<(char, char, char)> = and!(P_3, P_3, P_3);
 
-  const HELLO: Parser<&str> = word!("hello");
+  const HELLO: Parser<&[u8]> = word!(b"hello");
 
   #[test]
   fn test_word() {
-    let mut input = Input::new("hello");
+    let mut input = Input::new(b"hello");
 
     let result = HELLO(&mut input);
 
-    assert_eq!(result.unwrap(), "hello");
+    assert_eq!(result.unwrap(), b"hello");
   }
 
   #[test]
   fn test_word2() {
-    let result = parse_all(word!("omg"), "omg");
+    let result = parse_all(word!(b"omg"), b"omg");
 
-    assert_eq!(result.unwrap(), "omg");
+    assert_eq!(result.unwrap(), b"omg");
 
-    let result = parse_all(word!("omg"), "omgg");
+    let result = parse_all(word!(b"omg"), b"omgg");
 
     // Expect parse fail due to not all text parsed.
     assert_eq!(result, None);
@@ -342,21 +374,21 @@ mod tests {
 
   #[test]
   fn test_or() {
-    let result = parse_all(or!(word!("a"), word!("b")), "b");
+    let result = parse_all(or!(word!(b"a"), word!(b"b")), b"b");
 
     assert!(result.is_some());
-    assert_eq!(result.unwrap(), "b");
+    assert_eq!(result.unwrap(), b"b");
 
-    let result = parse_all(or!(word!("a"), word!("b"), word!("p")), "c");
+    let result = parse_all(or!(word!(b"a"), word!(b"b"), word!(b"p")), b"c");
 
     assert!(result.is_none());
   }
 
   #[test]
   fn test_rep_parser_sep() {
-    let parser: Parser<Vec<&str>> = rep_parser_sep!(word!("a"), word!(","));
+    let parser: Parser<Vec<&[u8]>> = rep_parser_sep!(word!(B("a")), word!(b","));
 
-    let result = parse_all(parser, "a,a,a");
+    let result = parse_all(parser, b"a,a,a");
 
     assert!(result.is_some());
     assert_eq!(result.unwrap().len(), 3);
@@ -364,9 +396,9 @@ mod tests {
 
   #[test]
   fn test_rep_sep() {
-    let parser: Parser<Vec<&str>> = rep_sep!(word!("a"), ",");
+    let parser: Parser<Vec<&[u8]>> = rep_sep!(word!(B("a")), b",");
 
-    let result = parse_all(parser, "a, a , a");
+    let result = parse_all(parser, b"a, a , a");
 
     assert!(result.is_some());
     assert_eq!(result.unwrap().len(), 3);
@@ -374,9 +406,9 @@ mod tests {
 
   #[test]
   fn test_until_str() {
-    let parser: Parser<String> = until_str!("omg");
+    let parser: Parser<BString> = until_str!(B("omg"));
 
-    let result = parse_all(parser, "aaaaaaaomg");
+    let result = parse_all(parser, b"aaaaaaaomg");
 
     assert!(result.is_some());
     assert_eq!(result.unwrap(), "aaaaaaa");
@@ -386,12 +418,12 @@ mod tests {
   fn test_many() {
     let parser = many!(character!('c'));
 
-    let result = parse_all(parser, "cccccc");
+    let result = parse_all(parser, b"cccccc");
 
     assert!(result.is_some());
     assert_eq!(result.unwrap().len(), 6);
 
-    let result = parse_part(parser, "x");
+    let result = parse_part(parser, b"x");
 
     // Succeed with no results.
     assert!(result.is_some());
@@ -415,13 +447,13 @@ mod tests {
 
   #[test]
   fn test_p_d() {
-    let mut input = Input::new("3");
+    let mut input = Input::new(b"3");
 
     let res = P_3(&mut input);
 
     assert_eq!(res.unwrap(), '3');
 
-    let mut input = Input::new("333");
+    let mut input = Input::new(b"333");
 
     let res = ALL(&mut input);
 
@@ -432,28 +464,28 @@ mod tests {
 
   #[test]
   fn test_until_parser() {
-    let parser: Parser<String> = until_parser!(word!("omg"));
+    let parser: Parser<BString> = until_parser!(word!(b"omg"));
 
-    let result = parse_all(parser, "aaaaaaaomg");
+    let result = parse_all(parser, b"aaaaaaaomg");
 
     assert!(result.is_some());
-    assert_eq!(result.unwrap(), "aaaaaaa");
+    assert_eq!(result.unwrap(), BString::from("aaaaaaa"));
   }
 
   #[test]
   fn test_until_parser_keep() {
-    let parser = and!(until_parser_keep!(word!("omg")), word!("omg"));
+    let parser = and!(until_parser_keep!(word!(b"omg")), word!(b"omg"));
 
-    let result = parse_all(parser, "aaaaaaaomg");
+    let result = parse_all(parser, b"aaaaaaaomg");
 
     assert!(result.is_some());
-    assert_eq!(result.unwrap(), ("aaaaaaa".to_string(), "omg"));
+    assert_eq!(result.unwrap(), (BString::from(b"aaaaaaa"), b"omg"));
 
-    let parser = until_parser_keep!(word!("omg"));
+    let parser = until_parser_keep!(word!(b"omg"));
 
     let result = run_parser(
       parser,
-      "aaaaaaaa",
+      b"aaaaaaaa",
       ParseOptions {
         must_parse_all: true,
         print_error: false,

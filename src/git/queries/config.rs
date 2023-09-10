@@ -8,6 +8,7 @@ use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
 use crate::{and, f, many, or, until_str, word};
 use crate::{character, map};
+use bstr::{BString, B};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -46,12 +47,12 @@ impl GitConfig {
   }
 }
 
-const P_HEADING_1: Parser<String> = map!(
+const P_HEADING_1: Parser<BString> = map!(
   and!(character!('['), ANY_WORD, character!(']')),
-  |res: (char, String, char)| { res.1 }
+  |res: (char, BString, char)| { res.1 }
 );
 
-const P_HEADING_2: Parser<String> = map!(
+const P_HEADING_2: Parser<BString> = map!(
   and!(
     character!('['),
     ANY_WORD,
@@ -59,45 +60,54 @@ const P_HEADING_2: Parser<String> = map!(
     STRING_LITERAL,
     character!(']')
   ),
-  |res: (char, String, String, String, char)| { f!("{}.{}", res.1, res.3) }
+  |res: (char, BString, BString, BString, char)| { BString::from(f!("{}.{}", res.1, res.3)) }
 );
 
-const P_HEADING: Parser<String> = or!(P_HEADING_1, P_HEADING_2);
+const P_HEADING: Parser<BString> = or!(P_HEADING_1, P_HEADING_2);
 
 //   merge = refs/heads/mac-app
-const P_ROW: Parser<String> = map!(
+const P_ROW: Parser<BString> = map!(
   and!(WS, ANY_WORD, WS, character!('='), WS, UNTIL_LINE_END),
-  |res: (String, String, String, char, String, String)| { f!("{}={}\n", res.1, res.5) }
+  |res: (BString, BString, BString, char, BString, BString)| {
+    BString::from(f!("{}={}\n", res.1, res.5))
+  }
 );
 
-const P_SECTION: Parser<String> = map!(and!(P_HEADING, many!(P_ROW)), |(header, rows): (
-  String,
-  Vec<String>
+const P_SECTION: Parser<BString> = map!(and!(P_HEADING, many!(P_ROW)), |(header, rows): (
+  BString,
+  Vec<BString>
 )| {
-  rows
-    .into_iter()
-    .map(|row| f!("{}.{}", header, row))
-    .collect::<Vec<String>>()
-    .join("")
+  let mut section = Vec::<u8>::new();
+
+  for row in rows {
+    section.append(&mut bstr::join(b".", &[&header, &row]));
+  }
+
+  BString::from(section)
 });
 
-const P_CONFIG2: Parser<String> = map!(many!(P_SECTION), |sections: Vec<String>| {
-  sections.join("")
+const P_CONFIG2: Parser<BString> = map!(many!(P_SECTION), |sections: Vec<BString>| {
+  BString::from(bstr::concat(&sections))
 });
 
 const P_CONFIG: Parser<HashMap<String, String>> = map!(
-  many!(and!(until_str!("="), UNTIL_LINE_END)),
-  |result: Vec<(String, String)>| { result.into_iter().collect::<HashMap<String, String>>() }
+  many!(and!(until_str!(b"="), UNTIL_LINE_END)),
+  |result: Vec<(BString, BString)>| {
+    result
+      .into_iter()
+      .map(|(key, value)| (key.to_string(), value.to_string()))
+      .collect::<HashMap<String, String>>()
+  }
 );
 
-const P_REMOTE_NAME: Parser<String> = map!(
+const P_REMOTE_NAME: Parser<BString> = map!(
   and!(
-    word!("remote."),
-    until_str!("."),
-    word!("url"),
+    word!(B("remote.")),
+    until_str!(B(".")),
+    word!(B("url")),
     UNTIL_LINE_END
   ),
-  |result: (&str, String, &str, String)| { result.1 }
+  |result: (&[u8], BString, &[u8], BString)| { result.1 }
 );
 
 /// Use this version on focus of GitFiend only. Get it from the store otherwise.
@@ -110,13 +120,13 @@ pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
   // let t2 = Instant::now();
 
   let result_text = if let Ok(text) = fs::read_to_string(config_path) {
-    let r = parse_all_err(P_CONFIG2, &text);
+    let r = parse_all_err(P_CONFIG2, text.as_bytes());
     // println!("time to read text config: {}ms", t2.elapsed().as_millis());
     r
   } else {
     // let t2 = Instant::now();
     Ok(
-      run_git::run_git_err(RunGitOptions {
+      run_git::run_git_bstr(RunGitOptions {
         repo_path,
         args: ["config", "--list"],
       })?
@@ -126,15 +136,15 @@ pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
 
   // println!("time to load git config: {}ms", t2.elapsed().as_millis());
 
-  let config_result = parse_all_err(P_CONFIG, result_text?.as_str());
+  let config_result = parse_all_err(P_CONFIG, &result_text?);
   let entries = config_result?;
-  let mut remotes = HashMap::new();
+  let mut remotes: HashMap<String, String> = HashMap::new();
 
   for (key, value) in entries.iter() {
     if key.starts_with("remote") {
       let name = run_parser(
         P_REMOTE_NAME,
-        key,
+        key.as_bytes(),
         ParseOptions {
           must_parse_all: true,
           print_error: false,
@@ -142,7 +152,7 @@ pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
       );
 
       if let Some(name) = name {
-        remotes.insert(name, value.clone());
+        remotes.insert(name.to_string(), value.clone());
       }
     }
   }
@@ -156,6 +166,7 @@ pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
 
 #[cfg(test)]
 mod tests {
+  use bstr::B;
   use std::collections::HashMap;
 
   use crate::git::git_types::GitConfig;
@@ -177,7 +188,7 @@ mod tests {
 
   #[test]
   fn test_p_config() {
-    let config = "credential.helper=osxkeychain
+    let config = b"credential.helper=osxkeychain
 user.email=something@gmail.com
 user.name=username
 filter.lfs.clean=git-lfs clean -- %f
@@ -224,7 +235,7 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
   fn test_p_remote_name() {
     let result = parse_all(
       P_REMOTE_NAME,
-      "remote.origin2.url=/Users/toby/Repos/test-repo-remote",
+      b"remote.origin2.url=/Users/toby/Repos/test-repo-remote",
     );
 
     assert!(result.is_some());
@@ -246,21 +257,21 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
 
   #[test]
   fn test_p_heading() {
-    let result = parse_all(P_HEADING, "[core]");
+    let result = parse_all(P_HEADING, b"[core]");
     assert!(result.is_some());
     assert_eq!(result.unwrap(), "core");
 
-    let result = parse_all(P_HEADING, "[remote \"origin\"]");
+    let result = parse_all(P_HEADING, b"[remote \"origin\"]");
     assert!(result.is_some());
-    assert_eq!(result.unwrap(), "remote.origin");
+    assert_eq!(result.unwrap(), B("remote.origin"));
 
-    let result = parse_all(P_HEADING, "[branch \"my-branch-name\"]");
+    let result = parse_all(P_HEADING, B("[branch \"my-branch-name\"]"));
     assert!(result.is_some());
     assert_eq!(result.unwrap(), "branch.my-branch-name");
 
-    let result = parse_all(P_HEADING, "[branch \"feature/my-branch-name\"]");
+    let result = parse_all(P_HEADING, B("[branch \"feature/my-branch-name\"]"));
     assert!(result.is_some());
-    assert_eq!(result.unwrap(), "branch.feature/my-branch-name");
+    assert_eq!(result.unwrap(), B("branch.feature/my-branch-name"));
   }
 
   #[test]
@@ -315,7 +326,7 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
 	remote = origin
 	merge = refs/heads/ssr-code-viewer"#;
 
-    let result = parse_all(P_CONFIG2, text);
+    let result = parse_all(P_CONFIG2, text.as_bytes());
 
     assert!(result.is_some());
     println!("{}", result.unwrap());

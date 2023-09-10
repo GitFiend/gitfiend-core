@@ -103,7 +103,7 @@ fn parse_ref_name(line: &str) -> String {
       return name.to_string();
     }
 
-    if let Some(ref_part) = parse_all(P_REF_NAME, name) {
+    if let Some(ref_part) = parse_all(P_REF_NAME, name.as_bytes()) {
       return format!("{}/{}", ref_part.location, ref_part.short_name);
     }
 

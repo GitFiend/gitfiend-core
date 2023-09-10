@@ -104,7 +104,7 @@ mod tests {
 
   #[test]
   fn test_create_hunks() {
-    let text = "import {ThemeName} from '../views/theme/theming'
+    let text = b"import {ThemeName} from '../views/theme/theming'
 
 export const maxNumberOfCommits = 1000
 export const maxNumberOfCommits = 100
@@ -136,7 +136,7 @@ export interface AnimationTime {
 }
 ";
 
-    let lines = calc_hunk_line_from_text("", text);
+    let lines = calc_hunk_line_from_text(b"", text);
 
     assert_eq!(lines.len(), 30);
 

@@ -3,6 +3,7 @@ use crate::git::queries::wip::wip_patches::WipPatchInfo;
 use crate::parser::standard_parsers::{UNTIL_NUL, WS};
 use crate::parser::Parser;
 use crate::{and, character, many, map, or};
+use bstr::BString;
 
 const P_WORK_STATUS_PART: Parser<char> = or!(
   character!(' '),
@@ -44,12 +45,12 @@ impl WipPatchType {
 
 const P_WIP_RENAME_PATCH: Parser<WipPatchInfo> = map!(
   and!(P_RENAME_STATUS, WS, UNTIL_NUL, WS, UNTIL_NUL),
-  |res: ((char, char), String, String, String, String)| {
+  |res: ((char, char), BString, BString, BString, BString)| {
     WipPatchInfo {
       staged: WipPatchType::from_char(res.0 .0),
       un_staged: WipPatchType::from_char(res.0 .1),
-      old_file: res.4,
-      new_file: res.2,
+      old_file: res.4.to_string(),
+      new_file: res.2.to_string(),
     }
   }
 );
@@ -58,12 +59,12 @@ const P_WORK_STATUS: Parser<(char, char)> = and!(P_WORK_STATUS_PART, P_WORK_STAT
 
 const P_WIP_OTHER_PATCH: Parser<WipPatchInfo> = map!(
   and!(P_WORK_STATUS, WS, UNTIL_NUL),
-  |res: ((char, char), String, String)| {
+  |res: ((char, char), BString, BString)| {
     WipPatchInfo {
       staged: WipPatchType::from_char(res.0 .0),
       un_staged: WipPatchType::from_char(res.0 .1),
-      old_file: res.2.clone(),
-      new_file: res.2,
+      old_file: res.2.to_string(),
+      new_file: res.2.to_string(),
     }
   }
 );
@@ -75,12 +76,12 @@ const P_COPY_STATUS: Parser<(char, char)> = or!(
 
 const P_WIP_COPY_PATCH: Parser<WipPatchInfo> = map!(
   and!(P_COPY_STATUS, WS, UNTIL_NUL, WS, UNTIL_NUL),
-  |res: ((char, char), String, String, String, String)| {
+  |res: ((char, char), BString, BString, BString, BString)| {
     WipPatchInfo {
       staged: WipPatchType::from_char(res.0 .0),
       un_staged: WipPatchType::from_char(res.0 .1),
-      old_file: res.4,
-      new_file: res.2,
+      old_file: res.4.to_string(),
+      new_file: res.2.to_string(),
     }
   }
 );
@@ -99,26 +100,29 @@ mod tests {
 
   #[test]
   fn test_p_rename_status() {
-    let out = parse_all(P_RENAME_STATUS, "R ");
+    let out = parse_all(P_RENAME_STATUS, b"R ");
     assert!(out.is_some());
     assert_eq!(out.unwrap(), ('R', ' '));
 
-    let out = parse_all(P_RENAME_STATUS, " R");
+    let out = parse_all(P_RENAME_STATUS, b" R");
     assert!(out.is_some());
     assert_eq!(out.unwrap(), (' ', 'R'));
 
-    let out = parse_all(P_RENAME_STATUS, "RM");
+    let out = parse_all(P_RENAME_STATUS, b"RM");
     assert!(out.is_some());
     assert_eq!(out.unwrap(), ('R', 'M'));
 
-    let out = parse_all(P_RENAME_STATUS, "DR");
+    let out = parse_all(P_RENAME_STATUS, b"DR");
     assert!(out.is_some());
     assert_eq!(out.unwrap(), ('D', 'R'));
   }
 
   #[test]
   fn test_p_wip_rename_patch() {
-    let out = parse_all(P_WIP_RENAME_PATCH, "R  filename.txt\0has some spaces.txt\0");
+    let out = parse_all(
+      P_WIP_RENAME_PATCH,
+      b"R  filename.txt\0has some spaces.txt\0",
+    );
 
     assert!(out.is_some());
     assert_eq!(
@@ -134,19 +138,19 @@ mod tests {
 
   #[test]
   fn test_p_work_status() {
-    let out = parse_all(P_WORK_STATUS, "??");
+    let out = parse_all(P_WORK_STATUS, b"??");
     assert_eq!(out.unwrap(), ('?', '?'));
 
-    let out = parse_all(P_WORK_STATUS, " A");
+    let out = parse_all(P_WORK_STATUS, b" A");
     assert_eq!(out.unwrap(), (' ', 'A'));
 
-    let out = parse_all(P_WORK_STATUS, "AM");
+    let out = parse_all(P_WORK_STATUS, b"AM");
     assert_eq!(out.unwrap(), ('A', 'M'));
   }
 
   #[test]
   fn test_p_wip_other_patch() {
-    let out = parse_all(P_WIP_OTHER_PATCH, "DU folder/has a space/test2.js\0");
+    let out = parse_all(P_WIP_OTHER_PATCH, b"DU folder/has a space/test2.js\0");
     assert!(out.is_some());
     assert_eq!(
       out.unwrap(),
@@ -161,7 +165,7 @@ mod tests {
 
   #[test]
   fn test_p_wip_patches() {
-    let out = parse_all(P_WIP_PATCHES, "R  582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt\0 582160ee-5216-4dc6-bf74-1c1fce4978eb.txt\0DU folder/has a space/test2.js\0");
+    let out = parse_all(P_WIP_PATCHES, b"R  582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt\0 582160ee-5216-4dc6-bf74-1c1fce4978eb.txt\0DU folder/has a space/test2.js\0");
     assert!(out.is_some());
 
     assert_eq!(
@@ -182,7 +186,7 @@ mod tests {
       ]
     );
 
-    let out = parse_all(P_WIP_PATCHES, "C  582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt\0 582160ee-5216-4dc6-bf74-1c1fce4978eb.txt\0DU folder/has a space/test2.js\0");
+    let out = parse_all(P_WIP_PATCHES, b"C  582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt\0 582160ee-5216-4dc6-bf74-1c1fce4978eb.txt\0DU folder/has a space/test2.js\0");
     assert!(out.is_some());
 
     assert_eq!(
@@ -208,7 +212,7 @@ mod tests {
   fn test_p_wip_patches2() {
     let out = parse_all(
       P_WIP_PATCHES,
-      "T  582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt\0DU folder/has a space/test2.js\0",
+      b"T  582160ee-5216-4dc6-bf74-1c1fce4978eb2.txt\0DU folder/has a space/test2.js\0",
     );
     assert!(out.is_some());
 
@@ -233,7 +237,7 @@ mod tests {
 
   #[test]
   fn test_p_wip_patches3() {
-    let text = " M .DS_Store\0 D LabBook/.ztr-directory\0 M LabBook/2023-06-18_CRISPR23-code.md\0?? Icon\r\0?? LabBook/2023-06-26_TEST.md\0";
+    let text = b" M .DS_Store\0 D LabBook/.ztr-directory\0 M LabBook/2023-06-18_CRISPR23-code.md\0?? Icon\r\0?? LabBook/2023-06-26_TEST.md\0";
 
     let out = parse_all(P_WIP_PATCHES, text);
     assert!(out.is_some());

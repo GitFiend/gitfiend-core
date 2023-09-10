@@ -2,8 +2,7 @@ use crate::git::git_types::{WipPatch, WipPatchType};
 use crate::git::queries::patches::file_is_image;
 use crate::git::queries::wip::read_merge_head;
 use crate::git::queries::wip::wip_patch_parsers::P_WIP_PATCHES;
-use crate::git::run_git::RunGitOptions;
-use crate::git::run_git::{run_git_err, GitOut};
+use crate::git::run_git::{run_git_bstr, GitOut2, RunGitOptions};
 use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
@@ -12,6 +11,7 @@ use ts_rs::TS;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct WipPatchInfo {
+  // TODO: Maybe we should use PathBuf instead of String?
   pub old_file: String,
   pub new_file: String,
   pub staged: WipPatchType,
@@ -26,7 +26,7 @@ pub struct WipPatches {
 }
 
 pub fn load_wip_patches(options: &ReqOptions) -> R<WipPatches> {
-  let GitOut { stdout, .. } = run_git_err(RunGitOptions {
+  let GitOut2 { stdout, .. } = run_git_bstr(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["status", "--porcelain", "-uall", "-z"],
   })?;

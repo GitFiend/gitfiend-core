@@ -9,8 +9,7 @@ use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
 use crate::git::queries::COMMIT_0_ID;
-use crate::git::run_git;
-use crate::git::run_git::{run_git_err, RunGitOptions};
+use crate::git::run_git::{run_git_bstr, RunGitOptions};
 use crate::parser::{parse_all, parse_all_err};
 use crate::server::request_util::R;
 
@@ -106,14 +105,20 @@ fn load_normal_patches(
     ids.insert(0, "show");
     ids.extend(["--name-status", "--pretty=format:%H,", "-z"]);
 
-    let out = run_git::run_git(RunGitOptions {
+    let out = run_git_bstr(RunGitOptions {
       repo_path,
       args: ids,
-    })?;
+    })
+    .ok()?;
 
-    let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
+    let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out.stdout)?;
 
-    Some(commit_patches.into_iter().collect())
+    Some(
+      commit_patches
+        .into_iter()
+        .map(|(id, patches)| (id.to_string(), patches))
+        .collect(),
+    )
   }
 }
 
@@ -122,7 +127,7 @@ fn load_all_patches_for_normal_commits(
   repo_path: &str,
   num_commits: u32,
 ) -> Option<HashMap<String, Vec<Patch>>> {
-  let out = run_git::run_git(RunGitOptions {
+  let out = run_git_bstr(RunGitOptions {
     args: [
       "log",
       "--remotes",
@@ -136,11 +141,17 @@ fn load_all_patches_for_normal_commits(
       &format!("-n{}", num_commits),
     ],
     repo_path,
-  })?;
+  })
+  .ok()?;
 
-  let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
+  let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out.stdout)?;
 
-  Some(commit_patches.into_iter().collect())
+  Some(
+    commit_patches
+      .into_iter()
+      .map(|(id, patches)| (id.to_string(), patches))
+      .collect(),
+  )
 }
 
 // without cache
@@ -154,7 +165,7 @@ fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> R<(String, Vec<P
       is_merge: true,
       parent_ids,
       ..
-    } => run_git_err(RunGitOptions {
+    } => run_git_bstr(RunGitOptions {
       repo_path,
       // args: [diff, name_status, z, format!("{}^1", id), id.to_string()],
       args: [
@@ -169,11 +180,11 @@ fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> R<(String, Vec<P
       parent_ids,
       id,
       ..
-    } => run_git_err(RunGitOptions {
+    } => run_git_bstr(RunGitOptions {
       repo_path,
       args: [diff, format!("{}..{}", parent_ids[0], id), name_status, z],
     }),
-    Commit { id, .. } => run_git_err(RunGitOptions {
+    Commit { id, .. } => run_git_bstr(RunGitOptions {
       repo_path,
       args: [diff, format!("{}..{}", COMMIT_0_ID, id), name_status, z],
     }),

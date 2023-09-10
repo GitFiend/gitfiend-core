@@ -1,4 +1,4 @@
-//
+use bstr::{BString, ByteSlice};
 
 pub struct Input {
   pub code: Vec<char>,
@@ -7,12 +7,25 @@ pub struct Input {
 }
 
 impl Input {
-  pub fn new(code: &str) -> Input {
+  pub fn new(code: &[u8]) -> Input {
     Input {
       code: code.chars().collect(),
       position: 0,
       attempted_position: 0,
     }
+  }
+
+  fn try_something(&mut self) {
+    let s = self.code[0..4].into_iter().cloned();
+    let string = BString::from_iter(s);
+
+    let _ = BString::from_iter(self.code[0..4].into_iter().cloned());
+
+    let a: &[u8] = b"omg";
+    let b = BString::from("hmm");
+
+    let c = bstr::join("", [a, &b]);
+    let d = bstr::concat(&[a, &b]);
   }
 
   pub fn advance(&mut self) {
@@ -53,7 +66,7 @@ mod tests {
 
   #[test]
   fn test_advance() {
-    let mut input = Input::new("wowowoowowow");
+    let mut input = Input::new(b"wowowoowowow");
 
     assert_eq!(input.next_char(), 'w');
 
@@ -65,7 +78,7 @@ mod tests {
 
   #[test]
   fn test_end() {
-    let input = Input::new("");
+    let input = Input::new(b"");
 
     assert_eq!(input.end(), true);
   }

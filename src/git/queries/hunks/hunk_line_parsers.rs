@@ -1,22 +1,24 @@
 use crate::git::git_types::{HunkLine, HunkLineStatus, HunkRange};
+use crate::git::queries::hunks::encode_text;
 use crate::parser::standard_parsers::{LINE_END, SIGNED_INT, UNTIL_LINE_END, WS, WS_STR};
 use crate::parser::Parser;
 use crate::{and, character, many, map, or, until_parser_keep_happy, word};
+use bstr::{BString, B};
 
 pub const P_HUNK_LINE_RANGE: Parser<HunkRange> = or!(
   map!(and!(SIGNED_INT, character!(','), SIGNED_INT), |res: (
-    String,
+    BString,
     char,
-    String
+    BString
   )| {
     HunkRange {
-      start: res.0.parse::<i64>().unwrap_or(0).abs() as i32,
-      length: res.2.parse().unwrap_or(0),
+      start: res.0.to_string().parse::<i64>().unwrap_or(0).abs() as i32,
+      length: res.2.to_string().parse().unwrap_or(0),
     }
   }),
-  map!(SIGNED_INT, |res: String| {
+  map!(SIGNED_INT, |res: BString| {
     HunkRange {
-      start: res.parse::<i64>().unwrap_or(0).abs() as i32,
+      start: res.to_string().parse::<i64>().unwrap_or(0).abs() as i32,
       length: 1,
     }
   })
@@ -24,15 +26,23 @@ pub const P_HUNK_LINE_RANGE: Parser<HunkRange> = or!(
 
 pub const P_HUNK_LINE_RANGES: Parser<(HunkRange, HunkRange)> = map!(
   and!(
-    word!("@@"),
+    word!(B("@@")),
     WS,
     P_HUNK_LINE_RANGE,
     WS,
     P_HUNK_LINE_RANGE,
     WS,
-    word!("@@")
+    word!(B("@@"))
   ),
-  |res: (&str, String, HunkRange, String, HunkRange, String, &str)| { (res.2, res.4) }
+  |res: (
+    &[u8],
+    BString,
+    HunkRange,
+    BString,
+    HunkRange,
+    BString,
+    &[u8]
+  )| { (res.2, res.4) }
 );
 
 // Only used for testing.
@@ -47,62 +57,62 @@ pub fn _generate_line_ranges_text(range: &(HunkRange, HunkRange)) -> String {
 
 pub struct Line {
   pub status: HunkLineStatus,
-  pub text: String,
-  pub line_ending: String,
+  pub text: BString,
+  pub line_ending: BString,
 }
 
-pub const P_LINE_AND_END: Parser<(String, &str)> =
+pub const P_LINE_AND_END: Parser<(BString, &[u8])> =
   and!(until_parser_keep_happy!(LINE_END), or!(LINE_END, WS_STR));
 
 const P_UNCHANGED_LINE: Parser<Line> = map!(and!(character!(' '), P_LINE_AND_END), |res: (
   char,
-  (String, &str)
+  (BString, &[u8])
 )| {
   Line {
     status: HunkLineStatus::Unchanged,
     text: res.1 .0,
-    line_ending: res.1 .1.to_string(),
+    line_ending: BString::from(res.1 .1),
   }
 });
 
 const P_ADDED_LINE: Parser<Line> = map!(and!(character!('+'), P_LINE_AND_END), |res: (
   char,
-  (String, &str)
+  (BString, &[u8])
 )| {
   Line {
     status: HunkLineStatus::Added,
     text: res.1 .0,
-    line_ending: res.1 .1.to_string(),
+    line_ending: BString::from(res.1 .1),
   }
 });
 
 const P_REMOVED_LINE: Parser<Line> = map!(and!(character!('-'), P_LINE_AND_END), |res: (
   char,
-  (String, &str)
+  (BString, &[u8])
 )| {
   Line {
     status: HunkLineStatus::Removed,
     text: res.1 .0,
-    line_ending: res.1 .1.to_string(),
+    line_ending: BString::from(res.1 .1),
   }
 });
 
 const P_NO_NEW_LINE: Parser<Line> = map!(and!(character!('\\'), UNTIL_LINE_END), |res: (
   char,
-  String
+  BString
 )| {
   Line {
     status: HunkLineStatus::Unchanged,
     text: res.1,
-    line_ending: String::from(""),
+    line_ending: BString::from(b""),
   }
 });
 
-const P_LINE_BREAK: Parser<Line> = map!(LINE_END, |res: &str| {
+const P_LINE_BREAK: Parser<Line> = map!(LINE_END, |res: &[u8]| {
   Line {
     status: HunkLineStatus::Unchanged,
-    text: String::from(""),
-    line_ending: res.to_string(),
+    text: BString::from(""),
+    line_ending: BString::from(res),
   }
 });
 
@@ -127,9 +137,9 @@ impl HunkLine {
       old_num,
       new_num,
       hunk_index,
-      text: line.text,
+      text: encode_text(line.text.to_vec()),
       index,
-      line_ending: line.line_ending,
+      line_ending: encode_text(line.line_ending.to_vec()),
     }
   }
 
@@ -139,9 +149,9 @@ impl HunkLine {
       old_num: None,
       new_num: None,
       hunk_index,
-      text: String::from(""),
+      text: encode_text(""),
       index: 0,
-      line_ending: String::from("\n"),
+      line_ending: encode_text("\n"),
     }
   }
 
@@ -151,9 +161,9 @@ impl HunkLine {
       old_num: None,
       new_num: None,
       hunk_index,
-      text: String::from(""),
+      text: encode_text(""),
       index: 0,
-      line_ending: String::from("\n"),
+      line_ending: encode_text("\n"),
     }
   }
 }
@@ -167,12 +177,13 @@ mod tests {
     _generate_line_ranges_text, P_ADDED_LINE, P_HUNK_LINE, P_HUNK_LINES, P_HUNK_LINE_RANGE,
     P_HUNK_LINE_RANGES,
   };
+  use bstr::ByteSlice;
 
   use crate::parser::parse_all;
 
   #[test]
   fn test_p_hunk_line_range() {
-    let res = parse_all(P_HUNK_LINE_RANGE, "-1,19");
+    let res = parse_all(P_HUNK_LINE_RANGE, b"-1,19");
 
     assert!(res.is_some());
     assert_eq!(
@@ -183,7 +194,7 @@ mod tests {
       }
     );
 
-    let res = parse_all(P_HUNK_LINE_RANGE, "+1");
+    let res = parse_all(P_HUNK_LINE_RANGE, b"+1");
     assert!(res.is_some());
     assert_eq!(
       res.unwrap(),
@@ -193,7 +204,7 @@ mod tests {
       }
     );
 
-    let res = parse_all(P_HUNK_LINE_RANGE, "-1");
+    let res = parse_all(P_HUNK_LINE_RANGE, b"-1");
     assert!(res.is_some());
     assert_eq!(
       res.unwrap(),
@@ -206,7 +217,7 @@ mod tests {
 
   #[test]
   fn test_p_hunk_line_ranges() {
-    let res = parse_all(P_HUNK_LINE_RANGES, "@@ -1 +1,2 @@");
+    let res = parse_all(P_HUNK_LINE_RANGES, b"@@ -1 +1,2 @@");
 
     assert!(res.is_some());
 
@@ -228,7 +239,7 @@ mod tests {
 
     assert_eq!(_generate_line_ranges_text(&ranges), "@@ -1,1 +1,2 @@");
 
-    let res = parse_all(P_HUNK_LINE_RANGES, "@@ -0,0 +1,26 @@");
+    let res = parse_all(P_HUNK_LINE_RANGES, b"@@ -0,0 +1,26 @@");
 
     assert!(res.is_some());
 
@@ -250,7 +261,7 @@ mod tests {
 
     assert_eq!(_generate_line_ranges_text(&ranges), "@@ -0,0 +1,26 @@");
 
-    let res = parse_all(P_HUNK_LINE_RANGES, "@@ -1,19 +1,17 @@");
+    let res = parse_all(P_HUNK_LINE_RANGES, b"@@ -1,19 +1,17 @@");
 
     assert!(res.is_some());
 
@@ -275,12 +286,13 @@ mod tests {
 
   #[test]
   fn test_p_hunk_lines() {
-    let hunk_line1 = " describe('test commits state', () => {\r\n";
-    let hunk_line2 = "\n";
-    let hunk_line3 = "-  it(`can load ${pathToThisRepo}`, async () => {\r\n";
-    let hunk_line4 = "+  it('todo', () => {";
+    let hunk_line1 = b" describe('test commits state', () => {\r\n";
+    let hunk_line2 = b"\n";
+    let hunk_line3 = b"-  it(`can load ${pathToThisRepo}`, async () => {\r\n";
+    let hunk_line4 = b"+  it('todo', () => {";
 
-    let hunk_lines = format!("{hunk_line1}{hunk_line2}{hunk_line3}{hunk_line4}");
+    // let hunk_lines = format!("{hunk_line1}{hunk_line2}{hunk_line3}{hunk_line4}");
+    let hunk_lines = bstr::concat(&[hunk_line1, hunk_line2.as_bytes(), hunk_line3, hunk_line4]);
 
     let out = parse_all(P_HUNK_LINE, hunk_line1);
 

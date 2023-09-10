@@ -92,7 +92,7 @@ pub fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour
   let text = if let Ok(parts) = colour.colour(&f!("{}\n", line.text)) {
     build_line(parts, &colour.colouring.theme)
   } else {
-    escape_xml(&line.text.replace('\n', ""))
+    escape_xml(&line.text.to_string().replace('\n', ""))
   };
 
   match line.status {

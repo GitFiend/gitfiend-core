@@ -7,7 +7,7 @@ pub(crate) mod standard_parsers;
 
 pub type Parser<T> = fn(&mut Input) -> Option<T>;
 
-pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
+pub fn parse_all<T>(parser: Parser<T>, text: &[u8]) -> Option<T> {
   run_parser(
     parser,
     text,
@@ -18,7 +18,7 @@ pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
   )
 }
 
-pub fn parse_all_err<T>(parser: Parser<T>, text: &str) -> Result<T, String> {
+pub fn parse_all_err<T>(parser: Parser<T>, text: &[u8]) -> Result<T, String> {
   run_parser_err(
     parser,
     text,
@@ -30,7 +30,7 @@ pub fn parse_all_err<T>(parser: Parser<T>, text: &str) -> Result<T, String> {
 }
 
 // Beware: Doesn't complain.
-pub fn parse_part<T>(parser: Parser<T>, text: &str) -> Option<T> {
+pub fn parse_part<T>(parser: Parser<T>, text: &[u8]) -> Option<T> {
   run_parser(
     parser,
     text,
@@ -46,7 +46,7 @@ pub struct ParseOptions {
   pub print_error: bool,
 }
 
-pub fn run_parser<T>(parser: Parser<T>, text: &str, options: ParseOptions) -> Option<T> {
+pub fn run_parser<T>(parser: Parser<T>, text: &[u8], options: ParseOptions) -> Option<T> {
   let mut input = Input::new(text);
 
   let result = parser(&mut input);
@@ -64,7 +64,7 @@ pub fn run_parser<T>(parser: Parser<T>, text: &str, options: ParseOptions) -> Op
 
 pub fn run_parser_err<T>(
   parser: Parser<T>,
-  text: &str,
+  text: &[u8],
   options: ParseOptions,
 ) -> Result<T, String> {
   let mut input = Input::new(text);
@@ -143,7 +143,7 @@ mod tests {
   fn test_map() {
     let my_parser = map!(word!("omg"), String::from);
 
-    let res = parse_all(my_parser, "omg");
+    let res = parse_all(my_parser, b"omg");
 
     assert_eq!(res.unwrap(), String::from("omg"));
   }
@@ -152,7 +152,7 @@ mod tests {
   fn test_map2() {
     let my_parser = map!(character!('c'), String::from);
 
-    let res = parse_all(my_parser, "c");
+    let res = parse_all(my_parser, b"c");
 
     assert_eq!(res.unwrap(), String::from("c"));
   }

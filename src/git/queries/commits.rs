@@ -43,7 +43,7 @@ pub fn load_top_commit_for_branch(options: &TopCommitOptions) -> R<CommitInfo> {
   })?
   .stdout;
 
-  parse_all_err(P_COMMIT_ROW, out.as_str())
+  parse_all_err(P_COMMIT_ROW, out.as_bytes())
 }
 
 pub fn load_head_commit(options: &ReqOptions) -> R<CommitInfo> {
@@ -58,7 +58,7 @@ pub fn load_head_commit(options: &ReqOptions) -> R<CommitInfo> {
     repo_path: &options.repo_path,
   })?;
 
-  parse_all_err(P_COMMIT_ROW, out.stdout.as_str())
+  parse_all_err(P_COMMIT_ROW, out.stdout.as_bytes())
 }
 
 #[derive(Debug, Clone, Deserialize, TS)]
@@ -179,7 +179,7 @@ pub fn load_commits(repo_path: &RepoPath, num: u32) -> R<Vec<CommitInfo>> {
   .stdout;
 
   time_result!(format!("parse commits. Length {}", out.len()), {
-    parse_all_err(P_COMMITS, &out)
+    parse_all_err(P_COMMITS, out.as_bytes())
   })
 }
 
@@ -225,7 +225,9 @@ pub fn commit_ids_between_commits_fallback(
     .stdout
   });
 
-  parse_all_err(P_ID_LIST, &out)
+  let result = parse_all_err(P_ID_LIST, out.as_bytes())?;
+
+  Ok(result.into_iter().map(|id| id.to_string()).collect())
 }
 
 #[derive(Debug, Deserialize, TS)]

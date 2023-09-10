@@ -3,18 +3,21 @@ use crate::git::queries::hunks::hunk_line_parsers::{Line, P_HUNK_LINES, P_HUNK_L
 use crate::parser::standard_parsers::{UNTIL_LINE_END, WS};
 use crate::parser::Parser;
 use crate::{and, many, map, or, word};
+use bstr::{BString, B};
 
-type IgnoredLine<'a> = (&'a str, String);
+type IgnoredLine<'a> = (&'a [u8], BString);
 
-const P_DIFF_LINE: Parser<IgnoredLine> = and!(word!("diff"), UNTIL_LINE_END);
+const P_DIFF_LINE: Parser<IgnoredLine> = and!(word!(b"diff"), UNTIL_LINE_END);
 
-const P_OPTIONAL_HEADER: Parser<String> = or!(
-  map!(and!(word!("deleted"), UNTIL_LINE_END), |_: IgnoredLine| {
-    String::from("deleted")
-  }),
-  map!(and!(word!("new file"), UNTIL_LINE_END), |_: IgnoredLine| {
-    String::from("new file")
-  }),
+const P_OPTIONAL_HEADER: Parser<BString> = or!(
+  map!(
+    and!(word!(B("deleted")), UNTIL_LINE_END),
+    |_: IgnoredLine| { BString::from("deleted") }
+  ),
+  map!(
+    and!(word!(B("new file")), UNTIL_LINE_END),
+    |_: IgnoredLine| { BString::from("new file") }
+  ),
   P_RENAME_HEADER,
   WS
 );
@@ -26,22 +29,22 @@ similarity index 88%
 rename from BetterName.txt
 rename to BetterName2.txt
  */
-const P_RENAME_HEADER: Parser<String> = map!(
+const P_RENAME_HEADER: Parser<BString> = map!(
   and!(
-    and!(word!("similarity"), UNTIL_LINE_END),
-    and!(word!("rename"), UNTIL_LINE_END),
-    and!(word!("rename"), UNTIL_LINE_END)
+    and!(word!(B("similarity")), UNTIL_LINE_END),
+    and!(word!(B("rename")), UNTIL_LINE_END),
+    and!(word!(B("rename")), UNTIL_LINE_END)
   ),
-  |_: (IgnoredLine, IgnoredLine, IgnoredLine)| { String::from("rename") }
+  |_: (IgnoredLine, IgnoredLine, IgnoredLine)| { BString::from(b"rename") }
 );
 
-const P_INDEX_LINE: Parser<IgnoredLine> = and!(word!("index"), UNTIL_LINE_END);
+const P_INDEX_LINE: Parser<IgnoredLine> = and!(word!(b"index"), UNTIL_LINE_END);
 
-const P_OLD_FILE: Parser<IgnoredLine> = and!(word!("---"), UNTIL_LINE_END);
+const P_OLD_FILE: Parser<IgnoredLine> = and!(word!(b"---"), UNTIL_LINE_END);
 
-const P_NEW_FILE: Parser<IgnoredLine> = and!(word!("+++"), UNTIL_LINE_END);
+const P_NEW_FILE: Parser<IgnoredLine> = and!(word!(b"+++"), UNTIL_LINE_END);
 
-const P_BINARY_INFO: Parser<IgnoredLine> = and!(word!("Binary"), UNTIL_LINE_END);
+const P_BINARY_INFO: Parser<IgnoredLine> = and!(word!(b"Binary"), UNTIL_LINE_END);
 
 struct FileInfo {
   is_binary: bool,
@@ -55,12 +58,12 @@ const P_FILE_INFO: Parser<FileInfo> = or!(
 
 const P_DIFF_HEADER: Parser<FileInfo> = map!(
   and!(P_DIFF_LINE, P_OPTIONAL_HEADER, P_INDEX_LINE, P_FILE_INFO),
-  |res: ((&str, String), String, (&str, String), FileInfo)| { res.3 }
+  |res: ((&[u8], BString), BString, (&[u8], BString), FileInfo)| { res.3 }
 );
 
 const P_HUNK: Parser<Hunk> = map!(
   and!(P_HUNK_LINE_RANGES, UNTIL_LINE_END, P_HUNK_LINES),
-  |res: ((HunkRange, HunkRange), String, Vec<Line>)| {
+  |res: ((HunkRange, HunkRange), BString, Vec<Line>)| {
     let old_line_range = res.0 .0;
     let new_line_range = res.0 .1;
 
@@ -166,7 +169,7 @@ index 4296fe4..5b0d387 100644
 --- a/src2/renderer-process/redux-store/repo-state/commits/commits-reducer.test.ts
 +++ b/src2/renderer-process/redux-store/repo-state/commits/commits-reducer.test.ts";
 
-    let result = parse_all(P_DIFF_HEADER, diff_header);
+    let result = parse_all(P_DIFF_HEADER, diff_header.as_bytes());
 
     assert!(result.is_some());
   }
@@ -182,7 +185,7 @@ index 4296fe4..5b0d387 100644
 
     let hunk_text = format!("{}\n{}", line_range, hunk_lines);
 
-    let out = parse_all(P_HUNK, &hunk_text);
+    let out = parse_all(P_HUNK, hunk_text.as_bytes());
 
     assert!(out.is_some());
   }

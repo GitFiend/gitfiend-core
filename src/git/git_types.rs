@@ -1,6 +1,9 @@
-use serde::{Deserialize, Serialize};
+use bstr::{BString, ByteSlice};
+// use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
+
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -148,8 +151,10 @@ pub struct HunkLine {
   pub old_num: Option<i32>,
   pub new_num: Option<i32>,
   pub hunk_index: i32,
-  pub text: String,
   pub index: u32,
+
+  // both base64 encoded
+  pub text: String,
   pub line_ending: String,
 }
 

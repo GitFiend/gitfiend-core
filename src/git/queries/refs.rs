@@ -4,16 +4,17 @@ use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
+use bstr::BString;
 use loggers::elapsed;
 
 pub(crate) mod head_info;
 pub(crate) mod ref_diffs;
 
-const REF_NAME_PARSER: Parser<String> =
+const REF_NAME_PARSER: Parser<BString> =
   take_char_while!(|c: char| { !c.is_whitespace() && c != ',' && c != '(' && c != ')' });
 
-pub const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: String| {
-  let cleaned = result.replace("^{}", "");
+pub const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: BString| {
+  let cleaned = result.to_string().replace("^{}", "");
   let parts: Vec<&str> = cleaned.split('/').collect();
   let ref_type = get_type_from_name(&parts);
 
@@ -54,7 +55,7 @@ const P_COMMIT_REFS: Parser<Vec<RefInfoPart>> = map!(
 );
 
 pub const P_OPTIONAL_REFS: Parser<Vec<RefInfoPart>> =
-  or!(P_COMMIT_REFS, map!(WS, |_: String| { Vec::new() }));
+  or!(P_COMMIT_REFS, map!(WS, |_: BString| { Vec::new() }));
 
 // fn get_type_from_name(part: &str) -> RefType {
 //   match part {
@@ -275,20 +276,20 @@ mod tests {
 
   #[test]
   fn test_p_ref_name() {
-    let res = parse_all(P_REF_NAME, "refs/heads/git-lib");
+    let res = parse_all(P_REF_NAME, b"refs/heads/git-lib");
 
     assert!(res.is_some());
   }
 
   #[test]
   fn test_p_tag_ref() {
-    let result = parse_all(P_TAG_REF, "tag: refs/tags/v0.11.2");
+    let result = parse_all(P_TAG_REF, b"tag: refs/tags/v0.11.2");
     assert!(result.is_some());
   }
 
   #[test]
   fn test_p_head_ref() {
-    let result = parse_all(P_HEAD_REF, "HEAD -> refs/heads/master");
+    let result = parse_all(P_HEAD_REF, b"HEAD -> refs/heads/master");
 
     assert!(result.is_some());
     assert_eq!(result.unwrap().id, "refs/heads/master");
@@ -297,7 +298,7 @@ mod tests {
   #[test]
   fn test_p_commit_refs() {
     let a = "(HEAD -> refs/heads/master, refs/remotes/origin/master, refs/remotes/origin/HEAD)";
-    let result = parse_all(P_COMMIT_REFS, a);
+    let result = parse_all(P_COMMIT_REFS, a.as_bytes());
 
     assert!(result.is_some());
     assert_eq!(result.as_ref().unwrap().len(), 3);
@@ -307,7 +308,7 @@ mod tests {
   #[test]
   fn test_p_optional_refs() {
     let a = "(HEAD -> refs/heads/master, refs/remotes/origin/master)";
-    let result = parse_all(P_OPTIONAL_REFS, a);
+    let result = parse_all(P_OPTIONAL_REFS, a.as_bytes());
 
     assert!(result.is_some());
 
@@ -317,7 +318,7 @@ mod tests {
     assert_eq!(refs[0].id, "refs/heads/master");
 
     let b = "(HEAD -> refs/heads/master, refs/remotes/origin/master, refs/remotes/origin/HEAD)";
-    let result = parse_all(P_OPTIONAL_REFS, b);
+    let result = parse_all(P_OPTIONAL_REFS, b.as_bytes());
 
     assert!(result.is_some());
 

@@ -1,10 +1,11 @@
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch, PatchType};
+use crate::git::queries::hunks::decode_text;
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::COMMIT_0_ID;
-use crate::git::run_git;
-use crate::git::run_git::{GitOut, RunGitOptions};
+use crate::git::run_git::{run_git_bstr, GitOut2, RunGitOptions};
 use crate::parser::parse_all_err;
 use crate::server::request_util::R;
+use bstr::ByteSlice;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -18,7 +19,7 @@ pub struct ReqHunkOptions {
 }
 
 pub fn load_hunks(options: &ReqHunkOptions) -> R<(Vec<Hunk>, Vec<HunkLine>)> {
-  let GitOut { stdout, .. } = run_git::run_git_err(RunGitOptions {
+  let GitOut2 { stdout, .. } = run_git_bstr(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options.commit, &options.patch),
   })?;
@@ -32,7 +33,7 @@ pub fn load_hunks(options: &ReqHunkOptions) -> R<(Vec<Hunk>, Vec<HunkLine>)> {
 type HunkLinesSplit = (Vec<Hunk>, Vec<HunkLine>, Vec<HunkLine>);
 
 pub fn load_hunks_split(options: &ReqHunkOptions) -> R<HunkLinesSplit> {
-  let GitOut { stdout, .. } = run_git::run_git_err(RunGitOptions {
+  let GitOut2 { stdout, .. } = run_git_bstr(RunGitOptions {
     repo_path: &options.repo_path,
     args: load_hunks_args(&options.commit, &options.patch),
   })?;
@@ -181,7 +182,8 @@ fn clear_lines_if_empty(lines: Vec<HunkLine>) -> Vec<HunkLine> {
       .collect::<Vec<_>>();
 
     if unchanged.is_empty()
-      || unchanged.len() == 1 && unchanged[0].text.contains("No newline at end of file")
+      || unchanged.len() == 1
+        && decode_text(&unchanged[0].text).contains_str("No newline at end of file")
     {
       return Vec::new();
     }

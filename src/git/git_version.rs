@@ -3,7 +3,8 @@ use crate::git::store::GIT_VERSION;
 use crate::parser::standard_parsers::UNSIGNED_INT;
 use crate::parser::{parse_part, Parser};
 use crate::server::git_request::ReqOptions;
-use crate::{and, character, map, rep_parser_sep, take_char_while};
+use crate::{and, character, map2, rep_parser_sep, take_char_while};
+use bstr::BString;
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -56,53 +57,56 @@ impl GitVersion {
 }
 
 fn parse_version(text: &str) -> Option<GitVersion> {
-  parse_part(P_VERSION, text)?
+  parse_part(P_VERSION, text.as_bytes())?
 }
 
 // Takes something like "git version 2.32.0"
-const P_VERSION_STRING: Parser<(String, Vec<String>)> = and!(
+const P_VERSION_STRING: Parser<(BString, Vec<BString>)> = and!(
   take_char_while!(|c: char| !c.is_numeric()),
   rep_parser_sep!(UNSIGNED_INT, character!('.'))
 );
 
-const P_VERSION: Parser<Option<GitVersion>> =
-  map!(P_VERSION_STRING, |res: (String, Vec<String>)| {
-    let (_, nums) = res;
+const P_VERSION: Parser<Option<GitVersion>> = map2!(P_VERSION_STRING, res, {
+  let (_, nums) = res;
 
-    Some(GitVersion {
-      major: nums
-        .get(0)
-        .unwrap_or(&String::from(""))
-        .parse()
-        .unwrap_or(0),
-      minor: nums
-        .get(1)
-        .unwrap_or(&String::from(""))
-        .parse()
-        .unwrap_or(0),
-      patch: nums
-        .get(2)
-        .unwrap_or(&String::from(""))
-        .parse()
-        .unwrap_or(0),
-    })
-  });
+  Some(GitVersion {
+    major: nums
+      .get(0)
+      .unwrap_or(&BString::from(""))
+      .to_string()
+      .parse()
+      .unwrap_or(0),
+    minor: nums
+      .get(1)
+      .unwrap_or(&BString::from(""))
+      .to_string()
+      .parse()
+      .unwrap_or(0),
+    patch: nums
+      .get(2)
+      .unwrap_or(&BString::from(""))
+      .to_string()
+      .parse()
+      .unwrap_or(0),
+  })
+});
 
 #[cfg(test)]
 mod tests {
   use crate::git::git_version::{parse_version, GitVersion, P_VERSION_STRING};
   use crate::parser::parse_all;
+  use bstr::BString;
 
   #[test]
   fn test_p_version_string() {
-    let result = parse_all(P_VERSION_STRING, "git version 2.32.0");
+    let result = parse_all(P_VERSION_STRING, b"git version 2.32.0");
 
     assert!(result.is_some());
     assert_eq!(
       result.unwrap(),
       (
-        "git version ".to_string(),
-        vec!["2".to_string(), "32".to_string(), "0".to_string()]
+        BString::from("git version "),
+        vec![BString::from("2"), BString::from("32"), BString::from("0")]
       )
     );
   }

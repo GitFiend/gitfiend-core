@@ -6,7 +6,7 @@ export interface HunkLine {
   oldNum: number | null;
   newNum: number | null;
   hunkIndex: number;
-  text: string;
   index: number;
+  text: string;
   lineEnding: string;
 }

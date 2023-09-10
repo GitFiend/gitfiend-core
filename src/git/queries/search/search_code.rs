@@ -6,6 +6,7 @@ use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
 use crate::git::queries::search::search_cancelled;
 use crate::git::store;
 use crate::parser::parse_all;
+use bstr::BString;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::process::{Command, Stdio};
@@ -70,7 +71,7 @@ pub fn search_commits_for_code(
 }
 
 // Just returns the raw text result from Git.
-pub fn search_code_command(options: &CodeSearchOpts, search_id: u32) -> Option<String> {
+pub fn search_code_command(options: &CodeSearchOpts, search_id: u32) -> Option<BString> {
   dprintln!(
     "Search for text: {}, id: {}, num: {}",
     options.search_text,
@@ -119,12 +120,14 @@ pub fn search_code_command(options: &CodeSearchOpts, search_id: u32) -> Option<S
   }
 
   if cmd.wait().ok()?.success() {
-    let mut text = String::new();
+    // let mut text = String::new();
+    let mut text2 = Vec::new();
 
-    let len = cmd.stdout?.read_to_string(&mut text).ok()?;
+    let len = cmd.stdout?.read(&mut text2).ok()?;
+    // let len = cmd.stdout?.read_to_string(&mut text).ok()?;
 
     if len > 0 {
-      return Some(text);
+      return Some(BString::from(text2));
     }
   }
 

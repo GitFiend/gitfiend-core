@@ -60,4 +60,8 @@ pub fn set_git_env() {
       }
     }
   }
+
+  if let Err(err) = fix_path_env::fix() {
+    eprintln!("{err}");
+  }
 }

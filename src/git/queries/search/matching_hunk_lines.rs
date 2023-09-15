@@ -38,7 +38,7 @@ pub fn get_matching_hunk_lines(
 
   let hunk_lines = get_matching_lines_in_hunks(hunks, search_text);
 
-  return Ok(hunk_lines);
+  Ok(hunk_lines)
 }
 
 fn get_hunks_from_cache(key: &str) -> Option<Vec<Hunk>> {

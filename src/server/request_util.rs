@@ -6,6 +6,25 @@ Stop using unwrap in these macros.
 Convert macros where possible to functions.
  */
 
+use ts_rs::TS;
+
+// TODO: Try refactor to use this instead of R
+pub type R2<T> = Result<T, ES>;
+
+#[derive(Debug, Clone, TS)]
+#[ts(export)]
+pub enum ES {
+  Text(String),
+}
+
+impl From<std::io::Error> for ES {
+  fn from(err: std::io::Error) -> Self {
+    ES::Text(err.to_string())
+  }
+}
+
+pub type R<T> = Result<T, String>;
+
 #[macro_export]
 macro_rules! parse_json {
   ($request: expr) => {{
@@ -65,5 +84,3 @@ macro_rules! handle_function_request {
     }
   }};
 }
-
-pub type R<T> = Result<T, String>;

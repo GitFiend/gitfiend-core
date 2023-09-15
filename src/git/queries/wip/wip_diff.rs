@@ -25,19 +25,23 @@ pub struct ReqWipHunksOptions {
   pub head_commit: Option<Commit>,
 }
 
-pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> R<(Vec<Hunk>, u32)> {
-  let lines = load_wip_hunk_lines(options)?;
+pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> R<(Vec<Hunk>, u32, bool)> {
+  let (lines, valid_utf8) = load_wip_hunk_lines(options)?;
+  let (hunks, patch_size) = convert_lines_to_hunks(lines);
 
-  Ok(convert_lines_to_hunks(lines))
+  Ok((hunks, patch_size, valid_utf8))
 }
 
-pub fn load_wip_hunks_split(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, Vec<HunkLine>)> {
-  let (hunks, _) = load_wip_hunks(options)?;
+pub fn load_wip_hunks_split(
+  options: &ReqWipHunksOptions,
+) -> R<(Vec<HunkLine>, Vec<HunkLine>, bool)> {
+  let (hunks, _, valid_utf8) = load_wip_hunks(options)?;
+  let (left, right) = flatten_hunks_split(hunks);
 
-  Ok(flatten_hunks_split(hunks))
+  Ok((left, right, valid_utf8))
 }
 
-pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
+pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bool)> {
   let ReqWipHunksOptions {
     patch,
     repo_path,
@@ -51,28 +55,34 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
   } = patch;
 
   if *is_image {
-    return Ok(Vec::new());
+    return Ok((Vec::new(), true));
   }
 
   let new_file_info = load_file(repo_path, new_file)?;
 
   if *patch_type == WipPatchType::A || head_commit.is_none() {
-    return Ok(calc_hunk_line_from_text("", &new_file_info.text));
+    return Ok((
+      calc_hunk_line_from_text("", &new_file_info.text),
+      new_file_info.valid_utf8,
+    ));
   }
 
   if let Some(commit) = head_commit {
     let mut old_text = load_unchanged_file(repo_path, patch, commit).unwrap_or(String::from(""));
 
     if *patch_type == WipPatchType::D {
-      return Ok(calc_hunk_line_from_text(&old_text, ""));
+      return Ok((calc_hunk_line_from_text(&old_text, ""), true));
     }
 
     old_text = switch_to_line_ending(old_text, &new_file_info.line_ending);
 
-    return Ok(calc_hunk_line_from_text(&old_text, &new_file_info.text));
+    return Ok((
+      calc_hunk_line_from_text(&old_text, &new_file_info.text),
+      new_file_info.valid_utf8,
+    ));
   }
 
-  Ok(Vec::new())
+  Ok((Vec::new(), true))
 }
 
 struct FileInfo {

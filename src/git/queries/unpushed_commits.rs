@@ -1,9 +1,9 @@
 use crate::git::git_types::{Commit, RefInfo, RefLocation, RefType};
 use crate::git::queries::commit_calcs::get_commit_ids_between_commit_ids;
 use crate::git::queries::commits_parsers::P_ID_LIST;
-use crate::git::run_git::{run_git, RunGitOptions};
+use crate::git::run_git::{run_git_err, RunGitOptions};
 use crate::git::store;
-use crate::parser::parse_all;
+use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
 use crate::{dprintln, time_result};
 use ahash::{AHashMap, AHashSet};
@@ -32,11 +32,11 @@ pub fn get_un_pushed_commits(options: &ReqOptions) -> UnPushedCommits {
     dprintln!("get_un_pushed_commits: Refs not found in commits, fall back to git request.");
   }
 
-  if let Some(out) = run_git(RunGitOptions {
+  if let Ok(out) = run_git_err(RunGitOptions {
     repo_path: &options.repo_path,
     args: ["log", "HEAD", "--not", "--remotes", "--pretty=format:%H"],
   }) {
-    if let Some(ids) = parse_all(P_ID_LIST, &out) {
+    if let Ok(ids) = parse_all_err(P_ID_LIST, &out.stdout) {
       return UnPushedCommits {
         // This branch is probably far behind the remote.
         // TODO: Do we include all commits then?

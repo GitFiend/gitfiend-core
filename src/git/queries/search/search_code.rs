@@ -57,7 +57,7 @@ pub fn search_commits_for_code(
           .into_iter()
           .flat_map(|patch| {
             Some(FileMatch {
-              lines: get_matching_hunk_lines(repo_path, commit, &patch, search_text)?,
+              lines: get_matching_hunk_lines(repo_path, commit, &patch, search_text).ok()?,
               patch,
             })
           })

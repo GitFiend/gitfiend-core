@@ -1,4 +1,4 @@
-use crate::git::run_git::{run_git, RunGitOptions};
+use crate::git::run_git::{run_git_err, RunGitOptions};
 use crate::git::store::GIT_VERSION;
 use crate::parser::standard_parsers::UNSIGNED_INT;
 use crate::parser::{parse_part, Parser};
@@ -8,11 +8,11 @@ use serde::Serialize;
 use ts_rs::TS;
 
 pub fn load_git_version() {
-  if let Some(version_str) = run_git(RunGitOptions {
+  if let Ok(version_str) = run_git_err(RunGitOptions {
     repo_path: ".",
     args: ["--version"],
   }) {
-    if let Some(version) = parse_version(&version_str) {
+    if let Some(version) = parse_version(&version_str.stdout) {
       GIT_VERSION.set(version);
     }
   }

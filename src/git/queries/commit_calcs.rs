@@ -1,7 +1,7 @@
 use ahash::{AHashMap, AHashSet};
 
 use crate::git::git_types::Commit;
-use crate::git::run_git::{run_git, RunGitOptions};
+use crate::git::run_git::{run_git_err, RunGitOptions};
 use crate::git::store::REF_DIFFS;
 
 fn _get_commit_map(commits: &[Commit]) -> AHashMap<&String, &Commit> {
@@ -35,15 +35,6 @@ pub fn find_commit_ancestors<'a>(
   ancestors
 }
 
-// impl Global<AHashMap<String, u32>> {
-//   fn get_diff(&self, key: &str) -> Option<u32> {
-//     if let Ok(diffs) = REF_DIFFS.read() {
-//       return Some(*diffs.get(key)?);
-//     }
-//     None
-//   }
-// }
-
 // How many commits ahead is a. The order matters.
 pub fn count_commits_between_commit_ids(
   a_id: &String,
@@ -57,10 +48,6 @@ pub fn count_commits_between_commit_ids(
       return *count;
     }
   }
-
-  // if let Some(count) = REF_DIFFS.get_diff(&key) {
-  //   return count;
-  // }
 
   if let Some(a) = commits.get(a_id) {
     if let Some(b) = commits.get(b_id) {
@@ -85,7 +72,6 @@ pub fn count_commits_between_commit_ids(
       if let Ok(mut diffs) = REF_DIFFS.write() {
         diffs.insert(key, num);
       }
-      // REF_DIFFS.insert(key, num);
 
       return num;
     }
@@ -138,7 +124,7 @@ pub fn count_commits_between_fallback(repo_path: &str, commit_id1: &str, commit_
     return 0;
   }
 
-  let out = run_git(RunGitOptions {
+  let out = run_git_err(RunGitOptions {
     args: [
       "rev-list",
       &format!("{}..{}", commit_id1, commit_id2),
@@ -147,8 +133,8 @@ pub fn count_commits_between_fallback(repo_path: &str, commit_id1: &str, commit_
     repo_path,
   });
 
-  if let Some(out) = out {
-    return out.trim().parse::<u32>().ok().unwrap_or(0);
+  if let Ok(out) = out {
+    return out.stdout.trim().parse::<u32>().ok().unwrap_or(0);
   }
 
   0

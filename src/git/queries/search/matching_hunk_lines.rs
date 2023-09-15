@@ -3,10 +3,10 @@ use std::time::Duration;
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::hunks::load_hunks::load_hunks_args;
-use crate::git::run_git;
-use crate::git::run_git::RunGitOptions;
+use crate::git::run_git::{run_git_err, RunGitOptions};
 use crate::global;
-use crate::parser::parse_all;
+use crate::parser::parse_all_err;
+use crate::server::request_util::R;
 use crate::util::global::Global;
 use crate::util::short_cache::ShortCache;
 
@@ -21,26 +21,24 @@ pub fn get_matching_hunk_lines(
   commit: &Commit,
   patch: &Patch,
   search_text: &str,
-) -> Option<Vec<HunkLine>> {
+) -> R<Vec<HunkLine>> {
   let cache_id = format!("{}{}", commit.id, patch.id);
 
   if let Some(hunks) = get_hunks_from_cache(&cache_id) {
-    return Some(get_matching_lines_in_hunks(hunks, search_text));
+    return Ok(get_matching_lines_in_hunks(hunks, search_text));
   }
 
-  if let Some(out) = run_git::run_git(RunGitOptions {
+  let out = run_git_err(RunGitOptions {
     repo_path,
     args: load_hunks_args(commit, patch),
-  }) {
-    let hunks = parse_all(P_HUNKS, &out)?;
-    store_hunk_in_cache(&cache_id, hunks.clone());
+  })?;
 
-    let hunk_lines = get_matching_lines_in_hunks(hunks, search_text);
+  let hunks = parse_all_err(P_HUNKS, &out.stdout)?;
+  store_hunk_in_cache(&cache_id, hunks.clone());
 
-    return Some(hunk_lines);
-  }
+  let hunk_lines = get_matching_lines_in_hunks(hunks, search_text);
 
-  None
+  return Ok(hunk_lines);
 }
 
 fn get_hunks_from_cache(key: &str) -> Option<Vec<Hunk>> {

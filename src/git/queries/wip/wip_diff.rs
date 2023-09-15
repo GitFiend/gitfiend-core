@@ -9,10 +9,8 @@ use ts_rs::TS;
 
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
 use crate::git::queries::hunks::load_hunks::flatten_hunks_split;
-use crate::git::queries::syntax_colouring::COLOURING;
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
-use crate::git::run_git;
-use crate::git::run_git::RunGitOptions;
+use crate::git::run_git::{run_git_err, RunGitOptions};
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
 use crate::server::request_util::R;
@@ -30,8 +28,6 @@ pub struct ReqWipHunksOptions {
 pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> R<(Vec<Hunk>, u32)> {
   let lines = load_wip_hunk_lines(options)?;
 
-  // try_colour(&lines, &options.patch);
-
   Ok(convert_lines_to_hunks(lines))
 }
 
@@ -39,46 +35,6 @@ pub fn load_wip_hunks_split(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, V
   let (hunks, _) = load_wip_hunks(options)?;
 
   Ok(flatten_hunks_split(hunks))
-}
-
-pub fn load_wip_hunks_coloured(options: &ReqWipHunksOptions) -> R<()> {
-  let lines = load_wip_hunk_lines(options)?;
-  // let hunks = convert_lines_to_hunks(lines);
-
-  try_colour(&lines, &options.patch);
-
-  Ok(())
-}
-
-fn try_colour(lines: &[HunkLine], patch: &WipPatch) {
-  if let Ok(colouring) = COLOURING.read() {
-    let syntax_set = &colouring.syntax_set;
-    let theme_set = &colouring.theme_set;
-
-    let file_extension = Path::new(&patch.new_file)
-      .extension()
-      .unwrap()
-      .to_str()
-      .unwrap();
-
-    println!("extension: {}", file_extension);
-
-    if let Some(syntax) = syntax_set.find_syntax_by_extension(file_extension) {
-      let mut highlighter =
-        syntect::easy::HighlightLines::new(syntax, &theme_set.themes["base16-ocean.dark"]);
-
-      for line in lines {
-        if let Ok(highlighted_line) = highlighter.highlight_line(&line.text, syntax_set) {
-          for (style, text) in highlighted_line {
-            print!("{:?}", style.foreground);
-            print!("{}", text);
-            print!("{:?}", style.foreground);
-          }
-          // println!("{:?}", highlighted_line);
-        }
-      }
-    }
-  }
 }
 
 pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
@@ -105,8 +61,7 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
   }
 
   if let Some(commit) = head_commit {
-    let mut old_text =
-      load_unchanged_file(repo_path, patch, commit).unwrap_or_else(|| String::from(""));
+    let mut old_text = load_unchanged_file(repo_path, patch, commit).unwrap_or(String::from(""));
 
     if *patch_type == WipPatchType::D {
       return Ok(calc_hunk_line_from_text(&old_text, ""));
@@ -248,15 +203,14 @@ fn get_status_from_change_tag(tag: &ChangeTag) -> HunkLineStatus {
   }
 }
 
-fn load_unchanged_file(
-  repo_path: &String,
-  patch: &WipPatch,
-  head_commit: &Commit,
-) -> Option<String> {
-  run_git::run_git(RunGitOptions {
-    repo_path,
-    args: ["show", &format!("{}:{}", head_commit.id, &patch.old_file)],
-  })
+fn load_unchanged_file(repo_path: &String, patch: &WipPatch, head_commit: &Commit) -> R<String> {
+  Ok(
+    run_git_err(RunGitOptions {
+      repo_path,
+      args: ["show", &format!("{}:{}", head_commit.id, &patch.old_file)],
+    })?
+    .stdout,
+  )
 }
 
 #[cfg(test)]

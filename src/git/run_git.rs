@@ -1,4 +1,5 @@
 use crate::dprintln;
+use chardetng::EncodingDetector;
 use std::ffi::OsStr;
 use std::path::Path;
 use std::process::{Command, Output};
@@ -14,30 +15,6 @@ where
 {
   pub args: I,
   pub repo_path: &'a str,
-}
-
-pub fn run_git<I, S>(options: RunGitOptions<I, S>) -> Option<String>
-where
-  I: IntoIterator<Item = S>,
-  S: AsRef<OsStr>,
-{
-  let result = Command::new(Path::new(GIT_PATH.as_path()))
-    .args(options.args)
-    .current_dir(options.repo_path)
-    .output();
-
-  if let Ok(out) = result {
-    let Output { stdout, stderr, .. } = &out;
-
-    // TODO: Is stderr sometimes valid and useful git output?
-    if !stdout.is_empty() {
-      return Some(String::from_utf8_lossy(stdout).to_string());
-    } else if !stderr.is_empty() {
-      dprintln!("StdErr: {:?}", String::from_utf8_lossy(stderr).to_string());
-    }
-  }
-
-  None
 }
 
 pub struct GitOut {
@@ -59,9 +36,18 @@ where
   let Output { stdout, stderr, .. } = &out;
 
   Ok(GitOut {
-    stdout: String::from_utf8_lossy(stdout).to_string(),
-    stderr: String::from_utf8_lossy(stderr).to_string(),
+    stdout: read_buffer_to_string(stdout),
+    stderr: read_buffer_to_string(stderr),
   })
+}
+
+fn read_buffer_to_string(bytes: &[u8]) -> String {
+  let mut decoder = EncodingDetector::new();
+  decoder.feed(bytes, true);
+  let encoding = decoder.guess(None, true);
+  let content = encoding.decode(bytes).0;
+
+  content.into_owned()
 }
 
 pub fn run_git_buffer<I, S>(options: RunGitOptions<I, S>) -> Option<Vec<u8>>
@@ -96,13 +82,13 @@ mod tests {
 
   #[test]
   fn test_run_git() {
-    let text = run_git::run_git(RunGitOptions {
+    let text = run_git::run_git_err(RunGitOptions {
       args: ["--help"],
       repo_path: ".",
     });
 
-    assert!(text.is_some());
-    assert!(!text.unwrap().is_empty());
+    assert!(text.is_ok());
+    assert!(!text.unwrap().stdout.is_empty());
   }
 
   #[test]

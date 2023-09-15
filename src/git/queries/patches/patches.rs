@@ -9,9 +9,8 @@ use crate::git::queries::patches::patch_parsers::{
   map_data_to_patch, P_MANY_PATCHES_WITH_COMMIT_IDS, P_PATCHES,
 };
 use crate::git::queries::COMMIT_0_ID;
-use crate::git::run_git;
 use crate::git::run_git::{run_git_err, RunGitOptions};
-use crate::parser::{parse_all, parse_all_err};
+use crate::parser::parse_all_err;
 use crate::server::request_util::R;
 
 #[elapsed]
@@ -65,7 +64,7 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> R<HashMap<String,
   }
 
   if !commits_without_patches.is_empty() {
-    if let Some(patches) =
+    if let Ok(patches) =
       load_normal_patches(repo_path, &commits_without_patches, commits.len() as u32)
     {
       new_patches.extend(patches);
@@ -92,7 +91,7 @@ fn load_normal_patches(
   repo_path: &str,
   commits_without_patches: &Vec<&Commit>,
   num_commits: u32,
-) -> Option<HashMap<String, Vec<Patch>>> {
+) -> R<HashMap<String, Vec<Patch>>> {
   if commits_without_patches.len() > 20 {
     // Assume we now have all the plain commits.
     load_all_patches_for_normal_commits(repo_path, num_commits)
@@ -106,14 +105,15 @@ fn load_normal_patches(
     ids.insert(0, "show");
     ids.extend(["--name-status", "--pretty=format:%H,", "-z"]);
 
-    let out = run_git::run_git(RunGitOptions {
+    let out = run_git_err(RunGitOptions {
       repo_path,
       args: ids,
-    })?;
+    })?
+    .stdout;
 
-    let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
+    let commit_patches = parse_all_err(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
 
-    Some(commit_patches.into_iter().collect())
+    Ok(commit_patches.into_iter().collect())
   }
 }
 
@@ -121,8 +121,8 @@ fn load_normal_patches(
 fn load_all_patches_for_normal_commits(
   repo_path: &str,
   num_commits: u32,
-) -> Option<HashMap<String, Vec<Patch>>> {
-  let out = run_git::run_git(RunGitOptions {
+) -> R<HashMap<String, Vec<Patch>>> {
+  let out = run_git_err(RunGitOptions {
     args: [
       "log",
       "--remotes",
@@ -136,11 +136,12 @@ fn load_all_patches_for_normal_commits(
       &format!("-n{}", num_commits),
     ],
     repo_path,
-  })?;
+  })?
+  .stdout;
 
-  let commit_patches = parse_all(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
+  let commit_patches = parse_all_err(P_MANY_PATCHES_WITH_COMMIT_IDS, &out)?;
 
-  Some(commit_patches.into_iter().collect())
+  Ok(commit_patches.into_iter().collect())
 }
 
 // without cache

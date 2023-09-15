@@ -1,4 +1,5 @@
-use std::fs::read_to_string;
+use chardetng::EncodingDetector;
+use std::fs::read;
 use std::ops::Add;
 use std::path::Path;
 
@@ -122,21 +123,43 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<Vec<HunkLine>> {
 struct FileInfo {
   text: String,
   line_ending: String,
+  valid_utf8: bool,
 }
 
 fn load_file(repo_path: &str, file_path: &str) -> R<FileInfo> {
   let path = Path::new(repo_path).join(file_path);
-  let text = read_to_string(path).map_err(|e| e.to_string())?;
-  let line_ending = detect_new_line(&text);
+  let bytes = read(path).map_err(|e| e.to_string())?;
 
-  if !text.ends_with(&line_ending) {
-    return Ok(FileInfo {
-      text: text.add(&line_ending),
+  if let Ok(text) = String::from_utf8(bytes.clone()) {
+    let line_ending = detect_new_line(&text);
+
+    if !text.ends_with(&line_ending) {
+      return Ok(FileInfo {
+        text: text.add(&line_ending),
+        line_ending,
+        valid_utf8: true,
+      });
+    }
+
+    Ok(FileInfo {
+      text,
       line_ending,
-    });
-  }
+      valid_utf8: true,
+    })
+  } else {
+    let mut decoder = EncodingDetector::new();
+    decoder.feed(&bytes, true);
+    let encoding = decoder.guess(None, true);
+    let content = encoding.decode(&bytes).0;
+    let text = content.into_owned();
+    let line_ending = detect_new_line(&text);
 
-  Ok(FileInfo { text, line_ending })
+    Ok(FileInfo {
+      text,
+      line_ending,
+      valid_utf8: false,
+    })
+  }
 }
 
 fn detect_new_line(text: &str) -> String {

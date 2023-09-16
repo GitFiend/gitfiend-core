@@ -3,6 +3,7 @@ use crate::git::queries::commit_calcs::count_commits_between_fallback;
 use crate::git::queries::config::load_full_config;
 use crate::git::queries::wip::wip_patches::{load_wip_patches, WipPatches};
 use crate::git::queries::workspace::load_current_branch::{load_current_branch, read_refs, Refs};
+use crate::git::queries::workspace::load_packed_refs::load_packed_refs;
 use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
@@ -42,8 +43,11 @@ pub fn load_ws_repo2(options: &ReqOptions) -> R<WsRepoState2> {
   let Refs {
     local_id,
     remote_id,
-    others,
+    mut others,
   } = read_refs(repo_path, &current_branch)?;
+
+  let packed_refs = load_packed_refs(repo_path)?;
+  others.extend(packed_refs);
 
   if let Some(local_id) = local_id.clone() {
     if let Some(remote_id) = remote_id {

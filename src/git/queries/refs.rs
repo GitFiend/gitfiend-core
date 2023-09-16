@@ -1,9 +1,9 @@
 use crate::git::git_types::{CommitInfo, GitConfig, RefInfo, RefLocation, RefType};
 use crate::git::store::{RepoPath, CONFIG};
-use crate::or;
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
+use crate::{map2, or};
 use loggers::elapsed;
 
 pub(crate) mod head_info;
@@ -29,10 +29,7 @@ pub const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: Strin
   }
 });
 
-const P_TAG_REF: Parser<RefInfoPart> = map!(and!(word!("tag: "), P_REF_NAME), |result: (
-  &str,
-  RefInfoPart,
-)| { result.1 });
+const P_TAG_REF: Parser<RefInfoPart> = map2!(and!(word!("tag: "), P_REF_NAME), result, result.1);
 
 const P_HEAD_REF: Parser<RefInfoPart> = map!(
   and!(word!("HEAD -> "), P_REF_NAME),
@@ -55,14 +52,6 @@ const P_COMMIT_REFS: Parser<Vec<RefInfoPart>> = map!(
 
 pub const P_OPTIONAL_REFS: Parser<Vec<RefInfoPart>> =
   or!(P_COMMIT_REFS, map!(WS, |_: String| { Vec::new() }));
-
-// fn get_type_from_name(part: &str) -> RefType {
-//   match part {
-//     "tags" => RefType::Tag,
-//     "stash" => RefType::Stash,
-//     _ => RefType::Branch,
-//   }
-// }
 
 fn get_type_from_name(parts: &[&str]) -> RefType {
   if parts.len() > 1 {

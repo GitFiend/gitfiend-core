@@ -1,6 +1,6 @@
 use crate::parser::Parser;
 use crate::{
-  and, character, conditional_char, conditional_char2, map, map2, optional_take_char_while, or,
+  and, character, conditional_char2, map, map2, optional_take_char_while, or,
   take_char_while, until_parser, word,
 };
 

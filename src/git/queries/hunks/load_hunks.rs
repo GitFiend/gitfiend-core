@@ -39,7 +39,7 @@ pub fn load_hunks_split(options: &ReqHunkOptions) -> R<HunkLinesSplit> {
   })?;
 
   let hunks = parse_all_err(P_HUNKS, &stdout)?;
-  let (hunk_lines_left, hunk_lines_right) = flatten_hunks_split(hunks.clone());
+  let (hunk_lines_left, hunk_lines_right) = flatten_hunks_split(&hunks);
 
   Ok((hunks, hunk_lines_left, hunk_lines_right))
 }
@@ -104,7 +104,7 @@ fn flatten_hunks(hunks: Vec<Hunk>) -> Vec<HunkLine> {
   lines
 }
 
-pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
+pub fn flatten_hunks_split(hunks: &[Hunk]) -> (Vec<HunkLine>, Vec<HunkLine>) {
   let mut left = Vec::<HunkLine>::new();
   let mut right = Vec::<HunkLine>::new();
 
@@ -123,12 +123,12 @@ pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
     let mut left_count = 0;
     let mut right_count = 0;
 
-    for line in hunk.lines {
+    for line in &hunk.lines {
       if line.status == Removed {
-        left.push(line);
+        left.push(line.clone());
         left_count += 1;
       } else if line.status == Added {
-        right.push(line);
+        right.push(line.clone());
         right_count += 1;
       } else {
         if right_count > left_count {
@@ -145,7 +145,7 @@ pub fn flatten_hunks_split(hunks: Vec<Hunk>) -> (Vec<HunkLine>, Vec<HunkLine>) {
         }
 
         left.push(line.clone());
-        right.push(line);
+        right.push(line.clone());
       }
     }
 

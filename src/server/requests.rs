@@ -78,36 +78,41 @@ pub fn start_async_server() {
           request,
 
           // Queries
+          git_version,
           run,
+
           scan_workspace,
+          repo_has_changed,
           load_ws_repo2,
+
+          is_rebase_in_progress,
           load_commits_and_refs,
           load_full_config,
-          commit_ids_between_commits,
+
           load_hunks,
           load_hunks_split,
-          is_rebase_in_progress,
-          load_wip_patches,
-          get_un_pushed_commits,
           load_wip_hunks,
           load_wip_hunk_lines,
           load_wip_hunks_split,
-          git_version,
-          calc_ref_diffs,
-          start_diff_search,
-          poll_diff_search,
+          load_conflicted_file,
+          get_patch_as_html,
+
+          load_wip_patches,
           load_patches_for_commit,
-          search_commits,
+          load_commit_image,
+
+          calc_head_info,
+          commit_ids_between_commits,
+          get_un_pushed_commits,
+          calc_ref_diffs,
           commit_is_ancestor,
           commit_is_on_branch,
           get_all_commits_on_current_branch,
-          load_conflicted_file,
-          load_commit_image,
-          calc_head_info,
-          repo_has_changed,
-          auto_complete,
 
-          get_patch_as_html,
+          search_commits,
+          start_diff_search,
+          poll_diff_search,
+          auto_complete,
 
           // TODO: Will this work in a sand-boxed mac app?
           path_exists,

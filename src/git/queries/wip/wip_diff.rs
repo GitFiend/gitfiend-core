@@ -3,7 +3,7 @@ use std::fs::read;
 use std::ops::Add;
 use std::path::Path;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use similar::{ChangeTag, TextDiff};
 use ts_rs::TS;
 
@@ -32,13 +32,25 @@ pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> R<(Vec<Hunk>, u32, bool)>
   Ok((hunks, patch_size, valid_utf8))
 }
 
-pub fn load_wip_hunks_split(
-  options: &ReqWipHunksOptions,
-) -> R<(Vec<HunkLine>, Vec<HunkLine>, bool)> {
-  let (hunks, _, valid_utf8) = load_wip_hunks(options)?;
-  let (left, right) = flatten_hunks_split(hunks);
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
+pub struct WipHunksSplit {
+  left: Vec<HunkLine>,
+  right: Vec<HunkLine>,
+  hunks: Vec<Hunk>,
+  valid_utf8: bool,
+}
 
-  Ok((left, right, valid_utf8))
+pub fn load_wip_hunks_split(options: &ReqWipHunksOptions) -> R<WipHunksSplit> {
+  let (hunks, _, valid_utf8) = load_wip_hunks(options)?;
+  let (left, right) = flatten_hunks_split(&hunks);
+
+  Ok(WipHunksSplit {
+    left,
+    right,
+    hunks,
+    valid_utf8,
+  })
 }
 
 pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bool)> {

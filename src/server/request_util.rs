@@ -1,11 +1,3 @@
-/*
-TODO: Stop passing options into each request as reference.
-
-Stop using unwrap in these macros.
-
-Convert macros where possible to functions.
- */
-
 use ts_rs::TS;
 
 // TODO: Try refactor to use this instead of R
@@ -29,7 +21,11 @@ pub type R<T> = Result<T, String>;
 macro_rules! parse_json {
   ($request: expr) => {{
     let mut content = String::new();
-    $request.as_reader().read_to_string(&mut content).unwrap();
+
+    if let Err(e) = $request.as_reader().read_to_string(&mut content) {
+      dprintln!("{}", e);
+      return;
+    }
 
     match serde_json::from_str(&content) {
       Ok(options) => options,
@@ -44,14 +40,21 @@ macro_rules! parse_json {
 #[macro_export]
 macro_rules! send_response {
   ($request: expr, $result: expr) => {{
-    let serialized = serde_json::to_string(&$result).unwrap();
+    let result = serde_json::to_string(&$result);
 
-    match $request.respond(Response::from_string(serialized)) {
-      Ok(_) => {}
+    match result {
+      Ok(serialized) => {
+        match $request.respond(Response::from_string(serialized)) {
+          Ok(_) => {}
+          Err(e) => {
+            dprintln!("{}", e);
+          }
+        };
+      }
       Err(e) => {
         dprintln!("{}", e);
       }
-    };
+    }
   }};
 }
 

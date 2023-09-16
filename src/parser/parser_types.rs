@@ -24,10 +24,8 @@ macro_rules! or {
   ( $($p:expr),* ) => {
     |input: &mut $crate::parser::input::Input| {
       $({
-        let res = $p(input);
-
-        if res.is_some() {
-          return res
+        if let Some(res) = $p(input) {
+          return Some(res);
         }
       })*
 

@@ -58,9 +58,9 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bo
     return Ok((Vec::new(), true));
   }
 
-  let new_file_info = load_file(repo_path, new_file)?;
-
   if *patch_type == WipPatchType::A || head_commit.is_none() {
+    let new_file_info = load_file(repo_path, new_file)?;
+
     return Ok((
       calc_hunk_line_from_text("", &new_file_info.text),
       new_file_info.valid_utf8,
@@ -73,6 +73,8 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bo
     if *patch_type == WipPatchType::D {
       return Ok((calc_hunk_line_from_text(&old_text, ""), true));
     }
+
+    let new_file_info = load_file(repo_path, new_file)?;
 
     old_text = switch_to_line_ending(old_text, &new_file_info.line_ending);
 

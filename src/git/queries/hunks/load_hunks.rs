@@ -1,3 +1,4 @@
+use crate::f;
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch, PatchType};
 use crate::git::queries::hunks::hunk_parsers::P_HUNKS;
 use crate::git::queries::COMMIT_0_ID;
@@ -45,6 +46,7 @@ pub fn load_hunks_split(options: &ReqHunkOptions) -> R<HunkLinesSplit> {
 
 pub fn load_hunks_args(commit: &Commit, patch: &Patch) -> Vec<String> {
   let diff = "diff".to_string();
+  let no_colour = f!("--no-color");
   let dashes = "--".to_string();
 
   let Commit {
@@ -58,11 +60,11 @@ pub fn load_hunks_args(commit: &Commit, patch: &Patch) -> Vec<String> {
 
   if *is_merge {
     // args.extend_from_slice(&[diff, format!("{}^@", id)]);
-    args.extend_from_slice(&[diff, format!("{}...{}", parent_ids[0], parent_ids[1])]);
+    args.extend_from_slice(&[diff, no_colour, f!("{}...{}", parent_ids[0], parent_ids[1])]);
   } else if !commit.parent_ids.is_empty() {
-    args.extend_from_slice(&[diff, format!("{}..{}", parent_ids[0], id)]);
+    args.extend_from_slice(&[diff, no_colour, f!("{}..{}", parent_ids[0], id)]);
   } else {
-    args.extend_from_slice(&[diff, format!("{}..{}", COMMIT_0_ID, id)]);
+    args.extend_from_slice(&[diff, no_colour, f!("{}..{}", COMMIT_0_ID, id)]);
   }
 
   args.push(dashes);

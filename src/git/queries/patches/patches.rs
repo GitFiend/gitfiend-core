@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::dprintln;
+use crate::{dprintln, f};
 use loggers::elapsed;
 
 use crate::git::git_types::{Commit, Patch};
@@ -148,6 +148,7 @@ fn load_all_patches_for_normal_commits(
 fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> R<(String, Vec<Patch>)> {
   let diff = String::from("diff");
   let name_status = String::from("--name-status");
+  let no_colour = f!("--no-color");
   let z = String::from("-z");
 
   let out = match commit {
@@ -162,6 +163,7 @@ fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> R<(String, Vec<P
         diff,
         name_status,
         z,
+        no_colour,
         format!("{}...{}", parent_ids[0], parent_ids[1]),
       ],
     }),
@@ -172,11 +174,23 @@ fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> R<(String, Vec<P
       ..
     } => run_git_err(RunGitOptions {
       repo_path,
-      args: [diff, format!("{}..{}", parent_ids[0], id), name_status, z],
+      args: [
+        diff,
+        format!("{}..{}", parent_ids[0], id),
+        no_colour,
+        name_status,
+        z,
+      ],
     }),
     Commit { id, .. } => run_git_err(RunGitOptions {
       repo_path,
-      args: [diff, format!("{}..{}", COMMIT_0_ID, id), name_status, z],
+      args: [
+        diff,
+        format!("{}..{}", COMMIT_0_ID, id),
+        no_colour,
+        name_status,
+        z,
+      ],
     }),
   };
 

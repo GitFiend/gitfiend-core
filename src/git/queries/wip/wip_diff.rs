@@ -38,17 +38,19 @@ pub struct WipHunksSplit {
   left: Vec<HunkLine>,
   right: Vec<HunkLine>,
   hunks: Vec<Hunk>,
+  patch_size: u32,
   valid_utf8: bool,
 }
 
 pub fn load_wip_hunks_split(options: &ReqWipHunksOptions) -> R<WipHunksSplit> {
-  let (hunks, _, valid_utf8) = load_wip_hunks(options)?;
+  let (hunks, patch_size, valid_utf8) = load_wip_hunks(options)?;
   let (left, right) = flatten_hunks_split(&hunks);
 
   Ok(WipHunksSplit {
     left,
     right,
     hunks,
+    patch_size,
     valid_utf8,
   })
 }

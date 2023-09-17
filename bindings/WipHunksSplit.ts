@@ -6,5 +6,6 @@ export interface WipHunksSplit {
   left: Array<HunkLine>;
   right: Array<HunkLine>;
   hunks: Array<Hunk>;
+  patch_size: number;
   valid_utf8: boolean;
 }

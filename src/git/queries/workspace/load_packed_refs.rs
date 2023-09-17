@@ -9,7 +9,7 @@ use crate::{and, character, many, map2, or, word};
 pub fn load_packed_refs(repo_path: &str) -> R<Vec<String>> {
   let path = Path::new(repo_path).join(".git").join("packed-refs");
 
-  let text = read_to_string(path).map_err(|e| e.to_string())?;
+  let text = read_to_string(path)?;
 
   let lines = parse_all_err(P_LINES, &text);
 

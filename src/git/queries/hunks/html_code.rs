@@ -29,7 +29,7 @@ pub fn get_patch_as_html(options: &ReqPatchCodeOptions) -> R<String> {
     split,
   } = options;
 
-  let mut colouring = COLOURING.write().map_err(|e| e.to_string())?;
+  let mut colouring = COLOURING.write()?;
   let mut c = colouring.get_colour_line(theme, &patch.get_file_extension());
 
   if *split {

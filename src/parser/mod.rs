@@ -1,5 +1,6 @@
 use crate::dprintln;
 use crate::parser::input::Input;
+use crate::server::request_util::{ES, R};
 
 pub(crate) mod input;
 mod parser_types;
@@ -18,7 +19,7 @@ pub fn parse_all<T>(parser: Parser<T>, text: &str) -> Option<T> {
   )
 }
 
-pub fn parse_all_err<T>(parser: Parser<T>, text: &str) -> Result<T, String> {
+pub fn parse_all_err<T>(parser: Parser<T>, text: &str) -> R<T> {
   run_parser_err(
     parser,
     text,
@@ -62,11 +63,7 @@ pub fn run_parser<T>(parser: Parser<T>, text: &str, options: ParseOptions) -> Op
   result
 }
 
-pub fn run_parser_err<T>(
-  parser: Parser<T>,
-  text: &str,
-  options: ParseOptions,
-) -> Result<T, String> {
+pub fn run_parser_err<T>(parser: Parser<T>, text: &str, options: ParseOptions) -> R<T> {
   let mut input = Input::new(text);
 
   if let Some(res) = parser(&mut input) {
@@ -77,7 +74,7 @@ pub fn run_parser_err<T>(
         dprintln!("{}", message);
       }
 
-      return Err(message);
+      return Err(ES::Text(message));
     }
 
     return Ok(res);
@@ -89,7 +86,7 @@ pub fn run_parser_err<T>(
     dprintln!("{}", message);
   }
 
-  Err(message)
+  Err(ES::Text(message))
 }
 
 fn get_error_message(input: &Input) -> String {

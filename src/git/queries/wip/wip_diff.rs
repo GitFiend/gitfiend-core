@@ -107,7 +107,7 @@ struct FileInfo {
 
 fn load_file(repo_path: &str, file_path: &str) -> R<FileInfo> {
   let path = Path::new(repo_path).join(file_path);
-  let bytes = read(path).map_err(|e| e.to_string())?;
+  let bytes = read(path)?;
 
   if let Ok(text) = String::from_utf8(bytes.clone()) {
     let line_ending = detect_new_line(&text);

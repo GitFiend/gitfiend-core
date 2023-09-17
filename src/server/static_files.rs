@@ -1,13 +1,15 @@
-use crate::server::request_util::R;
-use crate::{dprintln, f};
-use serde::Deserialize;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+
+use serde::Deserialize;
 use tiny_http::{Header, Request, Response};
 use ts_rs::TS;
+
+use crate::dprintln;
+use crate::server::request_util::{ES, R};
 
 // TODO: If there's an error then a response won't be sent. This probably leaks memory.
 pub fn handle_resource_request(request: Request) -> Option<()> {
@@ -63,17 +65,12 @@ pub fn temp_dir(_: &String) -> R<String> {
   Ok(String::from(
     env::temp_dir()
       .to_str()
-      .ok_or(f!("temp_dir: Couldn't convert to str."))?,
+      .ok_or(ES::from("temp_dir: Couldn't convert to str."))?,
   ))
 }
 
 pub fn file_size(file_path: &String) -> R<u64> {
-  Ok(
-    Path::new(file_path)
-      .metadata()
-      .map_err(|e| e.to_string())?
-      .len(),
-  )
+  Ok(Path::new(file_path).metadata()?.len())
 }
 
 #[derive(Debug, Deserialize, TS)]
@@ -87,10 +84,8 @@ pub struct WriteFileOpts {
 pub fn write_file(options: &WriteFileOpts) -> R<bool> {
   let WriteFileOpts { file_path, content } = options;
 
-  let mut file = File::create(file_path).map_err(|e| e.to_string())?;
-  file
-    .write_all(content.as_ref())
-    .map_err(|e| e.to_string())?;
+  let mut file = File::create(file_path)?;
+  file.write_all(content.as_ref())?;
 
   Ok(true)
 }

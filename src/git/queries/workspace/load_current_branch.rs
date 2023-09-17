@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::fs::{read_dir, read_to_string};
 use std::path::{Path, PathBuf};
 
-use crate::server::request_util::R;
+use crate::server::request_util::{ES, R};
 
 pub fn load_current_branch(repo_path: &str) -> R<String> {
   let head = Path::new(repo_path).join(".git").join("HEAD");
@@ -11,14 +11,15 @@ pub fn load_current_branch(repo_path: &str) -> R<String> {
     return if let Some(branch) = text.split(':').last() {
       Ok(branch.trim().replace("refs/heads/", ""))
     } else {
-      Err(
-        "Failed to load current branch. Failed to parse .git/HEAD. Could be a detached head?"
-          .to_string(),
-      )
+      Err(ES::from(
+        "Failed to load current branch. Failed to parse .git/HEAD. Could be a detached head?",
+      ))
     };
   }
 
-  Err("Failed to load current branch. Failed to read .git/HEAD".to_string())
+  Err(ES::from(
+    "Failed to load current branch. Failed to read .git/HEAD",
+  ))
 }
 
 pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
@@ -62,32 +63,22 @@ fn read_refs_inner(
   refs_result: &mut Refs,
   refs_type: RefsType,
 ) -> R<()> {
-  for item in read_dir(refs_path).map_err(|e| e.to_string())? {
-    let path = item.map_err(|e| e.to_string())?.path();
+  for item in read_dir(refs_path)? {
+    let path = item?.path();
 
     if path.is_file() {
       if path.to_str().unwrap_or("").ends_with(branch_name) {
         match refs_type {
           RefsType::Local => {
-            refs_result.local_id = Some(
-              read_to_string(path)
-                .map_err(|e| e.to_string())?
-                .trim()
-                .to_string(),
-            );
+            refs_result.local_id = Some(read_to_string(path)?.trim().to_string());
           }
           RefsType::Remote => {
-            refs_result.remote_id = Some(
-              read_to_string(path)
-                .map_err(|e| e.to_string())?
-                .trim()
-                .to_string(),
-            );
+            refs_result.remote_id = Some(read_to_string(path)?.trim().to_string());
           }
         }
       } else {
         refs_result.others.insert(
-          PathBuf::from(&path.strip_prefix(refs_path).map_err(|e| e.to_string())?)
+          PathBuf::from(&path.strip_prefix(refs_path)?)
             .to_str()
             .unwrap_or("")
             .to_string(),

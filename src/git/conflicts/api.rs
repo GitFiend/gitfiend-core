@@ -26,7 +26,7 @@ pub fn load_conflicted_file(options: &LoadConflictOptions) -> R<ConflictedFile> 
   let LoadConflictOptions { repo_path, patch } = options;
 
   let path = Path::new(repo_path).join(&patch.new_file);
-  let text = fs::read_to_string(path).map_err(|e| e.to_string())?;
+  let text = fs::read_to_string(path)?;
 
   let lines = text.lines().collect::<Vec<&str>>();
 

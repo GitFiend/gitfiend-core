@@ -30,8 +30,7 @@ where
   let out = Command::new(Path::new(GIT_PATH.as_path()))
     .args(options.args)
     .current_dir(options.repo_path)
-    .output()
-    .map_err(|e| e.to_string())?;
+    .output()?;
 
   let Output { stdout, stderr, .. } = &out;
 

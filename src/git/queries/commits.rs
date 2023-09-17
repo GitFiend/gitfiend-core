@@ -12,8 +12,8 @@ use crate::git::store;
 use crate::git::store::RepoPath;
 use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
-use crate::server::request_util::R;
-use crate::{dprintln, f, time_result};
+use crate::server::request_util::{ES, R};
+use crate::{dprintln, time_result};
 use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -132,8 +132,8 @@ fn load_commits_unfiltered(
     let stashes_thread = thread::spawn(move || load_stashes(&p1));
     let commits_thread = thread::spawn(move || load_commits(&p2, num));
 
-    let stashes = stashes_thread.join().map_err(|e| f!("{:?}", e))?;
-    let mut commits = commits_thread.join().map_err(|e| f!("{:?}", e))??;
+    let stashes = stashes_thread.join()?;
+    let mut commits = commits_thread.join()??;
 
     if let Ok(mut stashes) = stashes {
       commits.append(&mut stashes);
@@ -290,8 +290,9 @@ pub fn get_all_commits_on_current_branch(options: &ReqOptions) -> R<HashSet<Stri
     repo_path: repo_path.to_string(),
   })?;
 
-  let (commits, _) = store::get_commits_and_refs(repo_path)
-    .ok_or(f!("get_all_commits_on_current_branch: Commits not found."))?;
+  let (commits, _) = store::get_commits_and_refs(repo_path).ok_or(ES::from(
+    "get_all_commits_on_current_branch: Commits not found.",
+  ))?;
   let commits = get_commit_map_cloned(&commits);
 
   let mut ancestors: HashSet<String> = HashSet::new();

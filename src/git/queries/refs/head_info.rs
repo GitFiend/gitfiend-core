@@ -1,4 +1,3 @@
-use crate::f;
 use ahash::AHashMap;
 use serde::Serialize;
 use ts_rs::TS;
@@ -12,7 +11,7 @@ use crate::git::queries::refs::ref_diffs::calc_remote_ref_diffs;
 use crate::git::store;
 use crate::git::store::{RepoPath, CONFIG};
 use crate::server::git_request::ReqOptions;
-use crate::server::request_util::R;
+use crate::server::request_util::{ES, R};
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -31,7 +30,7 @@ pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
   let ReqOptions { repo_path } = options;
 
   let (commits, refs) =
-    store::get_commits_and_refs(repo_path).ok_or(f!("calc_head_info: No commits"))?;
+    store::get_commits_and_refs(repo_path).ok_or(ES::from("calc_head_info: No commits"))?;
 
   let head_info = calc_head_info_from_commits(commits, refs);
 
@@ -68,7 +67,7 @@ pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
     }
   }
 
-  Err(f!("calc_head_info: Failed to get head info"))
+  Err(ES::from("calc_head_info: Failed to get head info"))
 }
 
 // Returns Option intentionally.
@@ -136,7 +135,7 @@ pub fn calc_head_fallback(repo_path: &str) -> R<(CommitInfo, usize)> {
     .refs
     .iter()
     .position(|r| r.head)
-    .ok_or("calc_head_fallback: Head index not found")?;
+    .ok_or(ES::from("calc_head_fallback: Head index not found"))?;
 
   Ok((commit, i))
 }
@@ -178,7 +177,7 @@ pub fn calc_remote_fallback(
     ));
   }
 
-  Err(f!(
-    "calc_remote_fallback: Didn't find remote ref in remote commit"
+  Err(ES::from(
+    "calc_remote_fallback: Didn't find remote ref in remote commit",
   ))
 }

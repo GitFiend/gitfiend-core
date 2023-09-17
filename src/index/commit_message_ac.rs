@@ -1,10 +1,10 @@
 use crate::git::git_types::Commit;
 use crate::git::queries::patches::patches::load_patches;
 use crate::git::store;
+use crate::global;
 use crate::index::ac_index::ACIndex;
-use crate::server::request_util::R;
+use crate::server::request_util::{ES, R};
 use crate::util::global::Global;
-use crate::{f, global};
 
 pub fn commit_message_ac(
   repo_path: &String,
@@ -58,7 +58,7 @@ fn get_index(repo_path: &String) -> R<ACIndex> {
 
 fn build_index(repo_path: &String) -> R<ACIndex> {
   let (commits, refs) = store::get_commits_and_refs(repo_path)
-    .ok_or(f!("build_index: Couldn't get commits and refs."))?;
+    .ok_or(ES::from("build_index: Couldn't get commits and refs."))?;
   let patches = load_patches(repo_path, &commits)?;
 
   let mut index = ACIndex::new();

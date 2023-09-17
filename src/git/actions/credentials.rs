@@ -1,8 +1,8 @@
 use std::env;
 use std::path::PathBuf;
 
-use crate::server::request_util::R;
-use crate::{dprintln, f};
+use crate::dprintln;
+use crate::server::request_util::{ES, R};
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -24,7 +24,7 @@ pub fn set_credentials(credentials: &Credentials) -> R<()> {
     "GIT_ASKPASS",
     path
       .to_str()
-      .ok_or(f!("set_credentials: Failed to convert path to str"))?,
+      .ok_or(ES::from("set_credentials: Failed to convert path to str"))?,
   );
 
   Ok(())
@@ -45,15 +45,15 @@ pub fn get_ask_pass_path() -> R<PathBuf> {
     "ask-pass"
   };
 
-  let dir = env::current_dir().map_err(|e| e.to_string())?;
+  let dir = env::current_dir()?;
 
-  let missing_parent = f!("get_ask_pass_path: Couldn't get parent dir.");
+  let missing_parent = ES::from("get_ask_pass_path: Couldn't get parent dir.");
 
   #[cfg(debug_assertions)]
   return Ok(
     dir
       .parent()
-      .ok_or(&missing_parent)?
+      .ok_or(missing_parent)?
       .join("git-fiend")
       .join("src")
       .join("ask-pass")
@@ -64,12 +64,11 @@ pub fn get_ask_pass_path() -> R<PathBuf> {
 
   #[cfg(not(debug_assertions))]
   Ok(
-    env::current_exe()
-      .map_err(|e| e.to_string())?
+    env::current_exe()?
       .parent()
-      .ok_or(&missing_parent)?
+      .ok_or(missing_parent.clone())?
       .parent()
-      .ok_or(&missing_parent)?
+      .ok_or(missing_parent)?
       .join("ask-pass")
       .join(name),
   )

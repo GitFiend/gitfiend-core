@@ -1,6 +1,5 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::f;
 use serde::Serialize;
 use ts_rs::TS;
 
@@ -9,7 +8,7 @@ use crate::git::queries::patches::patches::load_patches;
 use crate::git::queries::search::search_code::FileMatch;
 use crate::git::queries::search::SearchOptions;
 use crate::git::store;
-use crate::server::request_util::R;
+use crate::server::request_util::{ES, R};
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Hash, TS)]
 #[ts(export)]
@@ -39,7 +38,7 @@ pub fn search_commits(options: &SearchOptions) -> R<Vec<CoreSearchResult>> {
   } = options;
 
   let (commits, refs) = store::get_commits_and_refs(repo_path)
-    .ok_or(f!("search_commits: Couldn't get commits and refs."))?;
+    .ok_or(ES::from("search_commits: Couldn't get commits and refs."))?;
   let patches = load_patches(repo_path, &commits)?;
   let search_text = search_text.to_lowercase();
   let mut results: Vec<CoreSearchResult> = Vec::new();

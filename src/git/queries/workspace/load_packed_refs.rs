@@ -61,7 +61,12 @@ const P_LINES: Parser<Vec<String>> = map2!(
   lines
     .into_iter()
     .flat_map(|l| match l {
-      PRLine::Ref(line) => Some(line),
+      PRLine::Ref(line) =>
+        if line == "HEAD" {
+          None
+        } else {
+          Some(line)
+        },
       PRLine::Other => None,
     })
     .collect()

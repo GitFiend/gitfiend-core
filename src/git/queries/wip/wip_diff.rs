@@ -9,10 +9,12 @@ use ts_rs::TS;
 
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
 use crate::git::queries::hunks::load_hunks::flatten_hunks_split;
+use crate::git::queries::refs::head_info::calc_head_info;
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
 use crate::git::run_git::{run_git_err, RunGitOptions};
 use crate::parser::standard_parsers::{LINE_END, WS_STR};
 use crate::parser::{parse_all, Parser};
+use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
 use crate::{and, or, rep_parser_sep, until_parser_keep_happy};
 
@@ -72,6 +74,8 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bo
     return Ok((Vec::new(), true));
   }
 
+  let head_commit = ensure_head_commit(head_commit, repo_path);
+
   if *patch_type == WipPatchType::A || head_commit.is_none() {
     let new_file_info = load_file(repo_path, new_file)?;
 
@@ -82,7 +86,7 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bo
   }
 
   if let Some(commit) = head_commit {
-    let mut old_text = load_unchanged_file(repo_path, patch, commit).unwrap_or(String::from(""));
+    let mut old_text = load_unchanged_file(repo_path, patch, &commit).unwrap_or(String::from(""));
 
     if *patch_type == WipPatchType::D {
       return Ok((calc_hunk_line_from_text(&old_text, ""), true));
@@ -99,6 +103,19 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bo
   }
 
   Ok((Vec::new(), true))
+}
+
+fn ensure_head_commit(head: &Option<Commit>, repo_path: &str) -> Option<Commit> {
+  if head.is_none() {
+    return Some(
+      calc_head_info(&ReqOptions {
+        repo_path: repo_path.to_string(),
+      })
+      .ok()?
+      .commit,
+    );
+  }
+  head.clone()
 }
 
 struct FileInfo {

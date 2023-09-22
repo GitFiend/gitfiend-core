@@ -7,7 +7,6 @@ mod commits_test;
 
 pub(crate) mod commit_calcs;
 mod commit_filters;
-pub(crate) mod common_branches;
 pub(crate) mod config;
 pub(crate) mod hunks;
 pub(crate) mod patches;

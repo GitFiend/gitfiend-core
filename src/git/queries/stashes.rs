@@ -5,7 +5,7 @@ use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS};
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::git::store::RepoPath;
-use crate::parser::{parse_all_err};
+use crate::parser::parse_all_err;
 use crate::server::request_util::R;
 
 #[elapsed]
@@ -21,12 +21,12 @@ pub fn load_stashes(repo_path: &RepoPath) -> R<Vec<CommitInfo>> {
       "--date=raw",
     ],
     repo_path,
-  })?.stdout;
+  })?
+  .stdout;
 
   let mut commits = parse_all_err(P_COMMITS, out.as_str())?;
 
-  for i in 0..commits.len() {
-    let mut c = &mut commits[i];
+  for (i, c) in commits.iter_mut().enumerate() {
     c.stash_id = Some(format!("refs/stash@{{{}}}", i));
     c.is_merge = false;
     c.refs.clear();

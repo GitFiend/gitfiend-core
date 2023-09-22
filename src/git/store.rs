@@ -2,7 +2,7 @@ use crate::git::git_types::{Commit, GitConfig, Patch, RefInfo};
 use crate::git::git_version::GitVersion;
 use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
-use crate::git::repo_watcher::{clear_repo_changed_status, get_watched_repos};
+use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::{Glo, Global};
 use crate::{dprintln, glo, global, time_block};
@@ -49,17 +49,17 @@ pub fn get_commits_and_refs(repo_path: &RepoPath) -> Option<(Vec<Commit>, Vec<Re
   COMMITS_AND_REFS.get_by_key(repo_path)
 }
 
-pub fn get_all_workspace_commits() -> Option<AHashMap<RepoPath, (Vec<Commit>, Vec<RefInfo>)>> {
-  let commits = COMMITS_AND_REFS.get()?;
-  let watched_repos: HashMap<RepoPath, bool> = get_watched_repos()?;
-
-  Some(
-    commits
-      .into_iter()
-      .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
-      .collect(),
-  )
-}
+// pub fn get_all_workspace_commits() -> Option<AHashMap<RepoPath, (Vec<Commit>, Vec<RefInfo>)>> {
+//   let commits = COMMITS_AND_REFS.get()?;
+//   let watched_repos: HashMap<RepoPath, bool> = get_watched_repos()?;
+//
+//   Some(
+//     commits
+//       .into_iter()
+//       .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
+//       .collect(),
+//   )
+// }
 
 pub fn clear_unwatched_repos_from_commits(watched_repos: &HashMap<String, bool>) -> Option<()> {
   let commits = COMMITS_AND_REFS

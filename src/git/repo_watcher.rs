@@ -8,7 +8,7 @@ use notify::{Event, RecursiveMode, Result, Watcher};
 use serde::Deserialize;
 use ts_rs::TS;
 
-use crate::git::store::{clear_unwatched_repos_from_commits, RepoPath};
+use crate::git::store::clear_unwatched_repos_from_commits;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 use crate::{dprintln, global};
@@ -65,13 +65,13 @@ pub fn watch_repo(options: &WatchRepoOptions) {
   thread::spawn(move || watch(root_repo));
 }
 
-pub fn get_watched_repos() -> Option<HashMap<RepoPath, bool>> {
-  WATCH_DIRS.get()
-}
-
-pub fn stop_watching_repo(_: &ReqOptions) {
-  WATCH_DIRS.set(HashMap::new());
-}
+// pub fn get_watched_repos() -> Option<HashMap<RepoPath, bool>> {
+//   WATCH_DIRS.get()
+// }
+//
+// pub fn stop_watching_repo(_: &ReqOptions) {
+//   WATCH_DIRS.set(HashMap::new());
+// }
 
 pub fn repo_has_changed(options: &ReqOptions) -> Option<bool> {
   let dirs = WATCH_DIRS.get()?;

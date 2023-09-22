@@ -2,7 +2,7 @@ use crate::git::repo_watcher::mark_changed;
 use serde::Deserialize;
 use ts_rs::TS;
 
-use crate::git::run_git_action::{run_git_action, run_git_action_with_vec, RunGitActionOptions};
+use crate::git::run_git_action::{run_git_action, RunGitActionOptions};
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -33,9 +33,9 @@ pub struct CommandsOptions {
   pub commands: Vec<Vec<String>>,
 }
 
-// TODO: Add an option to ignore errors and keep going.
-pub fn commands(options: &CommandsOptions) -> u32 {
-  mark_changed(&options.repo_path);
-
-  run_git_action_with_vec(&options.repo_path, options.commands.clone())
-}
+// // TODO: Add an option to ignore errors and keep going.
+// pub fn commands(options: &CommandsOptions) -> u32 {
+//   mark_changed(&options.repo_path);
+//
+//   run_git_action_with_vec(&options.repo_path, options.commands.clone())
+// }

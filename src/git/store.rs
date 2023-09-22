@@ -13,16 +13,12 @@ use std::env;
 pub type RepoPath = String;
 type PatchPath = String;
 
-// static COMMITS: Global<AHashMap<RepoPath, Vec<CommitInfo>>> = global!(AHashMap::new());
+type CommitsAndRefs = (Vec<Commit>, Vec<RefInfo>);
 
-static COMMITS_AND_REFS: Global<AHashMap<RepoPath, (Vec<Commit>, Vec<RefInfo>)>> =
-  global!(AHashMap::new());
+static COMMITS_AND_REFS: Glo<AHashMap<RepoPath, CommitsAndRefs>> = glo!(AHashMap::new());
 
 static PATCHES: Glo<(RepoPath, HashMap<PatchPath, Vec<Patch>>)> =
   glo!((RepoPath::new(), HashMap::new()));
-
-// static PATCHES2: Glo<Arc<(RepoPath, HashMap<PatchPath, Vec<Patch>>)>> =
-//   glo!(Arc::new((RepoPath::new(), HashMap::new())));
 
 // Key is 2 commit ids joined.
 pub static REF_DIFFS: Glo<AHashMap<String, u32>> = glo!(AHashMap::new());
@@ -38,37 +34,38 @@ pub fn get_git_version() -> GitVersion {
 }
 
 pub fn insert_commits(repo_path: &RepoPath, commits: &Vec<Commit>, refs: &Vec<RefInfo>) {
-  COMMITS_AND_REFS.insert(repo_path.to_owned(), (commits.to_owned(), refs.to_owned()));
+  if let Ok(mut cr) = COMMITS_AND_REFS.write() {
+    (*cr).insert(repo_path.to_string(), (commits.to_owned(), refs.to_owned()));
+  }
 
   clear_repo_changed_status(&ReqOptions {
     repo_path: repo_path.to_string(),
   });
 }
 
-pub fn get_commits_and_refs(repo_path: &RepoPath) -> Option<(Vec<Commit>, Vec<RefInfo>)> {
-  COMMITS_AND_REFS.get_by_key(repo_path)
+pub fn get_commits_and_refs(repo_path: &RepoPath) -> Option<CommitsAndRefs> {
+  if let Ok(cr) = COMMITS_AND_REFS.read() {
+    return Some((*cr).get(repo_path)?.to_owned());
+  }
+
+  None
 }
 
-// pub fn get_all_workspace_commits() -> Option<AHashMap<RepoPath, (Vec<Commit>, Vec<RefInfo>)>> {
-//   let commits = COMMITS_AND_REFS.get()?;
-//   let watched_repos: HashMap<RepoPath, bool> = get_watched_repos()?;
-//
-//   Some(
-//     commits
-//       .into_iter()
-//       .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
-//       .collect(),
-//   )
-// }
+fn get_all_commits_and_refs() -> Option<AHashMap<RepoPath, CommitsAndRefs>> {
+  let cr = COMMITS_AND_REFS.read().ok()?;
+
+  Some((*cr).to_owned())
+}
 
 pub fn clear_unwatched_repos_from_commits(watched_repos: &HashMap<String, bool>) -> Option<()> {
-  let commits = COMMITS_AND_REFS
-    .get()?
+  let commits = get_all_commits_and_refs()?
     .into_iter()
     .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
     .collect();
 
-  COMMITS_AND_REFS.set(commits);
+  if let Ok(mut cr) = COMMITS_AND_REFS.write() {
+    *cr = commits
+  }
 
   let configs = CONFIG
     .get()?
@@ -86,8 +83,6 @@ pub fn insert_patches(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) {
     if let Ok(mut saved_patches) = PATCHES.write() {
       *saved_patches = (repo_path.to_owned(), patches.to_owned());
     }
-
-    // PATCHES.set((repo_path.to_string(), patches.to_owned()));
   });
 }
 
@@ -95,8 +90,6 @@ pub fn get_patches(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
   println!("TRYING TO GET PATCHES FOR: {}", repo_path);
 
   if let Ok(stored) = PATCHES.read() {
-    // let (path, patches) = &stored;
-
     if stored.0 == repo_path && !stored.1.is_empty() {
       println!("Found {} patches for repo: {}", stored.1.len(), repo_path);
       return Some(stored.1.clone());
@@ -106,24 +99,8 @@ pub fn get_patches(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
   None
 }
 
-// pub fn get_patches_ref(repo_path: &str) -> Option<Arc<(RepoPath, HashMap<PatchPath, Vec<Patch>>)>> {
-//   println!("TRYING TO GET PATCHES FOR: {}", repo_path);
-//
-//   if let Ok(stored) = PATCHES2.read() {
-//     // let (path, patches) = &stored;
-//
-//     if stored.0 == repo_path && !stored.1.is_empty() {
-//       println!("Found {} patches for repo: {}", stored.1.len(), repo_path);
-//       return Some(stored.clone());
-//     }
-//   }
-//
-//   None
-// }
-
 pub fn clear_cache(_: &ReqOptions) {
   clear_completed_searches();
-  // clear_changed_status();
 
   dprintln!("Cleared cache.");
 }

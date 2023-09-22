@@ -32,10 +32,3 @@ pub struct CommandsOptions {
   pub repo_path: String,
   pub commands: Vec<Vec<String>>,
 }
-
-// // TODO: Add an option to ignore errors and keep going.
-// pub fn commands(options: &CommandsOptions) -> u32 {
-//   mark_changed(&options.repo_path);
-//
-//   run_git_action_with_vec(&options.repo_path, options.commands.clone())
-// }

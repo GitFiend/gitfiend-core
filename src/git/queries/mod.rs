@@ -8,6 +8,7 @@ mod commits_test;
 pub(crate) mod commit_calcs;
 mod commit_filters;
 pub(crate) mod config;
+pub mod config_parser;
 pub(crate) mod hunks;
 pub(crate) mod patches;
 pub(crate) mod refs;

@@ -36,3 +36,6 @@ codegen-units = 1
 # Set the default for dependencies.
 [profile.dev.package."*"]
 #opt-level = 3
+
+#[lints]
+#redundant_closure_call = true

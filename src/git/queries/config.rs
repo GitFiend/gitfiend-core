@@ -1,13 +1,14 @@
 use crate::git::git_types::GitConfig;
+use crate::git::queries::config_parser::P_CONFIG2;
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::git::store::CONFIG;
-use crate::parser::standard_parsers::{ANY_WORD, STRING_LITERAL, UNTIL_LINE_END, WS};
+use crate::map;
+use crate::parser::standard_parsers::UNTIL_LINE_END;
 use crate::parser::{parse_all_err, run_parser, ParseOptions, Parser};
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
-use crate::{and, f, many, or, until_str, word};
-use crate::{character, map};
+use crate::{and, many, until_str, word};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -46,45 +47,7 @@ impl GitConfig {
   }
 }
 
-const P_HEADING_1: Parser<String> = map!(
-  and!(character!('['), ANY_WORD, character!(']')),
-  |res: (char, String, char)| { res.1 }
-);
-
-const P_HEADING_2: Parser<String> = map!(
-  and!(
-    character!('['),
-    ANY_WORD,
-    WS,
-    STRING_LITERAL,
-    character!(']')
-  ),
-  |res: (char, String, String, String, char)| { f!("{}.{}", res.1, res.3) }
-);
-
-const P_HEADING: Parser<String> = or!(P_HEADING_1, P_HEADING_2);
-
-//   merge = refs/heads/mac-app
-const P_ROW: Parser<String> = map!(
-  and!(WS, ANY_WORD, WS, character!('='), WS, UNTIL_LINE_END),
-  |res: (String, String, String, char, String, String)| { f!("{}={}\n", res.1, res.5) }
-);
-
-const P_SECTION: Parser<String> = map!(and!(P_HEADING, many!(P_ROW)), |(header, rows): (
-  String,
-  Vec<String>
-)| {
-  rows
-    .into_iter()
-    .map(|row| f!("{}.{}", header, row))
-    .collect::<Vec<String>>()
-    .join("")
-});
-
-const P_CONFIG2: Parser<String> = map!(many!(P_SECTION), |sections: Vec<String>| {
-  sections.join("")
-});
-
+// Parses logged config from git command.
 const P_CONFIG: Parser<HashMap<String, String>> = map!(
   many!(and!(until_str!("="), UNTIL_LINE_END)),
   |result: Vec<(String, String)>| { result.into_iter().collect::<HashMap<String, String>>() }
@@ -105,16 +68,11 @@ pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
   let ReqOptions { repo_path } = options;
 
   let config_path = Path::new(repo_path).join(".git").join("config");
-  // println!("config exists: {}, {:?}", config_path.exists(), config_path);
-
-  // let t2 = Instant::now();
 
   let result_text = if let Ok(text) = fs::read_to_string(config_path) {
-    let r = parse_all_err(P_CONFIG2, &text);
-    // println!("time to read text config: {}ms", t2.elapsed().as_millis());
-    r
+    parse_all_err(P_CONFIG2, &text)
   } else {
-    // let t2 = Instant::now();
+    // If new config parser fails, fallback to the old one.
     Ok(
       run_git::run_git_err(RunGitOptions {
         repo_path,
@@ -123,8 +81,6 @@ pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
       .stdout,
     )
   };
-
-  // println!("time to load git config: {}ms", t2.elapsed().as_millis());
 
   let config_result = parse_all_err(P_CONFIG, result_text?.as_str());
   let entries = config_result?;
@@ -159,9 +115,8 @@ mod tests {
   use std::collections::HashMap;
 
   use crate::git::git_types::GitConfig;
-  use crate::git::queries::config::{
-    load_full_config, P_CONFIG, P_CONFIG2, P_HEADING, P_REMOTE_NAME,
-  };
+  use crate::git::queries::config::{load_full_config, P_CONFIG, P_REMOTE_NAME};
+  use crate::git::queries::config_parser::{P_CONFIG2, P_HEADING};
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
 
@@ -272,9 +227,12 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
 	logallrefupdates = true
 	ignorecase = true
 	precomposeunicode = true
+# Some comment.	
 [remote "origin"]
 	url = https://github.com/GitFiend/git-fiend.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
+	
+; Some comment 2.
 [branch "main"]
 	remote = origin
 	merge = refs/heads/main

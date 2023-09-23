@@ -160,8 +160,6 @@ mod tests {
 
     let res = conflicted_lines(str_lines);
 
-    println!("{:?}", res);
-
     let expected = ConflictedFile {
       lines: vec![CFLine::Slot(SlotLine {
         section: 0,
@@ -203,8 +201,6 @@ mod tests {
     ];
 
     let res = conflicted_lines(str_lines);
-
-    println!("{:?}", res);
 
     let expected = ConflictedFile {
       lines: vec![

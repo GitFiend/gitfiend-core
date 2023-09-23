@@ -318,6 +318,5 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
     let result = parse_all(P_CONFIG2, text);
 
     assert!(result.is_some());
-    println!("{}", result.unwrap());
   }
 }

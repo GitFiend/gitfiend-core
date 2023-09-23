@@ -26,11 +26,14 @@ pub static REF_DIFFS: Glo<AHashMap<String, u32>> = glo!(AHashMap::new());
 // This probably needs to be per repo. We could then watch for changes?
 pub static CONFIG: Global<AHashMap<RepoPath, GitConfig>> = global!(AHashMap::new());
 
-pub static GIT_VERSION: Global<GitVersion> = global!(GitVersion::new());
+pub static GIT_VERSION: Glo<GitVersion> = glo!(GitVersion::new());
 
 // Assumes git is installed.
 pub fn get_git_version() -> GitVersion {
-  GIT_VERSION.get().unwrap_or_else(GitVersion::new)
+  if let Ok(version) = GIT_VERSION.read() {
+    return (*version).to_owned();
+  }
+  GitVersion::new()
 }
 
 pub fn insert_commits(repo_path: &RepoPath, commits: &Vec<Commit>, refs: &Vec<RefInfo>) {
@@ -87,11 +90,8 @@ pub fn insert_patches(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) {
 }
 
 pub fn get_patches(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
-  println!("TRYING TO GET PATCHES FOR: {}", repo_path);
-
   if let Ok(stored) = PATCHES.read() {
     if stored.0 == repo_path && !stored.1.is_empty() {
-      println!("Found {} patches for repo: {}", stored.1.len(), repo_path);
       return Some(stored.1.clone());
     }
   }

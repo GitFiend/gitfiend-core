@@ -1,5 +1,5 @@
 use crate::git::run_git::{run_git_err, RunGitOptions};
-use crate::git::store::GIT_VERSION;
+use crate::git::store::{get_git_version, GIT_VERSION};
 use crate::parser::standard_parsers::UNSIGNED_INT;
 use crate::parser::{parse_part, Parser};
 use crate::server::git_request::ReqOptions;
@@ -13,21 +13,23 @@ pub fn load_git_version() {
     args: ["--version"],
   }) {
     if let Some(version) = parse_version(&version_str.stdout) {
-      GIT_VERSION.set(version);
+      if let Ok(mut gv) = GIT_VERSION.write() {
+        *gv = version;
+      }
     }
   }
 }
 
 // Expect this to return none if Git is not installed.
 pub fn git_version(_: &ReqOptions) -> Option<GitVersion> {
-  let version = GIT_VERSION.get()?;
+  let version = get_git_version();
 
-  if version.major == 0 {
+  if !version.valid() {
     load_git_version();
 
-    let version = GIT_VERSION.get()?;
+    let version = get_git_version();
 
-    if version.major != 0 {
+    if version.valid() {
       return Some(version);
     }
 
@@ -52,6 +54,10 @@ impl GitVersion {
       minor: 0,
       patch: 0,
     }
+  }
+
+  pub fn valid(&self) -> bool {
+    self.major > 0
   }
 }
 

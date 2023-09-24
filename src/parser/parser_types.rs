@@ -35,6 +35,21 @@ macro_rules! or {
 }
 
 #[macro_export]
+macro_rules! not {
+  ($p:expr) => {
+    |input: &mut $crate::parser::input::Input| -> Option<()> {
+      let pos = input.position;
+      if let Some(_) = $p(input) {
+        input.position = pos;
+        input.attempted_position = pos;
+        return None;
+      }
+      Some(())
+    }
+  };
+}
+
+#[macro_export]
 macro_rules! character {
   ($c:expr) => {
     |input: &mut $crate::parser::input::Input| -> Option<char> {
@@ -457,6 +472,18 @@ mod tests {
         print_error: false,
       },
     );
+
+    assert!(result.is_none());
+  }
+
+  #[test]
+  fn test_not_parser() {
+    let parser = not!(word!("hello"));
+
+    let result = parse_part(parser, "hi");
+    assert!(result.is_some());
+
+    let result = parse_part(parser, "hello");
 
     assert!(result.is_none());
   }

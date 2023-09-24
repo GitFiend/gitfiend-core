@@ -1,6 +1,6 @@
 use crate::parser::standard_parsers::{ANY_WORD, STRING_LITERAL, UNTIL_LINE_END, WS};
 use crate::parser::Parser;
-use crate::{and, character, f, many, map2, or};
+use crate::{and, character, f, many, map2, not, or};
 
 const P_HEADING_1: Parser<String> = map2!(and!(character!('['), ANY_WORD, character!(']')), res, {
   res.1
@@ -27,13 +27,10 @@ const P_ROW: Parser<String> = map2!(
   f!("{}={}\n", res.1, res.5)
 );
 
-pub const P_CONFIG2: Parser<String> = map2!(
-  many!(or!(P_SECTION, P_UNKNOWN)),
-  sections,
-  sections.join("")
-);
+pub const P_CONFIG2: Parser<String> =
+  map2!(many!(or!(P_SECTION, P_OTHER)), sections, sections.join(""));
 
-const P_SECTION: Parser<String> = map2!(and!(P_HEADING, many!(or!(P_ROW, P_UNKNOWN))), res, {
+const P_SECTION: Parser<String> = map2!(and!(P_HEADING, many!(or!(P_ROW, P_OTHER))), res, {
   let (header, rows) = res;
   rows
     .into_iter()
@@ -48,8 +45,20 @@ const P_SECTION: Parser<String> = map2!(and!(P_HEADING, many!(or!(P_ROW, P_UNKNO
     .join("")
 });
 
-// Could be a comment, or some other thing we don't know how to parse.
-const P_UNKNOWN: Parser<String> = map2!(UNTIL_LINE_END, _res, String::new());
+const P_COMMENT: Parser<String> = map2!(
+  and!(WS, or!(character!(';'), character!('#')), UNTIL_LINE_END),
+  res,
+  f!("{}{}", res.1, res.2)
+);
+
+// Make sure we don't accidentally parse a row or heading as an unknown.
+const P_UNKNOWN: Parser<String> = map2!(
+  and!(not!(P_HEADING), not!(P_ROW), UNTIL_LINE_END),
+  res,
+  res.2
+);
+
+const P_OTHER: Parser<String> = or!(P_COMMENT, P_UNKNOWN);
 
 #[cfg(test)]
 mod tests {
@@ -82,6 +91,44 @@ mod tests {
 
     assert!(result.is_some());
     println!("{}", result.unwrap())
+  }
+
+  #[test]
+  fn parse_read_config() {
+    let text = r#"[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	url = https://github.com/GitFiend/rust-server.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+[branch "ssr-code-viewer"]
+	remote = origin
+	merge = refs/heads/ssr-code-viewer
+"#;
+
+    let result = parse_all(P_CONFIG2, text);
+
+    assert!(result.is_some());
+
+    assert_eq!(
+      result.unwrap(),
+      r#"core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+remote.origin.url=https://github.com/GitFiend/rust-server.git
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+branch.main.remote=origin
+branch.main.merge=refs/heads/main
+branch.ssr-code-viewer.remote=origin
+branch.ssr-code-viewer.merge=refs/heads/ssr-code-viewer
+"#
+    );
   }
 
   #[test]

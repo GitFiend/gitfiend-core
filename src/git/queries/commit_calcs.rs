@@ -35,6 +35,39 @@ pub fn find_commit_ancestors<'a>(
   ancestors
 }
 
+pub fn find_commit_descendants(commit: &Commit, commits: &[Commit]) -> Vec<String> {
+  let mut descendants: Vec<String> = Vec::new();
+
+  find_commit_descendants_inner(commit, commits, &mut descendants);
+
+  descendants
+}
+
+fn find_commit_descendants_inner(
+  commit: &Commit,
+  commits: &[Commit],
+  descendants: &mut Vec<String>,
+) {
+  if commit.index == 0 {
+    return;
+  }
+
+  let mut i = commit.index - 1;
+
+  loop {
+    let c = &commits[i];
+    if c.stash_id.is_none() && c.parent_ids.contains(&commit.id) {
+      descendants.push(c.id.clone());
+      find_commit_descendants_inner(c, commits, descendants);
+      break;
+    } else if i > 0 {
+      i -= 1;
+    } else {
+      break;
+    }
+  }
+}
+
 // How many commits ahead is a. The order matters.
 pub fn count_commits_between_commit_ids(
   a_id: &String,

@@ -1,6 +1,7 @@
 use crate::git::git_types::{Commit, CommitInfo, RefInfo};
 use crate::git::queries::commit_calcs::{
-  find_commit_ancestors, get_commit_ids_between_commit_ids, get_commit_map_cloned,
+  find_commit_ancestors, find_commit_descendants, get_commit_ids_between_commit_ids,
+  get_commit_map_cloned,
 };
 use crate::git::queries::commit_filters::{apply_commit_filters, CommitFilter};
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
@@ -263,24 +264,38 @@ pub fn commit_is_ancestor(options: &CommitAncestorOpts) -> bool {
 pub struct CommitOnBranchOpts {
   pub repo_path: String,
   pub commit_id: String,
+  pub include_descendants: bool,
 }
 
 pub fn commit_is_on_branch(options: &CommitOnBranchOpts) -> R<bool> {
   let CommitOnBranchOpts {
     repo_path,
     commit_id,
+    include_descendants,
   } = options;
 
   Ok(
-    get_all_commits_on_current_branch(&ReqOptions {
+    get_all_commits_on_current_branch(&CommitsOnBranchOpts {
       repo_path: repo_path.clone(),
+      include_descendants: *include_descendants,
     })?
     .contains(commit_id),
   )
 }
 
-pub fn get_all_commits_on_current_branch(options: &ReqOptions) -> R<HashSet<String>> {
-  let ReqOptions { repo_path } = options;
+#[derive(Debug, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CommitsOnBranchOpts {
+  pub repo_path: String,
+  pub include_descendants: bool,
+}
+
+pub fn get_all_commits_on_current_branch(options: &CommitsOnBranchOpts) -> R<HashSet<String>> {
+  let CommitsOnBranchOpts {
+    repo_path,
+    include_descendants,
+  } = options;
 
   let HeadInfo {
     remote_commit,
@@ -293,13 +308,13 @@ pub fn get_all_commits_on_current_branch(options: &ReqOptions) -> R<HashSet<Stri
   let (commits, _) = store::get_commits_and_refs(repo_path).ok_or(ES::from(
     "get_all_commits_on_current_branch: Commits not found.",
   ))?;
-  let commits = get_commit_map_cloned(&commits);
+  let commits_map = get_commit_map_cloned(&commits);
 
   let mut ancestors: HashSet<String> = HashSet::new();
 
   if let Some(c) = remote_commit {
     ancestors.extend(
-      find_commit_ancestors(&c, &commits)
+      find_commit_ancestors(&c, &commits_map)
         .iter()
         .map(|id| id.to_string()),
     );
@@ -307,10 +322,16 @@ pub fn get_all_commits_on_current_branch(options: &ReqOptions) -> R<HashSet<Stri
   }
 
   ancestors.extend(
-    find_commit_ancestors(&commit, &commits)
+    find_commit_ancestors(&commit, &commits_map)
       .iter()
       .map(|id| id.to_string()),
   );
+
+  if *include_descendants {
+    let descendants = find_commit_descendants(&commit, &commits);
+    ancestors.extend(descendants);
+  }
+
   ancestors.insert(commit.id);
 
   Ok(ancestors)

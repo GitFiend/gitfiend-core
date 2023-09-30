@@ -14,11 +14,13 @@ use ts_rs::TS;
 #[derive(Debug, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub struct WsRepoState2 {
+pub struct RepoStatus {
   patches: WipPatches,
   config: GitConfig,
   branches: HashSet<String>,
   branch_name: String,
+  local_commit_id: Option<String>,
+  remote_commit_id: Option<String>,
   remote_ahead: u32,
   remote_behind: u32,
   state: BranchState,
@@ -32,7 +34,7 @@ pub enum BranchState {
   Both,
 }
 
-pub fn load_ws_repo2(options: &ReqOptions) -> R<WsRepoState2> {
+pub fn load_ws_repo2(options: &ReqOptions) -> R<RepoStatus> {
   let ReqOptions { repo_path } = options;
 
   let patches = load_wip_patches(options)?;
@@ -56,11 +58,13 @@ pub fn load_ws_repo2(options: &ReqOptions) -> R<WsRepoState2> {
 
       clear_repo_changed_status(options);
 
-      return Ok(WsRepoState2 {
+      return Ok(RepoStatus {
         patches,
         config,
         branches: others,
         branch_name: current_branch,
+        local_commit_id: Some(local_id),
+        remote_commit_id: Some(remote_id),
         remote_ahead,
         remote_behind,
         state: BranchState::Both,
@@ -83,11 +87,13 @@ pub fn load_ws_repo2(options: &ReqOptions) -> R<WsRepoState2> {
 
   clear_repo_changed_status(options);
 
-  Ok(WsRepoState2 {
+  Ok(RepoStatus {
     patches,
     config,
     branches: others,
     branch_name: current_branch,
+    local_commit_id: local_id,
+    remote_commit_id: remote_id,
     remote_ahead: 0,
     remote_behind: 0,
     state,

@@ -32,7 +32,7 @@ use crate::git::queries::wip::wip_diff::{
   load_wip_hunk_lines, load_wip_hunks, load_wip_hunks_split,
 };
 use crate::git::queries::wip::wip_patches::load_wip_patches;
-use crate::git::queries::workspace::ws_repo::load_ws_repo2;
+use crate::git::queries::workspace::ws_repo::load_repo_status;
 use crate::git::repo_watcher::{clear_repo_changed_status, repo_has_changed, watch_repo};
 use crate::git::run_git_action::poll_action2;
 use crate::git::store::{clear_all_caches, clear_cache, override_git_home};
@@ -83,7 +83,7 @@ pub fn start_async_server() {
 
           scan_workspace,
           repo_has_changed,
-          load_ws_repo2,
+          load_repo_status,
 
           is_rebase_in_progress,
           load_commits_and_refs,

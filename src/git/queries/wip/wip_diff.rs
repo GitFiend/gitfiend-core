@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use similar::{ChangeTag, TextDiff};
 use ts_rs::TS;
 
-use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
+use crate::git::git_types::{Hunk, HunkLine, HunkLineStatus, WipPatch, WipPatchType};
 use crate::git::queries::hunks::load_hunks::flatten_hunks_split;
 use crate::git::queries::refs::head_info::calc_head_info;
 use crate::git::queries::wip::create_hunks::convert_lines_to_hunks;
@@ -24,7 +24,7 @@ use crate::{and, or, rep_parser_sep, until_parser_keep_happy};
 pub struct ReqWipHunksOptions {
   pub repo_path: String,
   pub patch: WipPatch,
-  pub head_commit: Option<Commit>,
+  pub head_commit: Option<String>,
 }
 
 pub fn load_wip_hunks(options: &ReqWipHunksOptions) -> R<(Vec<Hunk>, u32, bool)> {
@@ -105,14 +105,15 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bo
   Ok((Vec::new(), true))
 }
 
-fn ensure_head_commit(head: &Option<Commit>, repo_path: &str) -> Option<Commit> {
+fn ensure_head_commit(head: &Option<String>, repo_path: &str) -> Option<String> {
   if head.is_none() {
     return Some(
       calc_head_info(&ReqOptions {
         repo_path: repo_path.to_string(),
       })
       .ok()?
-      .commit,
+      .commit
+      .id,
     );
   }
   head.clone()
@@ -246,11 +247,11 @@ fn get_status_from_change_tag(tag: &ChangeTag) -> HunkLineStatus {
   }
 }
 
-fn load_unchanged_file(repo_path: &String, patch: &WipPatch, head_commit: &Commit) -> R<String> {
+fn load_unchanged_file(repo_path: &String, patch: &WipPatch, head_commit: &str) -> R<String> {
   Ok(
     run_git_err(RunGitOptions {
       repo_path,
-      args: ["show", &format!("{}:{}", head_commit.id, &patch.old_file)],
+      args: ["show", &format!("{}:{}", head_commit, &patch.old_file)],
     })?
     .stdout,
   )

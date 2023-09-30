@@ -19,6 +19,7 @@ pub struct RepoStatus {
   config: GitConfig,
   branches: HashSet<String>,
   branch_name: String,
+  head_ref_id: String,
   local_commit_id: Option<String>,
   remote_commit_id: Option<String>,
   remote_ahead: u32,
@@ -34,13 +35,13 @@ pub enum BranchState {
   Both,
 }
 
-pub fn load_ws_repo2(options: &ReqOptions) -> R<RepoStatus> {
+pub fn load_repo_status(options: &ReqOptions) -> R<RepoStatus> {
   let ReqOptions { repo_path } = options;
 
   let patches = load_wip_patches(options)?;
   let config = load_full_config(options)?;
 
-  let current_branch = load_current_branch(repo_path)?;
+  let (head_id, current_branch) = load_current_branch(repo_path)?;
 
   let Refs {
     local_id,
@@ -48,7 +49,7 @@ pub fn load_ws_repo2(options: &ReqOptions) -> R<RepoStatus> {
     mut others,
   } = read_refs(repo_path, &current_branch)?;
 
-  let packed_refs = load_packed_refs(repo_path)?;
+  let packed_refs = load_packed_refs(repo_path).unwrap_or_else(|_| Vec::new());
   others.extend(packed_refs);
 
   if let Some(local_id) = local_id.clone() {
@@ -63,6 +64,7 @@ pub fn load_ws_repo2(options: &ReqOptions) -> R<RepoStatus> {
         config,
         branches: others,
         branch_name: current_branch,
+        head_ref_id: head_id,
         local_commit_id: Some(local_id),
         remote_commit_id: Some(remote_id),
         remote_ahead,
@@ -92,6 +94,7 @@ pub fn load_ws_repo2(options: &ReqOptions) -> R<RepoStatus> {
     config,
     branches: others,
     branch_name: current_branch,
+    head_ref_id: head_id,
     local_commit_id: local_id,
     remote_commit_id: remote_id,
     remote_ahead: 0,

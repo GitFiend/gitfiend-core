@@ -8,6 +8,7 @@ export interface RepoStatus {
   config: GitConfig;
   branches: Array<string>;
   branchName: string;
+  headRefId: string;
   localCommitId: string | null;
   remoteCommitId: string | null;
   remoteAhead: number;

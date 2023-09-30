@@ -4,12 +4,14 @@ use std::path::{Path, PathBuf};
 
 use crate::server::request_util::{ES, R};
 
-pub fn load_current_branch(repo_path: &str) -> R<String> {
+pub fn load_current_branch(repo_path: &str) -> R<(String, String)> {
   let head = Path::new(repo_path).join(".git").join("HEAD");
 
   if let Ok(text) = read_to_string(head) {
     return if let Some(branch) = text.split(':').last() {
-      Ok(branch.trim().replace("refs/heads/", ""))
+      let id = branch.trim();
+      let name = id.replace("refs/heads/", "");
+      Ok((id.to_string(), name))
     } else {
       Err(ES::from(
         "Failed to load current branch. Failed to parse .git/HEAD. Could be a detached head?",

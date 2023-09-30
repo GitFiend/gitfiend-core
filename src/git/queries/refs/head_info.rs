@@ -1,6 +1,4 @@
 use ahash::AHashMap;
-use serde::Serialize;
-use ts_rs::TS;
 
 use crate::git::git_types::{Commit, CommitInfo, GitConfig, RefInfo, RefLocation};
 use crate::git::queries::commit_calcs::count_commits_between_fallback;
@@ -13,11 +11,8 @@ use crate::git::store::{RepoPath, CONFIG};
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::{ES, R};
 
-#[derive(Debug, Clone, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
+#[derive(Debug, Clone)]
 pub struct HeadInfo {
-  #[serde(rename = "ref")]
   pub ref_info: RefInfo,
   pub commit: Commit,
   pub remote_ref: Option<RefInfo>,

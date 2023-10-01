@@ -22,7 +22,14 @@ pub fn is_rebase_in_progress(options: &ReqOptions) -> bool {
 // }
 
 pub fn read_merge_head(repo_path: &str) -> Option<String> {
-  let text = fs::read_to_string(Path::new(repo_path).join(".git").join("MERGE_HEAD")).ok()?;
+  if let Ok(text) = fs::read_to_string(Path::new(repo_path).join(".git").join("MERGE_HEAD")) {
+    return Some(text.trim().to_string());
+  }
 
-  Some(text.trim().to_string())
+  // This seems to happen when there's a conflict from un-stashing. Returns "special ref".
+  if let Ok(text) = fs::read_to_string(Path::new(repo_path).join(".git").join("AUTO_MERGE")) {
+    return Some(text.trim().to_string());
+  }
+
+  None
 }

@@ -102,7 +102,7 @@ fn read_remote_refs(
       } else {
         let p: PathBuf = path.strip_prefix(start_path)?.iter().skip(1).collect();
         let name = p.to_str().unwrap_or("").to_string();
-        if name != "HEAD" {
+        if !name.starts_with('.') {
           refs_result.others.insert(name);
         }
       }

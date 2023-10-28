@@ -102,7 +102,12 @@ fn read_remote_refs(
       } else {
         let p: PathBuf = path.strip_prefix(start_path)?.iter().skip(1).collect();
         let name = p.to_str().unwrap_or("").to_string();
-        if !name.starts_with('.') {
+
+        if name == "HEAD" {
+          if read_to_string(path)?.contains(branch_name) {
+            refs_result.remote_id = refs_result.local_id.clone();
+          }
+        } else if !name.starts_with('.') {
           refs_result.others.insert(name);
         }
       }

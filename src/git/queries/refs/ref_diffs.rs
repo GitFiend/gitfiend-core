@@ -8,8 +8,7 @@ use crate::git::git_types::{
   Commit, GitConfig, LocalRefCommitDiff, RefCommitDiff, RefInfo, RefLocation,
 };
 use crate::git::queries::commit_calcs::count_commits_between_commit_ids;
-use crate::git::store;
-use crate::git::store::CONFIG;
+use crate::git::store::{CONFIG, STORE};
 
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -31,7 +30,7 @@ pub fn calc_ref_diffs(
     ..
   } = options;
 
-  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
+  let (commits, refs) = STORE.get_commits_and_refs(repo_path)?;
   let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
 
   Some(calc_ref_diffs_inner(
@@ -88,8 +87,10 @@ fn calc_remote_ref_diff(
 ) -> RefCommitDiff {
   let ref_commit_id = &info.commit_id;
 
-  let ahead_of_head = count_commits_between_commit_ids(ref_commit_id, head_commit_id, commits);
-  let behind_head = count_commits_between_commit_ids(head_commit_id, ref_commit_id, commits);
+  let ahead_of_head =
+    count_commits_between_commit_ids(ref_commit_id, head_commit_id, commits);
+  let behind_head =
+    count_commits_between_commit_ids(head_commit_id, ref_commit_id, commits);
 
   RefCommitDiff {
     ahead_of_head,

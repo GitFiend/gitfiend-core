@@ -12,21 +12,24 @@ use directories::ProjectDirs;
 use loggers::elapsed;
 
 use crate::git::git_types::Patch;
-use crate::git::store;
+use crate::git::store::STORE;
 
-pub fn write_patches_cache(repo_path: &str, patches: &HashMap<String, Vec<Patch>>) -> Option<()> {
+pub fn write_patches_cache(
+  repo_path: &str,
+  patches: &HashMap<String, Vec<Patch>>,
+) -> Option<()> {
   let cache_dir = get_cache_dir()?;
   let file_name = generate_file_name(repo_path);
 
   let full_path = cache_dir.join(file_name);
 
-  store::insert_patches(repo_path, patches);
+  STORE.insert_patches(repo_path, patches);
 
   write_patches_to_file(full_path, patches).ok()
 }
 
 pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>> {
-  if let Some(patches) = store::get_patches(repo_path) {
+  if let Some(patches) = STORE.get_patches(repo_path) {
     return Some(patches);
   }
 
@@ -39,7 +42,7 @@ pub fn load_patches_cache(repo_path: &str) -> Option<HashMap<String, Vec<Patch>>
   let maybe_patches = read_patches_from_file(cache_file).ok();
 
   if let Some(patches) = maybe_patches {
-    store::insert_patches(repo_path, &patches);
+    STORE.insert_patches(repo_path, &patches);
 
     return Some(patches);
   }
@@ -71,7 +74,9 @@ fn generate_file_name(repo_path: &str) -> String {
 }
 
 #[elapsed]
-fn read_patches_from_file(path: PathBuf) -> Result<HashMap<String, Vec<Patch>>, Box<dyn Error>> {
+fn read_patches_from_file(
+  path: PathBuf,
+) -> Result<HashMap<String, Vec<Patch>>, Box<dyn Error>> {
   let file = File::open(&path)?;
 
   let mut reader = BufReader::new(file);

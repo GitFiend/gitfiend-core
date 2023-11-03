@@ -2,7 +2,7 @@ use crate::git::git_types::{Commit, RefInfo, RefLocation, RefType};
 use crate::git::queries::commit_calcs::get_commit_ids_between_commit_ids;
 use crate::git::queries::commits_parsers::P_ID_LIST;
 use crate::git::run_git::{run_git_err, RunGitOptions};
-use crate::git::store;
+use crate::git::store::STORE;
 use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
 use crate::{dprintln, time_result};
@@ -29,7 +29,9 @@ pub fn get_un_pushed_commits(options: &ReqOptions) -> UnPushedCommits {
       all_branches: all,
     };
   } else {
-    dprintln!("get_un_pushed_commits: Refs not found in commits, fall back to git request.");
+    dprintln!(
+      "get_un_pushed_commits: Refs not found in commits, fall back to git request."
+    );
   }
 
   if let Ok(out) = run_git_err(RunGitOptions {
@@ -57,10 +59,11 @@ fn get_unique_un_pushed_commits(
   repo_path: &String,
   un_pushed_ids: &[String],
 ) -> Option<Vec<String>> {
-  let (commits, refs) = store::get_commits_and_refs(repo_path)?;
+  let (commits, refs) = STORE.get_commits_and_refs(repo_path)?;
 
   let un_pushed_ids: AHashSet<String> = un_pushed_ids.iter().cloned().collect();
-  let ref_map: AHashMap<String, RefInfo> = refs.iter().map(|r| (r.id.clone(), r.clone())).collect();
+  let ref_map: AHashMap<String, RefInfo> =
+    refs.iter().map(|r| (r.id.clone(), r.clone())).collect();
   let commit_map: AHashMap<String, Commit> =
     commits.iter().map(|c| (c.id.clone(), c.clone())).collect();
 
@@ -130,7 +133,7 @@ fn un_pushed(
 // This will return none if head ref or remote ref can't be found in provided commits.
 fn get_un_pushed_commits_computed(options: &ReqOptions) -> Option<Vec<String>> {
   time_result!("get_un_pushed_commits_computed", {
-    let (commits, refs) = store::get_commits_and_refs(&options.repo_path)?;
+    let (commits, refs) = STORE.get_commits_and_refs(&options.repo_path)?;
 
     let commit_map: AHashMap<String, Commit> =
       commits.into_iter().map(|c| (c.id.clone(), c)).collect();

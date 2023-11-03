@@ -4,13 +4,14 @@ use crate::git::queries::commit_calcs::{
   get_commit_map_cloned,
 };
 use crate::git::queries::commit_filters::{apply_commit_filters, CommitFilter};
-use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST};
+use crate::git::queries::commits_parsers::{
+  PRETTY_FORMATTED, P_COMMITS, P_COMMIT_ROW, P_ID_LIST,
+};
 use crate::git::queries::refs::head_info::{calc_head_info, HeadInfo};
 use crate::git::queries::refs::{finish_properties_on_refs, get_ref_info_from_commits};
 use crate::git::queries::stashes::load_stashes;
 use crate::git::run_git::{run_git_err, RunGitOptions};
-use crate::git::store;
-use crate::git::store::RepoPath;
+use crate::git::store::{RepoPath, STORE};
 use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::{ES, R};
@@ -73,7 +74,9 @@ pub struct ReqCommitsOptions2 {
   pub skip_stashes: bool,
 }
 
-pub fn load_commits_and_refs(options: &ReqCommitsOptions2) -> R<(Vec<Commit>, Vec<RefInfo>)> {
+pub fn load_commits_and_refs(
+  options: &ReqCommitsOptions2,
+) -> R<(Vec<Commit>, Vec<RefInfo>)> {
   let ReqCommitsOptions2 {
     repo_path,
     num_commits,
@@ -82,7 +85,8 @@ pub fn load_commits_and_refs(options: &ReqCommitsOptions2) -> R<(Vec<Commit>, Ve
     skip_stashes,
   } = options;
 
-  let (commits, refs) = load_commits_unfiltered(repo_path, *num_commits, *fast, *skip_stashes)?;
+  let (commits, refs) =
+    load_commits_unfiltered(repo_path, *num_commits, *fast, *skip_stashes)?;
 
   Ok((
     apply_commit_filters(repo_path, commits, &refs, filters),
@@ -118,7 +122,7 @@ fn load_commits_unfiltered(
   skip_stashes: bool,
 ) -> R<(Vec<Commit>, Vec<RefInfo>)> {
   if cache_only {
-    if let Some(commits) = store::get_commits_and_refs(repo_path) {
+    if let Some(commits) = STORE.get_commits_and_refs(repo_path) {
       return Ok(commits);
     }
   }
@@ -158,7 +162,7 @@ fn load_commits_unfiltered(
   let refs = finish_properties_on_refs(get_ref_info_from_commits(&commits), repo_path);
   let commits = get_commits_from_info(commits);
 
-  store::insert_commits(repo_path, &commits, &refs);
+  STORE.insert_commits(repo_path, &commits, &refs);
 
   Ok((commits, refs))
 }
@@ -200,11 +204,13 @@ pub fn commit_ids_between_commits(options: &CommitDiffOpts) -> R<Vec<String>> {
     commit_id2,
   } = options;
 
-  if let Some((commits, _)) = store::get_commits_and_refs(repo_path) {
+  if let Some((commits, _)) = STORE.get_commits_and_refs(repo_path) {
     let commit_map: AHashMap<String, Commit> =
       commits.into_iter().map(|c| (c.id.clone(), c)).collect();
 
-    if let Some(result) = get_commit_ids_between_commit_ids(commit_id2, commit_id1, &commit_map) {
+    if let Some(result) =
+      get_commit_ids_between_commit_ids(commit_id2, commit_id1, &commit_map)
+    {
       return Ok(result);
     }
   }
@@ -245,7 +251,7 @@ pub fn commit_is_ancestor(options: &CommitAncestorOpts) -> bool {
     ancestor_candidate_id,
   } = options;
 
-  if let Some((commits, _)) = store::get_commits_and_refs(repo_path) {
+  if let Some((commits, _)) = STORE.get_commits_and_refs(repo_path) {
     let commits = get_commit_map_cloned(&commits);
 
     if let Some(commit) = commits.get(commit_id) {
@@ -291,7 +297,9 @@ pub struct CommitsOnBranchOpts {
   pub include_descendants: bool,
 }
 
-pub fn get_all_commits_on_current_branch(options: &CommitsOnBranchOpts) -> R<HashSet<String>> {
+pub fn get_all_commits_on_current_branch(
+  options: &CommitsOnBranchOpts,
+) -> R<HashSet<String>> {
   let CommitsOnBranchOpts {
     repo_path,
     include_descendants,
@@ -305,7 +313,7 @@ pub fn get_all_commits_on_current_branch(options: &CommitsOnBranchOpts) -> R<Has
     repo_path: repo_path.to_string(),
   })?;
 
-  let (commits, _) = store::get_commits_and_refs(repo_path).ok_or(ES::from(
+  let (commits, _) = STORE.get_commits_and_refs(repo_path).ok_or(ES::from(
     "get_all_commits_on_current_branch: Commits not found.",
   ))?;
   let commits_map = get_commit_map_cloned(&commits);

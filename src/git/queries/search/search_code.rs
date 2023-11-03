@@ -4,7 +4,7 @@ use crate::git::git_types::{HunkLine, Patch};
 use crate::git::queries::patches::patch_parsers::P_MANY_PATCHES_WITH_COMMIT_IDS;
 use crate::git::queries::search::matching_hunk_lines::get_matching_hunk_lines;
 use crate::git::queries::search::search_cancelled;
-use crate::git::store;
+use crate::git::store::STORE;
 use crate::parser::parse_all;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
@@ -45,7 +45,7 @@ pub fn search_commits_for_code(
     ..
   } = options;
 
-  let (commits, _) = store::get_commits_and_refs(repo_path)?;
+  let (commits, _) = STORE.get_commits_and_refs(repo_path)?;
 
   Some(
     commit_patches
@@ -57,7 +57,8 @@ pub fn search_commits_for_code(
           .into_iter()
           .flat_map(|patch| {
             Some(FileMatch {
-              lines: get_matching_hunk_lines(repo_path, commit, &patch, search_text).ok()?,
+              lines: get_matching_hunk_lines(repo_path, commit, &patch, search_text)
+                .ok()?,
               patch,
             })
           })

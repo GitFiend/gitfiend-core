@@ -9,13 +9,13 @@ use ts_rs::TS;
 
 use crate::dprintln;
 use crate::git::action_state::{
-  add_stderr_log, add_stdout_log, set_action_done, set_action_error, start_action, ActionState,
-  ACTIONS,
+  add_stderr_log, add_stdout_log, set_action_done, set_action_error, start_action,
+  ActionState, ACTIONS,
 };
 use crate::git::git_settings::GIT_PATH;
 use crate::git::git_version::GitVersion;
 use crate::git::run_git_action::ActionError::{Credential, Git, IO};
-use crate::git::store::get_git_version;
+use crate::git::store::STORE;
 use crate::server::request_util::{ES, R};
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -56,7 +56,7 @@ pub fn run_git_action<const N: usize>(options: RunGitActionOptions<N>) -> u32 {
 pub fn run_git_action_with_vec(repo_path: &str, commands: Vec<Vec<String>>) -> u32 {
   let id = start_action();
 
-  let git_version = get_git_version();
+  let git_version = STORE.get_git_version();
 
   let repo_path = repo_path.to_string();
 
@@ -64,7 +64,8 @@ pub fn run_git_action_with_vec(repo_path: &str, commands: Vec<Vec<String>>) -> u
     let mut failed = false;
 
     for c in commands {
-      if let Err(e) = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c) {
+      if let Err(e) = run_git_action_inner(id, repo_path.clone(), git_version.clone(), c)
+      {
         set_action_error(id, e);
         failed = true;
         break;

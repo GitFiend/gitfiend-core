@@ -6,8 +6,7 @@ use crate::git::queries::commits::{
   convert_commit, load_head_commit, load_top_commit_for_branch, TopCommitOptions,
 };
 use crate::git::queries::refs::ref_diffs::calc_remote_ref_diffs;
-use crate::git::store;
-use crate::git::store::{RepoPath, CONFIG};
+use crate::git::store::{RepoPath, CONFIG, STORE};
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::{ES, R};
 
@@ -24,8 +23,9 @@ pub struct HeadInfo {
 pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
   let ReqOptions { repo_path } = options;
 
-  let (commits, refs) =
-    store::get_commits_and_refs(repo_path).ok_or(ES::from("calc_head_info: No commits"))?;
+  let (commits, refs) = STORE
+    .get_commits_and_refs(repo_path)
+    .ok_or(ES::from("calc_head_info: No commits"))?;
 
   let head_info = calc_head_info_from_commits(commits, refs);
 
@@ -66,7 +66,10 @@ pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
 }
 
 // Returns Option intentionally.
-fn calc_head_info_from_commits(commits: Vec<Commit>, refs: Vec<RefInfo>) -> Option<HeadInfo> {
+fn calc_head_info_from_commits(
+  commits: Vec<Commit>,
+  refs: Vec<RefInfo>,
+) -> Option<HeadInfo> {
   let all_refs: AHashMap<String, RefInfo> =
     refs.iter().map(|r| (r.id.clone(), r.clone())).collect();
 
@@ -158,11 +161,17 @@ pub fn calc_remote_fallback(
 
     let remote_ref = remote_ref.clone();
 
-    let remote_ahead =
-      count_commits_between_fallback(repo_path, &head_ref.full_name, &remote_ref.full_name);
+    let remote_ahead = count_commits_between_fallback(
+      repo_path,
+      &head_ref.full_name,
+      &remote_ref.full_name,
+    );
 
-    let remote_behind =
-      count_commits_between_fallback(repo_path, &remote_ref.full_name, &head_ref.full_name);
+    let remote_behind = count_commits_between_fallback(
+      repo_path,
+      &remote_ref.full_name,
+      &head_ref.full_name,
+    );
 
     return Ok((
       remote_ahead,

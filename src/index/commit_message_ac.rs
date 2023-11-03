@@ -1,6 +1,6 @@
 use crate::git::git_types::Commit;
 use crate::git::queries::patches::patches::load_patches;
-use crate::git::store;
+use crate::git::store::STORE;
 use crate::global;
 use crate::index::ac_index::ACIndex;
 use crate::server::request_util::{ES, R};
@@ -57,7 +57,8 @@ fn get_index(repo_path: &String) -> R<ACIndex> {
 }
 
 fn build_index(repo_path: &String) -> R<ACIndex> {
-  let (commits, refs) = store::get_commits_and_refs(repo_path)
+  let (commits, refs) = STORE
+    .get_commits_and_refs(repo_path)
     .ok_or(ES::from("build_index: Couldn't get commits and refs."))?;
   let patches = load_patches(repo_path, &commits)?;
 

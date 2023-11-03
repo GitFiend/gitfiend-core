@@ -4,7 +4,7 @@ use ts_rs::TS;
 
 use crate::dprintln;
 use crate::git::run_git_action::{run_git_action, RunGitActionOptions};
-use crate::git::store::get_git_version;
+use crate::git::store::STORE;
 
 #[derive(Debug, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -20,7 +20,7 @@ pub fn clone_repo(options: &CloneOptions) -> u32 {
     return 0;
   }
 
-  let version = get_git_version();
+  let version = STORE.get_git_version();
 
   let command = if version.major > 1 && version.minor > 12 {
     vec!["clone", "--recurse-submodules", "--progress", &options.url]

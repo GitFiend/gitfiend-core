@@ -8,7 +8,7 @@ use notify::{Event, RecursiveMode, Result, Watcher};
 use serde::Deserialize;
 use ts_rs::TS;
 
-use crate::git::store::clear_unwatched_repos_from_commits;
+use crate::git::store::STORE;
 use crate::server::git_request::ReqOptions;
 use crate::util::global::Global;
 use crate::{dprintln, global};
@@ -56,7 +56,7 @@ pub fn watch_repo(options: &WatchRepoOptions) {
     .map(|path| (path.to_string(), options.start_changed))
     .collect();
 
-  clear_unwatched_repos_from_commits(&watched);
+  STORE.clear_unwatched_repos_from_commits(&watched);
 
   WATCH_DIRS.set(watched);
 
@@ -64,14 +64,6 @@ pub fn watch_repo(options: &WatchRepoOptions) {
 
   thread::spawn(move || watch(root_repo));
 }
-
-// pub fn get_watched_repos() -> Option<HashMap<RepoPath, bool>> {
-//   WATCH_DIRS.get()
-// }
-//
-// pub fn stop_watching_repo(_: &ReqOptions) {
-//   WATCH_DIRS.set(HashMap::new());
-// }
 
 pub fn repo_has_changed(options: &ReqOptions) -> Option<bool> {
   let dirs = WATCH_DIRS.get()?;
@@ -178,7 +170,10 @@ fn update_changed(changed_paths: Vec<PathBuf>) {
   }
 }
 
-fn closest_match(changed_path: &str, watch_dirs: &HashMap<String, bool>) -> Option<String> {
+fn closest_match(
+  changed_path: &str,
+  watch_dirs: &HashMap<String, bool>,
+) -> Option<String> {
   let mut matches = Vec::<&String>::new();
 
   for dir in watch_dirs.keys() {
@@ -199,29 +194,6 @@ mod tests {
   use crate::git::repo_watcher::PATH_FILTER2;
   use std::path::Path;
 
-  // #[test]
-  // fn test_path_filter() {
-  //   let is_ignored = |path| !PATH_FILTER(path);
-  //
-  //   assert_eq!(Path::new("/repo/.git").to_str(), Some("/repo/.git"));
-  //   assert_eq!(
-  //     Path::new("/repo/.git").to_path_buf().to_str(),
-  //     Some("/repo/.git")
-  //   );
-  //
-  //   let p = &Path::new("/repo/.git").to_path_buf();
-  //   assert!(is_ignored(&p));
-  //
-  //   let p = &Path::new("/repo/.git/logs/HEAD").to_path_buf();
-  //   assert!(is_ignored(&p));
-  //
-  //   let p = &Path::new("/repo/.git/HEAD").to_path_buf();
-  //   assert!(!is_ignored(&p));
-  //
-  //   let p = &Path::new("/repo/.git/ORIG_HEAD").to_path_buf();
-  //   assert!(!is_ignored(&p));
-  // }
-
   #[test]
   fn test_path_filter2() {
     let is_ignored = |path| !PATH_FILTER2(path);
@@ -241,7 +213,8 @@ mod tests {
     let p = &Path::new("/repo/.git/ORIG_HEAD").to_path_buf();
     assert!(!is_ignored(&p));
 
-    let p = &Path::new("/Users/tobysuggate/Repos/game-dist/.git/index.lock").to_path_buf();
+    let p =
+      &Path::new("/Users/tobysuggate/Repos/game-dist/.git/index.lock").to_path_buf();
     assert!(is_ignored(&p));
   }
 }

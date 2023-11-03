@@ -1,10 +1,15 @@
-use crate::git::store::get_commits_and_refs;
+use crate::git::store::STORE;
 use crate::index::ac_index::ACIndex;
 use crate::server::request_util::{ES, R};
 
-pub fn create_branch_ac(repo_path: &String, current_word: &str, max_num: usize) -> R<Vec<String>> {
-  let (_, refs) =
-    get_commits_and_refs(repo_path).ok_or(ES::from("create_branch_ac: Couldn't get refs."))?;
+pub fn create_branch_ac(
+  repo_path: &String,
+  current_word: &str,
+  max_num: usize,
+) -> R<Vec<String>> {
+  let (_, refs) = STORE
+    .get_commits_and_refs(repo_path)
+    .ok_or(ES::from("create_branch_ac: Couldn't get refs."))?;
   let mut index = ACIndex::new();
 
   for r in refs {

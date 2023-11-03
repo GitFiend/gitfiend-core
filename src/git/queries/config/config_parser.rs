@@ -62,7 +62,7 @@ const P_OTHER: Parser<String> = or!(P_COMMENT, P_UNKNOWN);
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::config_parser::P_CONFIG2;
+  use crate::git::queries::config::config_parser::P_CONFIG2;
   use crate::parser::parse_all;
 
   #[test]

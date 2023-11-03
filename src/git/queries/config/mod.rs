@@ -1,5 +1,5 @@
 use crate::git::git_types::GitConfig;
-use crate::git::queries::config_parser::P_CONFIG2;
+use crate::git::queries::config::config_parser::P_CONFIG2;
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
 use crate::git::store::CONFIG;
@@ -12,6 +12,8 @@ use crate::{and, many, until_str, word};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+
+pub mod config_parser;
 
 impl GitConfig {
   pub fn new() -> GitConfig {
@@ -115,8 +117,8 @@ mod tests {
   use std::collections::HashMap;
 
   use crate::git::git_types::GitConfig;
+  use crate::git::queries::config::config_parser::{P_CONFIG2, P_HEADING};
   use crate::git::queries::config::{load_full_config, P_CONFIG, P_REMOTE_NAME};
-  use crate::git::queries::config_parser::{P_CONFIG2, P_HEADING};
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
 

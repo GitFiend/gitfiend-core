@@ -101,6 +101,7 @@ pub struct RefCommitDiff {
 pub struct GitConfig {
   pub entries: HashMap<String, String>,
   pub remotes: HashMap<String, String>,
+  pub submodules: HashMap<String, String>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]

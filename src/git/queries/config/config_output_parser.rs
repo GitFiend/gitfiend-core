@@ -6,12 +6,24 @@ use std::collections::HashMap;
 // Parses logged config from git command.
 pub const P_CONFIG: Parser<HashMap<String, String>> = map!(
   many!(and!(until_str!("="), UNTIL_LINE_END)),
-  |result: Vec<(String, String)>| { result.into_iter().collect::<HashMap<String, String>>() }
+  |result: Vec<(String, String)>| {
+    result.into_iter().collect::<HashMap<String, String>>()
+  }
 );
 
 pub const P_REMOTE_NAME: Parser<String> = map!(
   and!(
     word!("remote."),
+    until_str!("."),
+    word!("url"),
+    UNTIL_LINE_END
+  ),
+  |result: (&str, String, &str, String)| { result.1 }
+);
+
+pub const P_SUBMODULE_NAME: Parser<String> = map!(
+  and!(
+    word!("submodule."),
     until_str!("."),
     word!("url"),
     UNTIL_LINE_END
@@ -25,7 +37,9 @@ mod tests {
 
   use crate::git::git_types::GitConfig;
   use crate::git::queries::config::config_file_parser::{P_CONFIG_FILE, P_HEADING};
-  use crate::git::queries::config::config_output_parser::{P_CONFIG, P_REMOTE_NAME};
+  use crate::git::queries::config::config_output_parser::{
+    P_CONFIG, P_REMOTE_NAME, P_SUBMODULE_NAME,
+  };
   use crate::git::queries::config::load_full_config;
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
@@ -104,9 +118,18 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
         ("branch.a.remote".to_string(), "origin3".to_string()),
       ]),
       remotes: HashMap::new(),
+      submodules: Default::default(),
     };
 
     assert_eq!(config.get_remote_for_branch("a"), "origin2");
+  }
+
+  #[test]
+  fn test_p_submodule() {
+    let result = parse_all(P_SUBMODULE_NAME, "submodule.fiend-ui.url");
+
+    assert!(result.is_some());
+    assert_eq!(result.unwrap(), "fiend-ui");
   }
 
   #[test]

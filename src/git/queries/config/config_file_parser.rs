@@ -27,7 +27,7 @@ const P_ROW: Parser<String> = map2!(
   f!("{}={}\n", res.1, res.5)
 );
 
-pub const P_CONFIG2: Parser<String> =
+pub const P_CONFIG_FILE: Parser<String> =
   map2!(many!(or!(P_SECTION, P_OTHER)), sections, sections.join(""));
 
 const P_SECTION: Parser<String> = map2!(and!(P_HEADING, many!(or!(P_ROW, P_OTHER))), res, {
@@ -62,7 +62,7 @@ const P_OTHER: Parser<String> = or!(P_COMMENT, P_UNKNOWN);
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::config::config_parser::P_CONFIG2;
+  use crate::git::queries::config::config_file_parser::P_CONFIG_FILE;
   use crate::parser::parse_all;
 
   #[test]
@@ -72,7 +72,7 @@ mod tests {
 	repositoryformatversion = 0
 	filemode = true 
 "#;
-    let result = parse_all(P_CONFIG2, text);
+    let result = parse_all(P_CONFIG_FILE, text);
 
     assert!(result.is_some());
     println!("{}", result.unwrap())
@@ -87,7 +87,7 @@ mod tests {
 	filemode = true 
 # hello
 "#;
-    let result = parse_all(P_CONFIG2, text);
+    let result = parse_all(P_CONFIG_FILE, text);
 
     assert!(result.is_some());
     println!("{}", result.unwrap())
@@ -111,7 +111,7 @@ mod tests {
 	merge = refs/heads/ssr-code-viewer
 "#;
 
-    let result = parse_all(P_CONFIG2, text);
+    let result = parse_all(P_CONFIG_FILE, text);
 
     assert!(result.is_some());
 
@@ -187,7 +187,7 @@ branch.ssr-code-viewer.merge=refs/heads/ssr-code-viewer
 	merge = refs/heads/ssr-code-viewer
 "#;
 
-    let result = parse_all(P_CONFIG2, text);
+    let result = parse_all(P_CONFIG_FILE, text);
 
     assert!(result.is_some());
     println!("{}", result.unwrap())

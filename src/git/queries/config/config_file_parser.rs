@@ -5,14 +5,14 @@ use crate::{and, character, f, many, map2, not, or};
 use std::fmt;
 
 // See https://git-scm.com/docs/git-config#_syntax
-pub enum Config {
-  Section(Section),
+pub enum ConfigFile {
+  Section(ConfigSection),
   Other(Other),
 }
 
-pub struct Section(Heading, Vec<Row>);
+pub struct ConfigSection(pub Heading, pub Vec<Row>);
 
-pub struct Heading(String, Option<String>);
+pub struct Heading(pub String, pub Option<String>);
 
 impl fmt::Display for Heading {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -23,7 +23,7 @@ impl fmt::Display for Heading {
   }
 }
 
-enum Row {
+pub enum Row {
   Data(String, String),
   Other(Other),
 }
@@ -59,13 +59,13 @@ const P_ROW: Parser<Row> = map2!(
   Row::Data(res.1, res.5)
 );
 
-pub const P_CONFIG_FILE: Parser<Vec<Config>> =
+pub const P_CONFIG_FILE: Parser<Vec<ConfigFile>> =
   map2!(many!(or!(P_SECTION, P_CONFIG_OTHER)), res, res);
 
-const P_SECTION: Parser<Config> = map2!(
+const P_SECTION: Parser<ConfigFile> = map2!(
   and!(P_HEADING, many!(or!(P_ROW, P_ROW_OTHER))),
   res,
-  Config::Section(Section(res.0, res.1))
+  ConfigFile::Section(ConfigSection(res.0, res.1))
 );
 
 const P_COMMENT: Parser<Other> = map2!(
@@ -82,10 +82,10 @@ const P_UNKNOWN: Parser<Other> = map2!(
 );
 
 const P_OTHER: Parser<Other> = or!(P_COMMENT, P_UNKNOWN);
-const P_CONFIG_OTHER: Parser<Config> = map2!(P_OTHER, res, Config::Other(res));
+const P_CONFIG_OTHER: Parser<ConfigFile> = map2!(P_OTHER, res, ConfigFile::Other(res));
 const P_ROW_OTHER: Parser<Row> = map2!(P_OTHER, res, Row::Other(res));
 
-pub fn parse_config_file(input: &str) -> R<Vec<Config>> {
+pub fn parse_config_file(input: &str) -> R<Vec<ConfigFile>> {
   parse_all_err(P_CONFIG_FILE, input)
 }
 
@@ -96,16 +96,16 @@ pub fn make_config_log(input: &str) -> R<String> {
     config
       .into_iter()
       .map(|config| match config {
-        Config::Section(section) => make_section_log(section),
-        Config::Other(_) => f!(""),
+        ConfigFile::Section(section) => make_section_log(section),
+        ConfigFile::Other(_) => f!(""),
       })
       .collect::<Vec<String>>()
       .join(""),
   )
 }
 
-fn make_section_log(section: Section) -> String {
-  let Section(heading, rows) = section;
+fn make_section_log(section: ConfigSection) -> String {
+  let ConfigSection(heading, rows) = section;
 
   let heading = heading.to_string();
 

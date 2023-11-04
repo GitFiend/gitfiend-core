@@ -11,10 +11,11 @@ use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub struct RepoPath {
-  path: PathBuf,
-  git_path: PathBuf,
-  submodule: bool,
+  pub path: PathBuf,
+  pub git_path: PathBuf,
+  pub submodule: bool,
 }
 
 pub type PathString = String;

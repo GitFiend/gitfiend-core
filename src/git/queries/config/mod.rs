@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::path::Path;
 
-mod config_file_parser;
+pub(crate) mod config_file_parser;
 mod config_output_parser;
 
 impl GitConfig {

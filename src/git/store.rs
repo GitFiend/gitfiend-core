@@ -4,6 +4,7 @@ use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
 use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
+use crate::server::request_util::{ES, R};
 use crate::util::global::{Glo, Global};
 use crate::{dprintln, glo, global, time_block};
 use ahash::AHashMap;
@@ -11,7 +12,7 @@ use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RepoPath {
   pub path: PathBuf,
   pub git_path: PathBuf,
@@ -21,6 +22,8 @@ pub struct RepoPath {
 pub type PathString = String;
 type PatchPath = String;
 type CommitsAndRefs = (Vec<Commit>, Vec<RefInfo>);
+
+static REPO_PATHS: Glo<Vec<RepoPath>> = glo!(Vec::new());
 
 static COMMITS_AND_REFS: Glo<AHashMap<PathString, CommitsAndRefs>> =
   glo!(AHashMap::new());
@@ -113,6 +116,24 @@ impl Store {
     }
 
     None
+  }
+
+  pub fn set_repo_paths(&self, repo_paths: Vec<RepoPath>) {
+    if let Ok(mut rp) = REPO_PATHS.write() {
+      *rp = repo_paths;
+    }
+  }
+
+  pub fn get_repo_path(&self, path_string: &str) -> R<RepoPath> {
+    if let Some(p) = REPO_PATHS
+      .read()?
+      .iter()
+      .find(|p| p.path.ends_with(path_string))
+    {
+      return Ok(p.clone());
+    }
+
+    Err(ES::from("Repo path not found"))
   }
 }
 

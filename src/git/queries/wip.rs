@@ -2,15 +2,15 @@ mod create_hunks;
 pub(crate) mod wip_diff;
 mod wip_patch_parsers;
 pub(crate) mod wip_patches;
+use crate::git::store::STORE;
 use crate::server::git_request::ReqOptions;
-use std::fs;
-use std::path::Path;
+use std::fs::read_to_string;
 
 pub fn is_rebase_in_progress(options: &ReqOptions) -> bool {
-  Path::new(&options.repo_path)
-    .join(".git")
-    .join("rebase-merge")
-    .exists()
+  if let Ok(path) = STORE.get_repo_path(&options.repo_path) {
+    return path.git_path.join("rebase-merge").exists();
+  }
+  false
 }
 
 // // Returns the commit id of the branch we tried to merge
@@ -22,12 +22,14 @@ pub fn is_rebase_in_progress(options: &ReqOptions) -> bool {
 // }
 
 pub fn read_merge_head(repo_path: &str) -> Option<String> {
-  if let Ok(text) = fs::read_to_string(Path::new(repo_path).join(".git").join("MERGE_HEAD")) {
+  let path = STORE.get_repo_path(repo_path).ok()?;
+
+  if let Ok(text) = read_to_string(path.git_path.join("MERGE_HEAD")) {
     return Some(text.trim().to_string());
   }
 
   // This seems to happen when there's a conflict from un-stashing. Returns "special ref".
-  if let Ok(text) = fs::read_to_string(Path::new(repo_path).join(".git").join("AUTO_MERGE")) {
+  if let Ok(text) = read_to_string(path.git_path.join("AUTO_MERGE")) {
     return Some(text.trim().to_string());
   }
 

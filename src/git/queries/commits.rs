@@ -11,7 +11,7 @@ use crate::git::queries::refs::head_info::{calc_head_info, HeadInfo};
 use crate::git::queries::refs::{finish_properties_on_refs, get_ref_info_from_commits};
 use crate::git::queries::stashes::load_stashes;
 use crate::git::run_git::{run_git_err, RunGitOptions};
-use crate::git::store::{RepoPath, STORE};
+use crate::git::store::{PathString, STORE};
 use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::{ES, R};
@@ -67,7 +67,7 @@ pub fn load_head_commit(options: &ReqOptions) -> R<CommitInfo> {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReqCommitsOptions2 {
-  pub repo_path: RepoPath,
+  pub repo_path: PathString,
   pub num_commits: u32,
   pub filters: Vec<CommitFilter>,
   pub fast: bool, // Fast means to use the cache only, don't run git command.
@@ -116,7 +116,7 @@ pub fn convert_commit(commit_info: CommitInfo) -> Commit {
 }
 
 fn load_commits_unfiltered(
-  repo_path: &RepoPath,
+  repo_path: &PathString,
   num_commits: u32,
   cache_only: bool,
   skip_stashes: bool,
@@ -167,7 +167,7 @@ fn load_commits_unfiltered(
   Ok((commits, refs))
 }
 
-pub fn load_commits(repo_path: &RepoPath, num: u32) -> R<Vec<CommitInfo>> {
+pub fn load_commits(repo_path: &PathString, num: u32) -> R<Vec<CommitInfo>> {
   let out = run_git_err(RunGitOptions {
     args: [
       "log",

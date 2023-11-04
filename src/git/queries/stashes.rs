@@ -4,12 +4,12 @@ use crate::git::git_types::CommitInfo;
 use crate::git::queries::commits_parsers::{PRETTY_FORMATTED, P_COMMITS};
 use crate::git::run_git;
 use crate::git::run_git::RunGitOptions;
-use crate::git::store::RepoPath;
+use crate::git::store::PathString;
 use crate::parser::parse_all_err;
 use crate::server::request_util::R;
 
 #[elapsed]
-pub fn load_stashes(repo_path: &RepoPath) -> R<Vec<CommitInfo>> {
+pub fn load_stashes(repo_path: &PathString) -> R<Vec<CommitInfo>> {
   let out = run_git::run_git_err(RunGitOptions {
     args: [
       "reflog",

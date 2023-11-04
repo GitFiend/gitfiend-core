@@ -63,7 +63,9 @@ const P_OTHER: Parser<String> = or!(P_COMMENT, P_UNKNOWN);
 #[cfg(test)]
 mod tests {
   use crate::git::queries::config::config_file_parser::P_CONFIG_FILE;
+  use crate::git::queries::config::config_file_parser2::make_config_log;
   use crate::parser::parse_all;
+  use std::result;
 
   #[test]
   fn test_white_space_at_front() {
@@ -87,10 +89,15 @@ mod tests {
 	filemode = true 
 # hello
 "#;
-    let result = parse_all(P_CONFIG_FILE, text);
+    // let result = parse_all(P_CONFIG_FILE, text).unwrap();
+    let result = make_config_log(text).unwrap();
 
-    assert!(result.is_some());
-    println!("{}", result.unwrap())
+    // assert_eq!(result, result2);
+    assert_eq!(
+      "core.repositoryformatversion=0
+core.filemode=true",
+      result.trim(),
+    );
   }
 
   #[test]

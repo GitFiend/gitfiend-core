@@ -9,18 +9,26 @@ use crate::{dprintln, glo, global, time_block};
 use ahash::AHashMap;
 use std::collections::HashMap;
 use std::env;
+use std::path::PathBuf;
 
-pub type RepoPath = String;
+pub struct RepoPath {
+  path: PathBuf,
+  git_path: PathBuf,
+  submodule: bool,
+}
+
+pub type PathString = String;
 type PatchPath = String;
 type CommitsAndRefs = (Vec<Commit>, Vec<RefInfo>);
 
-static COMMITS_AND_REFS: Glo<AHashMap<RepoPath, CommitsAndRefs>> = glo!(AHashMap::new());
-static PATCHES: Glo<(RepoPath, HashMap<PatchPath, Vec<Patch>>)> =
-  glo!((RepoPath::new(), HashMap::new()));
+static COMMITS_AND_REFS: Glo<AHashMap<PathString, CommitsAndRefs>> =
+  glo!(AHashMap::new());
+static PATCHES: Glo<(PathString, HashMap<PatchPath, Vec<Patch>>)> =
+  glo!((PathString::new(), HashMap::new()));
 // Key is 2 commit ids joined.
 pub static REF_DIFFS: Glo<AHashMap<String, u32>> = glo!(AHashMap::new());
 // This probably needs to be per repo. We could then watch for changes?
-pub static CONFIG: Global<AHashMap<RepoPath, GitConfig>> = global!(AHashMap::new());
+pub static CONFIG: Global<AHashMap<PathString, GitConfig>> = global!(AHashMap::new());
 pub static GIT_VERSION: Glo<GitVersion> = glo!(GitVersion::new());
 
 pub const STORE: Store = Store {};
@@ -36,7 +44,7 @@ impl Store {
 
   pub fn insert_commits(
     &self,
-    repo_path: &RepoPath,
+    repo_path: &PathString,
     commits: &Vec<Commit>,
     refs: &Vec<RefInfo>,
   ) {
@@ -49,7 +57,7 @@ impl Store {
     });
   }
 
-  pub fn get_commits_and_refs(&self, repo_path: &RepoPath) -> Option<CommitsAndRefs> {
+  pub fn get_commits_and_refs(&self, repo_path: &PathString) -> Option<CommitsAndRefs> {
     if let Ok(cr) = COMMITS_AND_REFS.read() {
       return Some((*cr).get(repo_path)?.to_owned());
     }
@@ -57,7 +65,7 @@ impl Store {
     None
   }
 
-  fn get_all_commits_and_refs(&self) -> Option<AHashMap<RepoPath, CommitsAndRefs>> {
+  fn get_all_commits_and_refs(&self) -> Option<AHashMap<PathString, CommitsAndRefs>> {
     let cr = COMMITS_AND_REFS.read().ok()?;
 
     Some((*cr).to_owned())

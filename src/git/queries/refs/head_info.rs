@@ -6,7 +6,7 @@ use crate::git::queries::commits::{
   convert_commit, load_head_commit, load_top_commit_for_branch, TopCommitOptions,
 };
 use crate::git::queries::refs::ref_diffs::calc_remote_ref_diffs;
-use crate::git::store::{RepoPath, CONFIG, STORE};
+use crate::git::store::{PathString, CONFIG, STORE};
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::{ES, R};
 
@@ -139,7 +139,7 @@ pub fn calc_head_fallback(repo_path: &str) -> R<(CommitInfo, usize)> {
 }
 
 pub fn calc_remote_fallback(
-  repo_path: &RepoPath,
+  repo_path: &PathString,
   head_ref: &mut RefInfo,
 ) -> R<(u32, Commit, u32, RefInfo)> {
   let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);

@@ -1,5 +1,5 @@
 use crate::git::git_types::{CommitInfo, GitConfig, RefInfo, RefLocation, RefType};
-use crate::git::store::{RepoPath, CONFIG};
+use crate::git::store::{PathString, CONFIG};
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;
 use crate::{and, character, map, rep_parser_sep, rep_sep, take_char_while, word};
@@ -29,7 +29,8 @@ pub const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: Strin
   }
 });
 
-const P_TAG_REF: Parser<RefInfoPart> = map2!(and!(word!("tag: "), P_REF_NAME), result, result.1);
+const P_TAG_REF: Parser<RefInfoPart> =
+  map2!(and!(word!("tag: "), P_REF_NAME), result, result.1);
 
 const P_HEAD_REF: Parser<RefInfoPart> = map!(
   and!(word!("HEAD -> "), P_REF_NAME),
@@ -144,7 +145,10 @@ pub fn get_ref_info_from_commits(commits: &[CommitInfo]) -> Vec<RefInfo> {
 // }
 
 // Sets siblings and remotes and returns new refs.
-pub fn finish_properties_on_refs(refs: Vec<RefInfo>, repo_path: &RepoPath) -> Vec<RefInfo> {
+pub fn finish_properties_on_refs(
+  refs: Vec<RefInfo>,
+  repo_path: &PathString,
+) -> Vec<RefInfo> {
   let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
 
   refs
@@ -285,7 +289,8 @@ mod tests {
 
   #[test]
   fn test_p_commit_refs() {
-    let a = "(HEAD -> refs/heads/master, refs/remotes/origin/master, refs/remotes/origin/HEAD)";
+    let a =
+      "(HEAD -> refs/heads/master, refs/remotes/origin/master, refs/remotes/origin/HEAD)";
     let result = parse_all(P_COMMIT_REFS, a);
 
     assert!(result.is_some());
@@ -305,7 +310,8 @@ mod tests {
     assert_eq!(refs.len(), 2);
     assert_eq!(refs[0].id, "refs/heads/master");
 
-    let b = "(HEAD -> refs/heads/master, refs/remotes/origin/master, refs/remotes/origin/HEAD)";
+    let b =
+      "(HEAD -> refs/heads/master, refs/remotes/origin/master, refs/remotes/origin/HEAD)";
     let result = parse_all(P_OPTIONAL_REFS, b);
 
     assert!(result.is_some());

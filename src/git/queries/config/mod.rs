@@ -12,6 +12,7 @@ use std::fs::read_to_string;
 use std::path::Path;
 
 mod config_file_parser;
+mod config_file_parser2;
 mod config_output_parser;
 
 impl GitConfig {

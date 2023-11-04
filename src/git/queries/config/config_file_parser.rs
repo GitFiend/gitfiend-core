@@ -1,12 +1,44 @@
 use crate::parser::standard_parsers::{ANY_WORD, STRING_LITERAL, UNTIL_LINE_END, WS};
-use crate::parser::Parser;
+use crate::parser::{parse_all_err, Parser};
+use crate::server::request_util::R;
 use crate::{and, character, f, many, map2, not, or};
+use std::fmt;
 
-const P_HEADING_1: Parser<String> = map2!(and!(character!('['), ANY_WORD, character!(']')), res, {
-  res.1
-});
+// See https://git-scm.com/docs/git-config#_syntax
+pub enum Config {
+  Section(Section),
+  Other(Other),
+}
 
-const P_HEADING_2: Parser<String> = map2!(
+pub struct Section(Heading, Vec<Row>);
+
+pub struct Heading(String, Option<String>);
+
+impl fmt::Display for Heading {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Heading(heading, None) => write!(f, "{heading}"),
+      Heading(heading, Some(value)) => write!(f, "{heading}.{value}"),
+    }
+  }
+}
+
+enum Row {
+  Data(String, String),
+  Other(Other),
+}
+
+pub enum Other {
+  Comment(String),
+  Unknown(String),
+}
+
+const P_HEADING_1: Parser<Heading> =
+  map2!(and!(character!('['), ANY_WORD, character!(']')), res, {
+    Heading(res.1, None)
+  });
+
+const P_HEADING_2: Parser<Heading> = map2!(
   and!(
     character!('['),
     ANY_WORD,
@@ -15,57 +47,101 @@ const P_HEADING_2: Parser<String> = map2!(
     character!(']')
   ),
   res,
-  f!("{}.{}", res.1, res.3)
+  Heading(res.1, Some(res.3))
 );
 
-pub const P_HEADING: Parser<String> = or!(P_HEADING_1, P_HEADING_2);
+const P_HEADING: Parser<Heading> = or!(P_HEADING_1, P_HEADING_2);
 
 //   merge = refs/heads/mac-app
-const P_ROW: Parser<String> = map2!(
+const P_ROW: Parser<Row> = map2!(
   and!(WS, ANY_WORD, WS, character!('='), WS, UNTIL_LINE_END),
   res,
-  f!("{}={}\n", res.1, res.5)
+  Row::Data(res.1, res.5)
 );
 
-pub const P_CONFIG_FILE: Parser<String> =
-  map2!(many!(or!(P_SECTION, P_OTHER)), sections, sections.join(""));
+pub const P_CONFIG_FILE: Parser<Vec<Config>> =
+  map2!(many!(or!(P_SECTION, P_CONFIG_OTHER)), res, res);
 
-const P_SECTION: Parser<String> = map2!(and!(P_HEADING, many!(or!(P_ROW, P_OTHER))), res, {
-  let (header, rows) = res;
-  rows
-    .into_iter()
-    .flat_map(|row| {
-      if row.is_empty() {
-        None
-      } else {
-        Some(f!("{}.{}", header, row))
-      }
-    })
-    .collect::<Vec<String>>()
-    .join("")
-});
+const P_SECTION: Parser<Config> = map2!(
+  and!(P_HEADING, many!(or!(P_ROW, P_ROW_OTHER))),
+  res,
+  Config::Section(Section(res.0, res.1))
+);
 
-const P_COMMENT: Parser<String> = map2!(
+const P_COMMENT: Parser<Other> = map2!(
   and!(WS, or!(character!(';'), character!('#')), UNTIL_LINE_END),
   res,
-  f!("{}{}", res.1, res.2)
+  Other::Comment(res.2)
 );
 
 // Make sure we don't accidentally parse a row or heading as an unknown.
-const P_UNKNOWN: Parser<String> = map2!(
+const P_UNKNOWN: Parser<Other> = map2!(
   and!(not!(P_HEADING), not!(P_ROW), UNTIL_LINE_END),
   res,
-  res.2
+  Other::Unknown(res.2)
 );
 
-const P_OTHER: Parser<String> = or!(P_COMMENT, P_UNKNOWN);
+const P_OTHER: Parser<Other> = or!(P_COMMENT, P_UNKNOWN);
+const P_CONFIG_OTHER: Parser<Config> = map2!(P_OTHER, res, Config::Other(res));
+const P_ROW_OTHER: Parser<Row> = map2!(P_OTHER, res, Row::Other(res));
+
+pub fn parse_config_file(input: &str) -> R<Vec<Config>> {
+  parse_all_err(P_CONFIG_FILE, input)
+}
+
+pub fn make_config_log(input: &str) -> R<String> {
+  let config = parse_config_file(input)?;
+
+  Ok(
+    config
+      .into_iter()
+      .map(|config| match config {
+        Config::Section(section) => make_section_log(section),
+        Config::Other(_) => f!(""),
+      })
+      .collect::<Vec<String>>()
+      .join(""),
+  )
+}
+
+fn make_section_log(section: Section) -> String {
+  let Section(heading, rows) = section;
+
+  let heading = heading.to_string();
+
+  rows
+    .into_iter()
+    .map(|row| match row {
+      Row::Data(key, value) => f!("{heading}.{key}={value}\n"),
+      Row::Other(_) => f!(""),
+    })
+    .collect::<Vec<String>>()
+    .join("")
+}
 
 #[cfg(test)]
 mod tests {
-  use crate::git::queries::config::config_file_parser::P_CONFIG_FILE;
-  use crate::git::queries::config::config_file_parser2::make_config_log;
+  use crate::git::queries::config::config_file_parser::{make_config_log, P_HEADING};
   use crate::parser::parse_all;
-  use std::result;
+
+  #[test]
+  fn test_p_heading() {
+    let result = parse_all(P_HEADING, "[core]");
+    assert!(result.is_some());
+    assert_eq!(result.unwrap().to_string(), "core");
+
+    let result = parse_all(P_HEADING, "[remote \"origin\"]");
+    assert!(result.is_some());
+    assert_eq!(result.unwrap().to_string(), "remote.origin");
+
+    let result = parse_all(P_HEADING, "[branch \"my-branch-name\"]");
+    assert!(result.is_some());
+    assert_eq!(result.unwrap().to_string(), "branch.my-branch-name");
+
+    let result = parse_all(P_HEADING, "[branch \"feature/my-branch-name\"]");
+    assert!(result.is_some());
+    assert_eq!(result.unwrap().to_string(), "branch.feature/my-branch-name");
+  }
 
   #[test]
   fn test_white_space_at_front() {
@@ -74,9 +150,9 @@ mod tests {
 	repositoryformatversion = 0
 	filemode = true 
 "#;
-    let result = parse_all(P_CONFIG_FILE, text);
+    let result = make_config_log(text);
 
-    assert!(result.is_some());
+    assert!(result.is_ok());
     println!("{}", result.unwrap())
   }
 
@@ -118,9 +194,9 @@ core.filemode=true",
 	merge = refs/heads/ssr-code-viewer
 "#;
 
-    let result = parse_all(P_CONFIG_FILE, text);
+    let result = make_config_log(text);
 
-    assert!(result.is_some());
+    assert!(result.is_ok());
 
     assert_eq!(
       result.unwrap(),
@@ -194,9 +270,9 @@ branch.ssr-code-viewer.merge=refs/heads/ssr-code-viewer
 	merge = refs/heads/ssr-code-viewer
 "#;
 
-    let result = parse_all(P_CONFIG_FILE, text);
+    let result = make_config_log(text);
 
-    assert!(result.is_some());
+    assert!(result.is_ok());
     println!("{}", result.unwrap())
   }
 }

@@ -36,7 +36,7 @@ mod tests {
   use std::collections::HashMap;
 
   use crate::git::git_types::GitConfig;
-  use crate::git::queries::config::config_file_parser::{P_CONFIG_FILE, P_HEADING};
+  use crate::git::queries::config::config_file_parser::make_config_log;
   use crate::git::queries::config::config_output_parser::{
     P_CONFIG, P_REMOTE_NAME, P_SUBMODULE_NAME,
   };
@@ -133,25 +133,6 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
   }
 
   #[test]
-  fn test_p_heading() {
-    let result = parse_all(P_HEADING, "[core]");
-    assert!(result.is_some());
-    assert_eq!(result.unwrap(), "core");
-
-    let result = parse_all(P_HEADING, "[remote \"origin\"]");
-    assert!(result.is_some());
-    assert_eq!(result.unwrap(), "remote.origin");
-
-    let result = parse_all(P_HEADING, "[branch \"my-branch-name\"]");
-    assert!(result.is_some());
-    assert_eq!(result.unwrap(), "branch.my-branch-name");
-
-    let result = parse_all(P_HEADING, "[branch \"feature/my-branch-name\"]");
-    assert!(result.is_some());
-    assert_eq!(result.unwrap(), "branch.feature/my-branch-name");
-  }
-
-  #[test]
   fn test_parse_config2() {
     let text = r#"[core]
 	repositoryformatversion = 0
@@ -206,8 +187,8 @@ remote.origin2.fetch=+refs/heads/*:refs/remotes/origin2/*
 	remote = origin
 	merge = refs/heads/ssr-code-viewer"#;
 
-    let result = parse_all(P_CONFIG_FILE, text);
+    let result = make_config_log(text);
 
-    assert!(result.is_some());
+    assert!(result.is_ok());
   }
 }

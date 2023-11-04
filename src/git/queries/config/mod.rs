@@ -1,5 +1,5 @@
 use crate::git::git_types::GitConfig;
-use crate::git::queries::config::config_file_parser::P_CONFIG_FILE;
+use crate::git::queries::config::config_file_parser::make_config_log;
 use crate::git::queries::config::config_output_parser::P_SUBMODULE_NAME;
 use crate::git::run_git::{run_git_err, RunGitOptions};
 use crate::git::store::CONFIG;
@@ -12,7 +12,6 @@ use std::fs::read_to_string;
 use std::path::Path;
 
 mod config_file_parser;
-mod config_file_parser2;
 mod config_output_parser;
 
 impl GitConfig {
@@ -57,7 +56,7 @@ pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
   let config_path = Path::new(repo_path).join(".git").join("config");
 
   let result_text = if let Ok(text) = read_to_string(config_path) {
-    parse_all_err(P_CONFIG_FILE, &text)
+    make_config_log(&text)
   } else {
     // If new config parser fails, fallback to the old one.
     Ok(

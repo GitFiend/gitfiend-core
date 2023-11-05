@@ -36,10 +36,13 @@ pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
   let repo = STORE.get_repo_path(repo_path)?;
   let path = repo.git_path.join("refs");
 
+  // We convert to a path so we aren't comparing / with \ on Windows.
+  let branch_name_path = PathBuf::from(branch_name);
+
   read_local_refs(
     &path.join("heads"),
     &path.join("heads"),
-    branch_name,
+    &branch_name_path,
     &mut refs,
   )?;
 
@@ -47,7 +50,7 @@ pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
   let _ = read_remote_refs(
     &path.join("remotes"),
     &path.join("remotes"),
-    branch_name,
+    &branch_name_path,
     &mut refs,
   );
 
@@ -64,14 +67,14 @@ pub struct Refs {
 fn read_local_refs(
   current_path: &PathBuf,
   start_path: &PathBuf,
-  branch_name: &str,
+  branch_name: &PathBuf,
   refs_result: &mut Refs,
 ) -> R<()> {
   for item in read_dir(current_path)? {
     let path = item?.path();
 
     if path.is_file() {
-      if path.to_str().unwrap_or("").ends_with(branch_name) {
+      if path.ends_with(branch_name) {
         refs_result.local_id = Some(read_to_string(path)?.trim().to_string());
       } else {
         refs_result.others.insert(
@@ -93,21 +96,21 @@ fn read_local_refs(
 fn read_remote_refs(
   current_path: &PathBuf,
   start_path: &PathBuf,
-  branch_name: &str,
+  branch_name: &PathBuf,
   refs_result: &mut Refs,
 ) -> R<()> {
   for item in read_dir(current_path)? {
     let path = item?.path();
 
     if path.is_file() {
-      if path.to_str().unwrap_or("").ends_with(branch_name) {
+      if path.ends_with(branch_name) {
         refs_result.remote_id = Some(read_to_string(path)?.trim().to_string());
       } else {
         let p: PathBuf = path.strip_prefix(start_path)?.iter().skip(1).collect();
         let name = p.to_str().unwrap_or("").to_string();
 
         if name == "HEAD" {
-          if read_to_string(path)?.contains(branch_name) {
+          if PathBuf::from(read_to_string(path)?).ends_with(branch_name) {
             refs_result.remote_id = refs_result.local_id.clone();
           }
         } else if !name.starts_with('.') {

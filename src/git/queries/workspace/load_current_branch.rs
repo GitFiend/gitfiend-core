@@ -1,3 +1,4 @@
+use crate::f;
 use crate::git::store::STORE;
 use std::collections::HashSet;
 use std::fs::{read_dir, read_to_string};
@@ -110,7 +111,7 @@ fn read_remote_refs(
         let name = p.to_str().unwrap_or("").to_string();
 
         if name == "HEAD" {
-          if PathBuf::from(read_to_string(path)?).ends_with(branch_name) {
+          if read_head_file(&path)?.ends_with(branch_name) {
             refs_result.remote_id = refs_result.local_id.clone();
           }
         } else if !name.starts_with('.') {
@@ -123,4 +124,18 @@ fn read_remote_refs(
   }
 
   Ok(())
+}
+
+// E.g. "ref: refs/remotes/origin/develop"
+// We use PathBuf to avoid comparing / with \ on Windows.
+fn read_head_file(head_path: &PathBuf) -> R<PathBuf> {
+  let text = read_to_string(head_path)?;
+
+  if let Some(i) = text.chars().position(|c| c == ':') {
+    let path = &text[(i + 1)..];
+
+    return Ok(PathBuf::from(path.trim()));
+  }
+
+  Err(ES::from(&f!("Failed to parse {:?}", head_path)))
 }

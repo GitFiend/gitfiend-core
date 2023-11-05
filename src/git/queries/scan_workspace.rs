@@ -2,7 +2,7 @@ use crate::git::queries::config::config_file_parser::{
   parse_config_file, ConfigFile, ConfigSection, Row,
 };
 use crate::git::store::{RepoPath, STORE};
-use crate::server::request_util::R;
+use crate::server::request_util::{ES, R};
 use serde::Deserialize;
 use std::fs::{read_dir, read_to_string};
 use std::path::{Path, PathBuf};
@@ -44,43 +44,25 @@ pub fn scan_workspace(options: &ScanOptions) -> Vec<PathBuf> {
 
 fn scan_single_repo(dir: PathBuf) -> Vec<RepoPath> {
   get_git_repo(&dir).into_iter().collect()
-
-  // if is_git_repo(&dir) {
-  //   vec![RepoPath {
-  //     path: dir.clone(),
-  //     git_path: dir.join(".git"),
-  //     submodule: false,
-  //   }]
-  // } else {
-  //   vec![]
-  // }
 }
 
 fn scan_workspace_inner(dir: PathBuf, repo_paths: &mut Vec<RepoPath>, depth: u8) {
   if let Some(repo_path) = get_git_repo(&dir) {
     repo_paths.push(repo_path);
   }
-  // if is_git_repo(&dir) {
-  //   repo_paths.push(RepoPath {
-  //     path: dir.clone(),
-  //     git_path: dir.join(".git"),
-  //     submodule: false,
-  //   });
-  // }
 
   if depth < MAX_SCAN_DEPTH {
     let entries = get_dir_entries(&dir);
 
-    if entries.len() < MAX_DIR_SIZE {
+    if let Some(path) = entries.iter().find(|p| p.ends_with(".gitmodules")) {
+      if let Ok(submodules) = read_git_modules(path) {
+        println!("submodules: {:?}", submodules);
+        repo_paths.extend(submodules);
+      }
+    } else if entries.len() < MAX_DIR_SIZE || depth == 0 {
       for e in entries {
         if e.is_dir() && !is_hidden(&e) {
           scan_workspace_inner(e, repo_paths, depth + 1);
-        } else if depth == 0 && e.iter().any(|c| c == ".gitmodules") {
-          if let Ok(submodules) = read_git_modules(&e) {
-            println!("submodules: {:?}", submodules);
-            repo_paths.extend(submodules);
-            break;
-          }
         }
       }
     }
@@ -92,6 +74,7 @@ fn read_git_modules(file_path: &PathBuf) -> R<Vec<RepoPath>> {
   let config: Vec<ConfigFile> = parse_config_file(&text)?;
 
   let mut submodules: Vec<RepoPath> = Vec::new();
+  let parent_repo_dir = file_path.parent().ok_or(ES::from("No parent dir"))?;
 
   for c in config {
     if let ConfigFile::Section(section) = c {
@@ -101,11 +84,10 @@ fn read_git_modules(file_path: &PathBuf) -> R<Vec<RepoPath>> {
           Row::Data(path, _) => path == "path",
           Row::Other(_) => false,
         }) {
-          submodules.push(RepoPath {
-            path: file_path.clone(),
-            git_path: file_path.join(path),
-            submodule: true,
-          })
+          let submodule_path = parent_repo_dir.join(path);
+          if let Some(repo) = get_git_repo(&submodule_path) {
+            submodules.push(repo);
+          }
         }
       }
     }
@@ -137,7 +119,7 @@ fn get_git_repo(dir: &Path) -> Option<RepoPath> {
 
       return Some(RepoPath {
         path: dir.to_path_buf(),
-        git_path: dir.join(path).join(".git"),
+        git_path: dir.join(path),
         submodule: true,
       });
     }
@@ -153,23 +135,6 @@ fn get_git_repo(dir: &Path) -> Option<RepoPath> {
 
   None
 }
-
-// // TODO: Doesn't check whether .git is a file or dir
-// //
-// // Check if it's a file? If so, read it so we can find the real dir.
-// fn is_git_repo(dir: &Path) -> bool {
-//   if dir.is_dir() {
-//     let git_file_path = dir.join(".git");
-//
-//     if git_file_path.is_file() {
-//       //
-//     }
-//
-//     return git_file_path.exists();
-//   }
-//
-//   false
-// }
 
 fn parse_submodule_git_file(text: &str) -> Option<String> {
   if let Some(i) = text.chars().position(|c| c == ':') {

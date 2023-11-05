@@ -2,14 +2,13 @@ use crate::git::git_types::GitConfig;
 use crate::git::queries::config::config_file_parser::make_config_log;
 use crate::git::queries::config::config_output_parser::P_SUBMODULE_NAME;
 use crate::git::run_git::{run_git_err, RunGitOptions};
-use crate::git::store::CONFIG;
+use crate::git::store::{CONFIG, STORE};
 use crate::parser::{parse_all_err, run_parser, ParseOptions};
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
 use config_output_parser::{P_CONFIG, P_REMOTE_NAME};
 use std::collections::HashMap;
 use std::fs::read_to_string;
-use std::path::Path;
 
 pub(crate) mod config_file_parser;
 mod config_output_parser;
@@ -53,7 +52,8 @@ impl GitConfig {
 pub fn load_full_config(options: &ReqOptions) -> R<GitConfig> {
   let ReqOptions { repo_path } = options;
 
-  let config_path = Path::new(repo_path).join(".git").join("config");
+  let repo = STORE.get_repo_path(repo_path)?;
+  let config_path = repo.git_path.join("config");
 
   let result_text = if let Ok(text) = read_to_string(config_path) {
     make_config_log(&text)

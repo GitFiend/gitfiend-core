@@ -1,13 +1,13 @@
-use std::fs::read_to_string;
-use std::path::Path;
-
+use crate::git::store::STORE;
 use crate::parser::standard_parsers::{ANY_WORD, UNTIL_LINE_END};
 use crate::parser::{parse_all_err, Parser};
 use crate::server::request_util::R;
 use crate::{and, character, many, map2, or, word};
+use std::fs::read_to_string;
 
 pub fn load_packed_refs(repo_path: &str) -> R<Vec<String>> {
-  let path = Path::new(repo_path).join(".git").join("packed-refs");
+  let repo = STORE.get_repo_path(repo_path)?;
+  let path = repo.git_path.join("packed-refs");
 
   let text = read_to_string(path)?;
 

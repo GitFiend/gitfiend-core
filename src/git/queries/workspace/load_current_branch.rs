@@ -1,11 +1,13 @@
+use crate::git::store::STORE;
 use std::collections::HashSet;
 use std::fs::{read_dir, read_to_string};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::server::request_util::{ES, R};
 
 pub fn load_current_branch(repo_path: &str) -> R<(String, String)> {
-  let head = Path::new(repo_path).join(".git").join("HEAD");
+  let repo = STORE.get_repo_path(repo_path)?;
+  let head = repo.git_path.join("HEAD");
 
   if let Ok(text) = read_to_string(head) {
     return if let Some(branch) = text.split(':').last() {
@@ -31,7 +33,8 @@ pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
     others: HashSet::new(),
   };
 
-  let path = Path::new(repo_path).join(".git").join("refs");
+  let repo = STORE.get_repo_path(repo_path)?;
+  let path = repo.git_path.join("refs");
 
   read_local_refs(
     &path.join("heads"),

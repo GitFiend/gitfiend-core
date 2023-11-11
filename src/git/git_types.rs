@@ -95,6 +95,7 @@ pub struct RefCommitDiff {
   pub behind_head: u32,
 }
 
+// See https://git-scm.com/docs/git-status for meaning.
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub enum PatchType {

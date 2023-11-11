@@ -1,5 +1,6 @@
-use crate::git::git_types::{Commit, GitConfig, Patch, RefInfo};
+use crate::git::git_types::{Commit, Patch, RefInfo};
 use crate::git::git_version::GitVersion;
+use crate::git::queries::config::GitConfig;
 use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
 use crate::git::repo_watcher::clear_repo_changed_status;

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use ts_rs::TS;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, TS)]
@@ -94,14 +93,6 @@ pub struct LocalRefCommitDiff {
 pub struct RefCommitDiff {
   pub ahead_of_head: u32,
   pub behind_head: u32,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export)]
-pub struct GitConfig {
-  pub entries: HashMap<String, String>,
-  pub remotes: HashMap<String, String>,
-  pub submodules: HashMap<String, String>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]

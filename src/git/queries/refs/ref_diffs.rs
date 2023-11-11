@@ -5,9 +5,10 @@ use std::collections::HashMap;
 use ts_rs::TS;
 
 use crate::git::git_types::{
-  Commit, GitConfig, LocalRefCommitDiff, RefCommitDiff, RefInfo, RefLocation,
+  Commit, LocalRefCommitDiff, RefCommitDiff, RefInfo, RefLocation,
 };
 use crate::git::queries::commit_calcs::count_commits_between_commit_ids;
+use crate::git::queries::config::GitConfig;
 use crate::git::store::{CONFIG, STORE};
 
 #[derive(Debug, Deserialize, Serialize, TS)]

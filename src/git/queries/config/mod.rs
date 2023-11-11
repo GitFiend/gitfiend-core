@@ -1,4 +1,3 @@
-use crate::git::git_types::GitConfig;
 use crate::git::queries::config::config_file_parser::make_config_log;
 use crate::git::queries::config::config_output_parser::P_SUBMODULE_NAME;
 use crate::git::run_git::{run_git_err, RunGitOptions};
@@ -7,11 +6,22 @@ use crate::parser::{parse_all_err, run_parser, ParseOptions};
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
 use config_output_parser::{P_CONFIG, P_REMOTE_NAME};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::read_to_string;
+use ts_rs::TS;
 
 pub(crate) mod config_file_parser;
 mod config_output_parser;
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct GitConfig {
+  pub entries: HashMap<String, String>,
+  // Key is remote name E.g "origin", value is url or path on disk.
+  pub remotes: HashMap<String, String>,
+  pub submodules: HashMap<String, String>,
+}
 
 impl GitConfig {
   pub fn new() -> GitConfig {

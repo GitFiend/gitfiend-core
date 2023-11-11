@@ -1,10 +1,11 @@
 use ahash::AHashMap;
 
-use crate::git::git_types::{Commit, CommitInfo, GitConfig, RefInfo, RefLocation};
+use crate::git::git_types::{Commit, CommitInfo, RefInfo, RefLocation};
 use crate::git::queries::commit_calcs::count_commits_between_fallback;
 use crate::git::queries::commits::{
   convert_commit, load_head_commit, load_top_commit_for_branch, TopCommitOptions,
 };
+use crate::git::queries::config::GitConfig;
 use crate::git::queries::refs::ref_diffs::calc_remote_ref_diffs;
 use crate::git::store::{PathString, CONFIG, STORE};
 use crate::server::git_request::ReqOptions;

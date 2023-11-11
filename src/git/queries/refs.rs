@@ -1,4 +1,5 @@
-use crate::git::git_types::{CommitInfo, GitConfig, RefInfo, RefLocation, RefType};
+use crate::git::git_types::{CommitInfo, RefInfo, RefLocation, RefType};
+use crate::git::queries::config::GitConfig;
 use crate::git::store::{PathString, CONFIG};
 use crate::parser::standard_parsers::WS;
 use crate::parser::Parser;

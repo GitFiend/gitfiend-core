@@ -35,12 +35,12 @@ pub const P_SUBMODULE_NAME: Parser<String> = map!(
 mod tests {
   use std::collections::HashMap;
 
-  use crate::git::git_types::GitConfig;
   use crate::git::queries::config::config_file_parser::make_config_log;
   use crate::git::queries::config::config_output_parser::{
     P_CONFIG, P_REMOTE_NAME, P_SUBMODULE_NAME,
   };
   use crate::git::queries::config::load_full_config;
+  use crate::git::queries::config::GitConfig;
   use crate::parser::parse_all;
   use crate::server::git_request::ReqOptions;
 

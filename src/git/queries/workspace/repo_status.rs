@@ -1,8 +1,10 @@
-use crate::git::git_types::GitConfig;
 use crate::git::queries::commit_calcs::count_commits_between_fallback;
 use crate::git::queries::config::load_full_config;
+use crate::git::queries::config::GitConfig;
 use crate::git::queries::wip::wip_patches::{load_wip_patches, WipPatches};
-use crate::git::queries::workspace::load_current_branch::{load_current_branch, read_refs, Refs};
+use crate::git::queries::workspace::load_current_branch::{
+  load_current_branch, read_refs, Refs,
+};
 use crate::git::queries::workspace::load_packed_refs::load_packed_refs;
 use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
@@ -17,6 +19,7 @@ use ts_rs::TS;
 pub struct RepoStatus {
   patches: WipPatches,
   config: GitConfig,
+  // These are just short names. Don't include remote name or whether local.
   branches: HashSet<String>,
   branch_name: String,
   head_ref_id: String,
@@ -55,7 +58,8 @@ pub fn load_repo_status(options: &ReqOptions) -> R<RepoStatus> {
   if let Some(local_id) = local_id.clone() {
     if let Some(remote_id) = remote_id {
       let remote_ahead = count_commits_between_fallback(repo_path, &local_id, &remote_id);
-      let remote_behind = count_commits_between_fallback(repo_path, &remote_id, &local_id);
+      let remote_behind =
+        count_commits_between_fallback(repo_path, &remote_id, &local_id);
 
       clear_repo_changed_status(options);
 

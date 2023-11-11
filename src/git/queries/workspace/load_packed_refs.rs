@@ -11,9 +11,7 @@ pub fn load_packed_refs(repo_path: &str) -> R<Vec<String>> {
 
   let text = read_to_string(path)?;
 
-  let lines = parse_all_err(P_LINES, &text);
-
-  lines
+  parse_all_err(P_LINES, &text)
 }
 
 #[derive(Debug)]

@@ -5,7 +5,7 @@ use crate::git::queries::wip::wip_patches::{load_wip_patches, WipPatches};
 use crate::git::queries::workspace::load_current_branch::{
   load_current_branch, read_refs, Refs,
 };
-use crate::git::queries::workspace::load_packed_refs::load_packed_refs;
+use crate::git::queries::workspace::load_packed_refs::{load_packed_refs, PackedRef};
 use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
@@ -48,12 +48,28 @@ pub fn load_repo_status(options: &ReqOptions) -> R<RepoStatus> {
 
   let Refs {
     local_id,
-    remote_id,
+    mut remote_id,
     mut others,
   } = read_refs(repo_path, &current_branch)?;
 
   let packed_refs = load_packed_refs(repo_path).unwrap_or_else(|_| Vec::new());
-  others.extend(packed_refs);
+
+  if remote_id.is_none() {
+    for r in packed_refs.iter() {
+      if let PackedRef::Remote(remote) = r {
+        if remote.name == current_branch {
+          remote_id = Some(remote.commit_id.clone());
+          break;
+        }
+      }
+    }
+  }
+
+  others.extend(packed_refs.iter().flat_map(|r| match r {
+    PackedRef::Local(l) => Some(l.name.clone()),
+    PackedRef::Remote(r) => Some(r.name.clone()),
+    PackedRef::Unknown => None,
+  }));
 
   if let Some(local_id) = local_id.clone() {
     if let Some(remote_id) = remote_id {

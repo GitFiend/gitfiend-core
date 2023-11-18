@@ -160,7 +160,6 @@ fn read_ref_path(path: &Path, root_path: &PathBuf) -> PathRef {
 }
 
 // E.g. "ref: refs/remotes/origin/develop"
-// We use PathBuf to avoid comparing / with \ on Windows.
 fn read_head_file(head_path: &PathBuf) -> R<String> {
   let text = read_to_string(head_path)?;
 

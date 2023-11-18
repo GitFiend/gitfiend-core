@@ -4,8 +4,9 @@ use crate::parser::{parse_all_err, Parser};
 use crate::server::request_util::R;
 use crate::{and, character, many, map2, or, word};
 use std::fs::read_to_string;
+use ts_rs::TS;
 
-pub fn load_packed_refs(repo_path: &str) -> R<Vec<String>> {
+pub fn load_packed_refs(repo_path: &str) -> R<Vec<PackedRef>> {
   let repo = STORE.get_repo_path(repo_path)?;
   let path = repo.git_path.join("packed-refs");
 
@@ -14,13 +15,30 @@ pub fn load_packed_refs(repo_path: &str) -> R<Vec<String>> {
   parse_all_err(P_LINES, &text)
 }
 
-#[derive(Debug)]
-enum PRLine {
-  Ref(String),
-  Other,
+#[derive(Debug, Eq, PartialEq, TS)]
+#[ts(export)]
+pub enum PackedRef {
+  Local(PackedLocalRef),
+  Remote(PackedRemoteRef),
+  Unknown,
 }
 
-const P_LOCAL: Parser<PRLine> = map2!(
+#[derive(Debug, Eq, PartialEq, TS)]
+#[ts(export)]
+pub struct PackedRemoteRef {
+  pub commit_id: String,
+  pub remote_name: String,
+  pub name: String,
+}
+
+#[derive(Debug, Eq, PartialEq, TS)]
+#[ts(export)]
+pub struct PackedLocalRef {
+  pub commit_id: String,
+  pub name: String,
+}
+
+const P_LOCAL: Parser<PackedRef> = map2!(
   and!(
     ANY_WORD,
     character!(' '),
@@ -28,10 +46,13 @@ const P_LOCAL: Parser<PRLine> = map2!(
     UNTIL_LINE_END
   ),
   res,
-  PRLine::Ref(res.3)
+  PackedRef::Local(PackedLocalRef {
+    commit_id: res.0,
+    name: res.3
+  })
 );
 
-const P_REMOTE: Parser<PRLine> = map2!(
+const P_REMOTE: Parser<PackedRef> = map2!(
   and!(
     ANY_WORD,
     character!(' '),
@@ -39,33 +60,26 @@ const P_REMOTE: Parser<PRLine> = map2!(
     UNTIL_LINE_END
   ),
   res,
-  PRLine::Ref(remove_remote(res.3))
-);
+  {
+    let (remote_name, name) = remove_remote(res.3);
 
-fn remove_remote(ref_part: String) -> String {
-  if let Some((_, tail)) = ref_part.split_once('/') {
-    return tail.to_string();
-  }
-  ref_part
-}
-
-const P_OTHER: Parser<PRLine> = map2!(UNTIL_LINE_END, __, PRLine::Other);
-
-const P_LINE: Parser<PRLine> = or!(P_LOCAL, P_REMOTE, P_OTHER);
-
-const P_LINES: Parser<Vec<String>> = map2!(
-  many!(P_LINE),
-  lines,
-  lines
-    .into_iter()
-    .flat_map(|l| match l {
-      PRLine::Ref(line) =>
-        if line == "HEAD" {
-          None
-        } else {
-          Some(line)
-        },
-      PRLine::Other => None,
+    PackedRef::Remote(PackedRemoteRef {
+      commit_id: res.0,
+      remote_name,
+      name,
     })
-    .collect()
+  }
 );
+
+const P_OTHER: Parser<PackedRef> = map2!(UNTIL_LINE_END, __, PackedRef::Unknown);
+
+const P_LINE: Parser<PackedRef> = or!(P_LOCAL, P_REMOTE, P_OTHER);
+
+const P_LINES: Parser<Vec<PackedRef>> = many!(P_LINE);
+
+fn remove_remote(ref_part: String) -> (String, String) {
+  if let Some((remote, tail)) = ref_part.split_once('/') {
+    return (remote.to_string(), tail.to_string());
+  }
+  (String::new(), ref_part)
+}

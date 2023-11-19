@@ -59,7 +59,8 @@ fn scan_workspace_inner(dir: PathBuf, repo_paths: &mut Vec<RepoPath>, depth: u8)
         println!("submodules: {:?}", submodules);
         repo_paths.extend(submodules);
       }
-    } else if entries.len() < MAX_DIR_SIZE || depth == 0 {
+    }
+    if entries.len() < MAX_DIR_SIZE || depth == 0 {
       for e in entries {
         if e.is_dir() && !is_hidden(&e) {
           scan_workspace_inner(e, repo_paths, depth + 1);

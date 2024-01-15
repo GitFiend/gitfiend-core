@@ -147,7 +147,6 @@ pub struct HunkLine {
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub enum HunkLineStatus {
   #[serde(rename = "+")]

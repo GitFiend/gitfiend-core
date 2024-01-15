@@ -4,6 +4,6 @@ export type HunkLineStatus =
   | "+"
   | "-"
   | " "
-  | "headerStart"
-  | "headerEnd"
-  | "skip";
+  | "HeaderStart"
+  | "HeaderEnd"
+  | "Skip";

@@ -15,24 +15,21 @@ pub fn load_packed_refs(repo_path: &str) -> R<Vec<PackedRef>> {
   parse_all_err(P_LINES, &text)
 }
 
-#[derive(Debug, Eq, PartialEq, TS)]
-#[ts(export)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum PackedRef {
   Local(PackedLocalRef),
   Remote(PackedRemoteRef),
   Unknown,
 }
 
-#[derive(Debug, Eq, PartialEq, TS)]
-#[ts(export)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct PackedRemoteRef {
   pub commit_id: String,
   pub remote_name: String,
   pub name: String,
 }
 
-#[derive(Debug, Eq, PartialEq, TS)]
-#[ts(export)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct PackedLocalRef {
   pub commit_id: String,
   pub name: String,

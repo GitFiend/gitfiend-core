@@ -15,7 +15,6 @@ pub struct MessageAC {
 }
 
 #[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub enum ACType {
   CommitMessage,

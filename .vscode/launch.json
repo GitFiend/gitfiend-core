@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rust-server'",
+            "name": "Debug executable 'gitfiend-core'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=rust-server",
-                    "--package=rust-server"
+                    "--bin=gitfiend-core",
+                    "--package=gitfiend-core"
                 ],
                 "filter": {
-                    "name": "rust-server",
+                    "name": "gitfiend-core",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'rust-server'",
+            "name": "Debug unit tests in executable 'gitfiend-core'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=rust-server",
-                    "--package=rust-server"
+                    "--bin=gitfiend-core",
+                    "--package=gitfiend-core"
                 ],
                 "filter": {
-                    "name": "rust-server",
+                    "name": "gitfiend-core",
                     "kind": "bin"
                 }
             },

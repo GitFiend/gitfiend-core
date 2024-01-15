@@ -184,7 +184,7 @@ core.filemode=true",
 	bare = false
 	logallrefupdates = true
 [remote "origin"]
-	url = https://github.com/GitFiend/rust-server.git
+	url = https://github.com/GitFiend/gitfiend-core.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [branch "main"]
 	remote = origin

@@ -1,5 +1,5 @@
 [package]
-name = "rust-server"
+name = "gitfiend-core"
 version = "1.0.0"
 edition = "2021"
 

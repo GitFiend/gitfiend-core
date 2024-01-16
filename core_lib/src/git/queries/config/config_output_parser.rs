@@ -33,7 +33,6 @@ pub const P_SUBMODULE_NAME: Parser<String> = map!(
 
 #[cfg(test)]
 mod tests {
-  use crate::f;
   use crate::git::git_request::ReqOptions;
   use std::collections::HashMap;
   use std::env;
@@ -49,15 +48,21 @@ mod tests {
 
   #[test]
   fn load_config() {
+    let project_dir = env::current_dir().unwrap();
+    let repo_dir = project_dir.parent().unwrap();
+    let repo_dir_string = repo_dir.to_string_lossy().to_string();
+
+    assert!(repo_dir.exists());
+
     let repos = scan_workspace(&ScanOptions {
-      repo_path: f!("."),
+      repo_path: repo_dir_string.clone(),
       workspaces_enabled: false,
     });
 
     assert!(!repos.is_empty());
 
     let result = load_full_config(&ReqOptions {
-      repo_path: ".".to_string(),
+      repo_path: repo_dir_string,
     });
 
     if result.is_err() {

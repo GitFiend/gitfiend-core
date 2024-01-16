@@ -109,6 +109,7 @@ PARSE FAILURE AT POSITION {}:
 macro_rules! map {
   ($parser:expr, $function:expr) => {
     |input: &mut $crate::parser::input::Input| {
+      #[allow(clippy::redundant_closure_call)]
       if let Some(result) = $parser(input) {
         Some($function(result))
       } else {
@@ -122,6 +123,7 @@ macro_rules! map {
 macro_rules! map2 {
   ($parser: expr, $name: ident, $map: expr) => {
     |input: &mut $crate::parser::input::Input| {
+      #[allow(clippy::redundant_closure_call)]
       if let Some($name) = $parser(input) {
         Some($map)
       } else {

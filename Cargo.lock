@@ -99,8 +99,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fff857943da45f546682664a79488be82e69e43c1a7a2307679ab9afb3a66d2e"
 
 [[package]]
-name = "core-lib"
+name = "core_lib"
 version = "0.1.0"
+dependencies = [
+ "ahash",
+ "chardetng",
+ "directories",
+ "encoding_rs",
+ "fix-path-env",
+ "loggers",
+ "mime_guess",
+ "notify",
+ "once_cell",
+ "rayon",
+ "serde",
+ "serde_json",
+ "similar",
+ "syntect",
+ "ts-rs",
+]
 
 [[package]]
 name = "crc32fast"
@@ -253,28 +270,6 @@ dependencies = [
  "cfg-if",
  "libc",
  "wasi",
-]
-
-[[package]]
-name = "gitfiend-core"
-version = "1.0.0"
-dependencies = [
- "ahash",
- "chardetng",
- "directories",
- "encoding_rs",
- "fix-path-env",
- "loggers",
- "mime_guess",
- "notify",
- "once_cell",
- "rayon",
- "serde",
- "serde_json",
- "similar",
- "syntect",
- "tiny_http",
- "ts-rs",
 ]
 
 [[package]]
@@ -654,6 +649,25 @@ dependencies = [
 [[package]]
 name = "server"
 version = "0.1.0"
+dependencies = [
+ "ahash",
+ "chardetng",
+ "core_lib",
+ "directories",
+ "encoding_rs",
+ "fix-path-env",
+ "loggers",
+ "mime_guess",
+ "notify",
+ "once_cell",
+ "rayon",
+ "serde",
+ "serde_json",
+ "similar",
+ "syntect",
+ "tiny_http",
+ "ts-rs",
+]
 
 [[package]]
 name = "similar"

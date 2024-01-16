@@ -4,7 +4,6 @@ use crate::parser::{parse_all_err, Parser};
 use crate::server::request_util::R;
 use crate::{and, character, many, map2, or, word};
 use std::fs::read_to_string;
-use ts_rs::TS;
 
 pub fn load_packed_refs(repo_path: &str) -> R<Vec<PackedRef>> {
   let repo = STORE.get_repo_path(repo_path)?;

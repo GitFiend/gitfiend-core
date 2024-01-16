@@ -1,3 +1,5 @@
+workspace = { members = ["core-lib","server"] }
+
 [package]
 name = "gitfiend-core"
 version = "1.0.0"

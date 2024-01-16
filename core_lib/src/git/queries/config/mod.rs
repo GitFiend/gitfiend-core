@@ -14,7 +14,7 @@ use ts_rs::TS;
 pub(crate) mod config_file_parser;
 mod config_output_parser;
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Default, Clone, Serialize, TS)]
 #[ts(export)]
 pub struct GitConfig {
   pub entries: HashMap<String, String>,
@@ -24,14 +24,6 @@ pub struct GitConfig {
 }
 
 impl GitConfig {
-  pub fn new() -> GitConfig {
-    GitConfig {
-      entries: HashMap::new(),
-      remotes: HashMap::new(),
-      submodules: HashMap::new(),
-    }
-  }
-
   // We take short_name because this is the same between remote and local refs.
   pub fn get_remote_for_branch(&self, short_name: &str) -> String {
     let GitConfig { entries, .. } = self;

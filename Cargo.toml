@@ -1,4 +1,4 @@
-workspace = { members = ["core_lib","server"] }
+workspace = { members = ["core_lib", "server"], resolver = "2" }
 
 #[package]
 #name = "gitfiend-core"
@@ -24,20 +24,20 @@ workspace = { members = ["core_lib","server"] }
 #chardetng = "0.1.17"
 #encoding_rs = "0.8.33"
 #fix-path-env = {git = "https://github.com/tauri-apps/fix-path-env-rs"}
-#
-#[profile.dev]
-##opt-level = 1
-##incremental = false
-#
-#[profile.release]
-##debug = true
-#strip = true
-#lto = true
-#codegen-units = 1
-#
-## Set the default for dependencies.
-#[profile.dev.package."*"]
-##opt-level = 3
-#
-##[lints]
-##redundant_closure_call = true
+
+[profile.dev]
+#opt-level = 1
+#incremental = false
+
+[profile.release]
+#debug = true
+strip = true
+lto = true
+codegen-units = 1
+
+# Set the default for dependencies.
+[profile.dev.package."*"]
+#opt-level = 3
+
+#[lints]
+#redundant_closure_call = true

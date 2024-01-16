@@ -143,7 +143,9 @@ pub fn calc_remote_fallback(
   repo_path: &PathString,
   head_ref: &mut RefInfo,
 ) -> R<(u32, Commit, u32, RefInfo)> {
-  let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
+  let config = CONFIG
+    .get_by_key(repo_path)
+    .unwrap_or_else(GitConfig::default);
 
   let remote_tracking_branch = config.get_tracking_branch_name(&head_ref.short_name);
 

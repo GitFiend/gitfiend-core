@@ -148,7 +148,9 @@ pub fn finish_properties_on_refs(
   refs: Vec<RefInfo>,
   repo_path: &PathString,
 ) -> Vec<RefInfo> {
-  let config = CONFIG.get_by_key(repo_path).unwrap_or_else(GitConfig::new);
+  let config = CONFIG
+    .get_by_key(repo_path)
+    .unwrap_or_else(GitConfig::default);
 
   refs
     .iter()

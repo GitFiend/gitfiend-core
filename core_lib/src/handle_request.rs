@@ -54,13 +54,11 @@ macro_rules! handler {
 }
 
 pub fn run_request(name: &str, options: &str) -> serde_json::Result<String> {
-  println!("Received request: {}, {}", name, options);
-
   handler! {
     name,
     options,
 
-   // Queries
+    // Queries
     git_version,
     run,
 

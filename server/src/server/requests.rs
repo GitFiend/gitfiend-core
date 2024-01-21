@@ -40,11 +40,10 @@ use core_lib::git::run_git_action::poll_action2;
 use core_lib::git::store::{clear_all_caches, clear_cache, override_git_home};
 use core_lib::index::auto_complete::auto_complete;
 use core_lib::util::data_store::{get_data_store, set_data_store};
-use core_lib::{dprintln, handle_function_request};
-
-use crate::server::static_files::{
+use core_lib::util::static_files::{
   file_size, handle_resource_request, path_exists, temp_dir, write_file,
 };
+use core_lib::{dprintln, handle_function_request};
 
 #[cfg(debug_assertions)]
 const PORT: u16 = 29997;

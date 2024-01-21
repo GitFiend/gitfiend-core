@@ -1,5 +1,6 @@
 mod config;
 pub mod git;
+pub mod handle_request;
 pub mod index;
 pub mod parser;
 pub mod util;

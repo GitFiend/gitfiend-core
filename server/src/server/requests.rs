@@ -1,6 +1,10 @@
+use std::env;
+use std::fs::File;
+use std::path::PathBuf;
 use std::process::exit;
+use std::str::FromStr;
 
-use tiny_http::{Response, Server};
+use tiny_http::{Header, Request, Response, Server};
 
 use core_lib::git::actions::add::git_add_files;
 use core_lib::git::actions::clone::clone_repo;
@@ -41,7 +45,7 @@ use core_lib::git::store::{clear_all_caches, clear_cache, override_git_home};
 use core_lib::index::auto_complete::auto_complete;
 use core_lib::util::data_store::{get_data_store, set_data_store};
 use core_lib::util::static_files::{
-  file_size, handle_resource_request, path_exists, temp_dir, write_file,
+  file_size, get_content_type, path_exists, temp_dir, write_file,
 };
 use core_lib::{dprintln, handle_function_request};
 
@@ -153,4 +157,44 @@ fn print_port(port: u16) {
   // PORT:12345
   // We pad the width so we can read a specific number of chars from the stream.
   println!("PORT:{:<12}", port);
+}
+
+// TODO: If there's an error then a response won't be sent. This probably leaks memory.
+pub fn handle_resource_request(request: Request) -> Option<()> {
+  let dir = get_server_dir()?;
+
+  // Remove any extra query part.
+  let url = request.url().split('?').next()?;
+  let file_path = dir.join(&url[3..]);
+
+  dprintln!("file_path {:?}, exists: {}", file_path, file_path.exists());
+
+  let file = File::open(&file_path).ok()?;
+  let mut response = Response::from_file(file);
+
+  let content_type = get_content_type(&file_path.to_string_lossy())?;
+
+  let header = Header::from_str(&content_type).ok()?;
+  response.add_header(header);
+
+  let _ = request.respond(response);
+
+  Some(())
+}
+
+fn get_server_dir() -> Option<PathBuf> {
+  #[cfg(debug_assertions)]
+  return Some(env::current_dir().ok()?.parent()?.join("git-fiend"));
+
+  // TODO: This is tested for native mac app, not electron production build.
+  // TODO: May need to unpack all from asar?
+  #[cfg(not(debug_assertions))]
+  Some(
+    env::current_exe()
+      .ok()?
+      .parent()?
+      .parent()?
+      .parent()?
+      .to_path_buf(),
+  )
 }

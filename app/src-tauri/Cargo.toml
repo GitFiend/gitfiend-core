@@ -14,7 +14,7 @@ tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
 core_lib = { path = "../../core_lib" }
-tauri = { version = "1.5", features = ["shell-open"] }
+tauri = { version = "1.5", features = [ "dialog-all", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 

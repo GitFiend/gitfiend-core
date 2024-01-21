@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use core_lib::handle_request::run_request;
+use tauri::Manager;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -14,6 +15,11 @@ fn handle_rpc_request(name: &str, options: &str) -> Option<String> {
 
 fn main() {
   tauri::Builder::default()
+    .setup(|app| {
+      #[cfg(debug_assertions)]
+      app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
+      Ok(())
+    })
     .invoke_handler(tauri::generate_handler![handle_rpc_request])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

@@ -39,7 +39,7 @@ pub fn git_version(_: &ReqOptions) -> Option<GitVersion> {
   Some(version)
 }
 
-#[derive(PartialEq, Eq, Debug, Clone, Serialize, TS)]
+#[derive(PartialEq, Eq, Debug, Clone, Default, Serialize, TS)]
 #[ts(export)]
 pub struct GitVersion {
   pub major: u32,
@@ -48,14 +48,6 @@ pub struct GitVersion {
 }
 
 impl GitVersion {
-  pub fn new() -> Self {
-    Self {
-      major: 0,
-      minor: 0,
-      patch: 0,
-    }
-  }
-
   pub fn valid(&self) -> bool {
     self.major > 0
   }
@@ -77,7 +69,7 @@ const P_VERSION: Parser<Option<GitVersion>> =
 
     Some(GitVersion {
       major: nums
-        .get(0)
+        .first()
         .unwrap_or(&String::from(""))
         .parse()
         .unwrap_or(0),

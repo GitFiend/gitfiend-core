@@ -7,10 +7,10 @@ use crate::git::store::STORE;
 use std::fs::read_to_string;
 
 pub fn is_rebase_in_progress(options: &ReqOptions) -> bool {
-  if let Ok(path) = STORE.get_repo_path(&options.repo_path) {
-    return path.git_path.join("rebase-merge").exists();
+  match STORE.get_repo_path(&options.repo_path) {
+    Ok(path) => path.git_path.join("rebase-merge").exists(),
+    Err(..) => false,
   }
-  false
 }
 
 // // Returns the commit id of the branch we tried to merge

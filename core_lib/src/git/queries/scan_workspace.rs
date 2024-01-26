@@ -98,16 +98,10 @@ fn read_git_modules(file_path: &PathBuf) -> R<Vec<RepoPath>> {
 }
 
 fn get_dir_entries(dir: &PathBuf) -> Vec<PathBuf> {
-  if let Ok(entries) = read_dir(dir) {
-    let paths: Vec<PathBuf> = entries
-      .filter(|e| e.is_ok())
-      .map(|e| e.unwrap().path())
-      .collect();
-
-    return paths;
+  match read_dir(dir) {
+    Ok(entries) => entries.filter_map(|e| Some(e.ok()?.path())).collect(),
+    Err(..) => vec![],
   }
-
-  vec![]
 }
 
 fn get_git_repo(dir: &Path) -> Option<RepoPath> {

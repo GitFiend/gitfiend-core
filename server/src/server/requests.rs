@@ -7,7 +7,7 @@ use std::str::FromStr;
 use tiny_http::{Header, Request, Response, Server};
 
 use core_lib::dprintln;
-use core_lib::handle_request::run_request;
+use core_lib::handle_request::run_core_request;
 use core_lib::util::static_files::get_content_type;
 
 #[cfg(debug_assertions)]
@@ -59,7 +59,7 @@ fn handle_server_request(mut request: Request) {
     return;
   }
 
-  if let Ok(result) = run_request(func_name, &options) {
+  if let Ok(result) = run_core_request(func_name, &options) {
     let _ = request.respond(Response::from_string(result));
   }
 }

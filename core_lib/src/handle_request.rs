@@ -36,6 +36,7 @@ use crate::util::data_store::{get_data_store, set_data_store};
 use crate::util::static_files::{file_size, path_exists, temp_dir, write_file};
 use serde::de::Error;
 
+#[macro_export]
 macro_rules! handler {
     ($name:expr, $options:expr, $($handler:ident),*) => {{
     match $name {
@@ -57,7 +58,7 @@ macro_rules! handler {
   }};
 }
 
-pub fn run_request(name: &str, options: &str) -> serde_json::Result<String> {
+pub fn run_core_request(name: &str, options: &str) -> serde_json::Result<String> {
   handler! {
     name,
     options,

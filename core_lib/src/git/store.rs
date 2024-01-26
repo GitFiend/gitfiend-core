@@ -34,17 +34,17 @@ static PATCHES: Glo<(PathString, HashMap<PatchPath, Vec<Patch>>)> =
 pub static REF_DIFFS: Glo<AHashMap<String, u32>> = glo!(AHashMap::new());
 // This probably needs to be per repo. We could then watch for changes?
 pub static CONFIG: Global<AHashMap<PathString, GitConfig>> = global!(AHashMap::new());
-pub static GIT_VERSION: Glo<GitVersion> = glo!(GitVersion::new());
+pub static GIT_VERSION: Glo<GitVersion> = glo!(GitVersion::default());
 
 pub const STORE: Store = Store {};
 pub struct Store {}
 impl Store {
   // Assumes git is installed.
   pub fn get_git_version(&self) -> GitVersion {
-    if let Ok(version) = GIT_VERSION.read() {
-      return (*version).to_owned();
+    match GIT_VERSION.read() {
+      Ok(version) => (*version).to_owned(),
+      Err(..) => GitVersion::default(),
     }
-    GitVersion::new()
   }
 
   pub fn insert_commits(

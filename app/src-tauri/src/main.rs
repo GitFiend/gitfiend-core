@@ -3,22 +3,38 @@
 
 mod app_requests;
 
-use crate::app_requests::run_app_request;
-use core_lib::handle_request::run_core_request;
+use core_lib::core_request::run_core_request;
+use core_lib::dprintln;
 use tauri::Manager;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn handle_rpc_request(name: &str, options: &str) -> Option<String> {
-  if let Ok(result) = run_core_request(name, options) {
-    return Some(result);
+fn handle_core_request(name: &str, options: &str) -> Option<String> {
+  match run_core_request(name, options) {
+    Ok(result) => {
+      return Some(result);
+    }
+    Err(e) => {
+      dprintln!("Error running core request: {}", e);
+    }
   }
-  if let Ok(result) = run_app_request(name, options) {
-    return Some(result);
-  }
+  // match run_app_request(name, options) {
+  //   Ok(result) => {
+  //     return Some(result);
+  //   }
+  //   Err(e) => {
+  //     dprintln!("Error running app request: {}", e);
+  //   }
+  // }
 
   None
 }
+
+// #[tauri::command]
+// async fn handle_main_request(app_handle: tauri::AppHandle) {
+//   println!("my custom command");
+//   // app_handle.dialog().open().await;
+// }
 
 fn main() {
   tauri::Builder::default()
@@ -27,7 +43,10 @@ fn main() {
       app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![handle_rpc_request])
+    .invoke_handler(tauri::generate_handler![
+      handle_core_request,
+      // handle_main_request
+    ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

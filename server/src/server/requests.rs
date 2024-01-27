@@ -6,8 +6,8 @@ use std::str::FromStr;
 
 use tiny_http::{Header, Request, Response, Server};
 
+use core_lib::core_request::run_core_request;
 use core_lib::dprintln;
-use core_lib::handle_request::run_core_request;
 use core_lib::util::static_files::get_content_type;
 
 #[cfg(debug_assertions)]

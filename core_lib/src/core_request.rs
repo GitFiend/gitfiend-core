@@ -1,4 +1,3 @@
-use crate::dprintln;
 use crate::git::actions::add::git_add_files;
 use crate::git::actions::clone::clone_repo;
 use crate::git::actions::command::command;
@@ -34,7 +33,6 @@ use crate::git::store::{clear_all_caches, clear_cache, override_git_home};
 use crate::index::auto_complete::auto_complete;
 use crate::util::data_store::{get_data_store, set_data_store};
 use crate::util::static_files::{file_size, path_exists, temp_dir, write_file};
-use serde::de::Error;
 
 #[macro_export]
 macro_rules! handler {
@@ -50,9 +48,7 @@ macro_rules! handler {
       },
       )*
       unknown_function => {
-        dprintln!("Unknown function {}, {:?}", unknown_function, $options);
-
-        Err(serde_json::Error::custom(format!("Unknown function {}", unknown_function)))
+        Err(serde::de::Error::custom(format!("Unknown function {}", unknown_function)))
       }
     }
   }};

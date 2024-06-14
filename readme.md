@@ -25,6 +25,8 @@ rustup update
 
 # 2. Add some MUSL dependencies
 sudo apt-get install pkg-config musl-tools
+# Or on Fedora
+sudo dnf install musl-gcc
 
 # 3. Add the Linux MUSL toolchain
 rustup target add x86_64-unknown-linux-musl

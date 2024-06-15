@@ -63,7 +63,9 @@ pub fn set_data_store(o: &DataStoreValues) -> ResultStatus {
         Ok(mut config_file) => match serde_json::to_string_pretty(&data) {
           Err(e) => ResultStatus::failure(&format!("Failed to serialize data: {}", e)),
           Ok(config_text) => match config_file.write_all(config_text.as_bytes()) {
-            Err(e) => ResultStatus::failure(&format!("Failed to write to config file: {}", e)),
+            Err(e) => {
+              ResultStatus::failure(&format!("Failed to write to config file: {}", e))
+            }
             Ok(_) => ResultStatus::success("Data store updated"),
           },
         },
@@ -91,7 +93,9 @@ fn load_config() -> UserConfigResult {
         match reader.read_to_string(&mut text) {
           Err(e) => UserConfigResult::Error(format!("Failed to read config file: {}", e)),
           Ok(_) => match serde_json::from_str::<HashMap<String, String>>(&text) {
-            Err(e) => UserConfigResult::Error(format!("Failed to parse config file: {}", e)),
+            Err(e) => {
+              UserConfigResult::Error(format!("Failed to parse config file: {}", e))
+            }
             Ok(config) => UserConfigResult::Config(config),
           },
         }

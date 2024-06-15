@@ -17,7 +17,6 @@ use std::path::PathBuf;
 pub struct RepoPath {
   pub path: PathBuf,
   pub git_path: PathBuf,
-  pub submodule: bool,
 }
 
 pub type PathString = String;

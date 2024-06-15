@@ -2,10 +2,4 @@
 import type { Hunk } from "./Hunk";
 import type { HunkLine } from "./HunkLine";
 
-export interface WipHunksSplit {
-  left: Array<HunkLine>;
-  right: Array<HunkLine>;
-  hunks: Array<Hunk>;
-  patch_size: number;
-  valid_utf8: boolean;
-}
+export type WipHunksSplit = { left: Array<HunkLine>, right: Array<HunkLine>, hunks: Array<Hunk>, patch_size: number, valid_utf8: boolean, };

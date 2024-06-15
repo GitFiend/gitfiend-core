@@ -121,7 +121,7 @@ fn get_git_repo(dir: &Path) -> Option<RepoPath> {
       return Some(RepoPath {
         path: dir.to_path_buf(),
         git_path: dir.join(path),
-        submodule: true,
+        // submodule: true,
       });
     }
 
@@ -129,7 +129,7 @@ fn get_git_repo(dir: &Path) -> Option<RepoPath> {
       return Some(RepoPath {
         path: dir.to_path_buf(),
         git_path: dir.join(".git"),
-        submodule: false,
+        // submodule: false,
       });
     }
   }

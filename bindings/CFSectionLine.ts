@@ -2,4 +2,4 @@
 import type { BlankLine } from "./BlankLine";
 import type { ConflictLine } from "./ConflictLine";
 
-export type CFSectionLine = { blank: BlankLine } | { conflict: ConflictLine };
+export type CFSectionLine = { "blank": BlankLine } | { "conflict": ConflictLine };

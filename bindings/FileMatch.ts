@@ -2,7 +2,4 @@
 import type { HunkLine } from "./HunkLine";
 import type { Patch } from "./Patch";
 
-export interface FileMatch {
-  patch: Patch;
-  lines: Array<HunkLine>;
-}
+export type FileMatch = { patch: Patch, lines: Array<HunkLine>, };

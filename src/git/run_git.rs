@@ -17,6 +17,7 @@ where
   pub repo_path: &'a str,
 }
 
+#[allow(dead_code)]
 pub struct GitOut {
   pub stdout: String,
   pub stderr: String,

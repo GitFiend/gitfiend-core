@@ -3,10 +3,4 @@ import type { Commit } from "./Commit";
 import type { Patch } from "./Patch";
 import type { ThemeColour } from "./ThemeColour";
 
-export interface ReqPatchCodeOptions {
-  repoPath: string;
-  commit: Commit;
-  patch: Patch;
-  theme: ThemeColour;
-  split: boolean;
-}
+export type ReqPatchCodeOptions = { repoPath: string, commit: Commit, patch: Patch, theme: ThemeColour, split: boolean, };

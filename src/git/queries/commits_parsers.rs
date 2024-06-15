@@ -1,7 +1,9 @@
 use crate::git::git_types::{CommitInfo, DateResult};
 use crate::git::queries::refs::{make_ref_info, RefInfoPart};
 use crate::git::queries::{RefInfo, P_OPTIONAL_REFS};
-use crate::parser::standard_parsers::{ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, WS};
+use crate::parser::standard_parsers::{
+  ANY_WORD, SIGNED_INT, UNSIGNED_INT, UNTIL_LINE_END, WS,
+};
 use crate::parser::Parser;
 use crate::{and, character, many, map, or, rep_parser_sep, take_char_while, until_str};
 

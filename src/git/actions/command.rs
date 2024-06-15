@@ -25,10 +25,10 @@ pub fn command(options: &CommandOptions) -> u32 {
   })
 }
 
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct CommandsOptions {
-  pub repo_path: String,
-  pub commands: Vec<Vec<String>>,
-}
+// #[derive(Debug, Deserialize, TS)]
+// #[serde(rename_all = "camelCase")]
+// #[ts(export)]
+// pub struct CommandsOptions {
+//   pub repo_path: String,
+//   pub commands: Vec<Vec<String>>,
+// }

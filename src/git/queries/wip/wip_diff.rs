@@ -86,7 +86,8 @@ pub fn load_wip_hunk_lines(options: &ReqWipHunksOptions) -> R<(Vec<HunkLine>, bo
   }
 
   if let Some(commit) = head_commit {
-    let mut old_text = load_unchanged_file(repo_path, patch, &commit).unwrap_or(String::from(""));
+    let mut old_text =
+      load_unchanged_file(repo_path, patch, &commit).unwrap_or(String::from(""));
 
     if *patch_type == WipPatchType::D {
       return Ok((calc_hunk_line_from_text(&old_text, ""), true));
@@ -247,7 +248,11 @@ fn get_status_from_change_tag(tag: &ChangeTag) -> HunkLineStatus {
   }
 }
 
-fn load_unchanged_file(repo_path: &String, patch: &WipPatch, head_commit: &str) -> R<String> {
+fn load_unchanged_file(
+  repo_path: &String,
+  patch: &WipPatch,
+  head_commit: &str,
+) -> R<String> {
   Ok(
     run_git_err(RunGitOptions {
       repo_path,

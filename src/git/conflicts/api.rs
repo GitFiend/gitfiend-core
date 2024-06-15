@@ -6,8 +6,8 @@ use serde::Deserialize;
 use ts_rs::TS;
 
 use crate::git::conflicts::conflicted_file::{
-  BlankLine, CFLine, CFSection, CFSectionLine, CFSide, ConflictLine, ConflictedFile, OkLine,
-  SlotLine,
+  BlankLine, CFLine, CFSection, CFSectionLine, CFSide, ConflictLine, ConflictedFile,
+  OkLine, SlotLine,
 };
 use crate::git::git_types::WipPatch;
 use crate::git::queries::refs::P_REF_NAME;
@@ -145,7 +145,8 @@ fn balance_section_with_blanks(file: &mut ConflictedFile, section: usize) {
 mod tests {
   use crate::git::conflicts::api::conflicted_lines;
   use crate::git::conflicts::conflicted_file::{
-    CFLine, CFSection, CFSectionLine, CFSide, ConflictLine, ConflictedFile, OkLine, SlotLine,
+    CFLine, CFSection, CFSectionLine, CFSide, ConflictLine, ConflictedFile, OkLine,
+    SlotLine,
   };
 
   #[test]

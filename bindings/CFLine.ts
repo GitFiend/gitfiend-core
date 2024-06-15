@@ -2,4 +2,4 @@
 import type { OkLine } from "./OkLine";
 import type { SlotLine } from "./SlotLine";
 
-export type CFLine = { ok: OkLine } | { slot: SlotLine };
+export type CFLine = { "ok": OkLine } | { "slot": SlotLine };

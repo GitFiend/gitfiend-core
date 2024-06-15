@@ -3,10 +3,4 @@ import type { FileMatch } from "./FileMatch";
 import type { Patch } from "./Patch";
 import type { SearchMatchType } from "./SearchMatchType";
 
-export interface CoreSearchResult {
-  commitId: string;
-  matches: Array<SearchMatchType>;
-  patches: Array<Patch>;
-  diffs: Array<FileMatch>;
-  refIds: Array<string>;
-}
+export type CoreSearchResult = { commitId: string, matches: Array<SearchMatchType>, patches: Array<Patch>, diffs: Array<FileMatch>, refIds: Array<string>, };

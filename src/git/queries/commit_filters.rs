@@ -6,6 +6,8 @@ use crate::git::git_types::{Commit, RefInfo};
 use crate::git::queries::commit_calcs::{find_commit_ancestors, get_commit_map_cloned};
 use crate::git::queries::patches::patches::load_patches;
 
+// TODO: Investigate unused properties.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]

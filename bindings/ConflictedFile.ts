@@ -2,11 +2,4 @@
 import type { CFLine } from "./CFLine";
 import type { CFSection } from "./CFSection";
 
-export interface ConflictedFile {
-  lines: Array<CFLine>;
-  sections: Array<CFSection>;
-  refNameTop: string;
-  refNameBottom: string;
-  lineEnding: string;
-  maxLineLength: number;
-}
+export type ConflictedFile = { lines: Array<CFLine>, sections: Array<CFSection>, refNameTop: string, refNameBottom: string, lineEnding: string, maxLineLength: number, };

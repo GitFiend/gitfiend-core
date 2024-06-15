@@ -54,49 +54,49 @@ pub struct Line {
 pub const P_LINE_AND_END: Parser<(String, &str)> =
   and!(until_parser_keep_happy!(LINE_END), or!(LINE_END, WS_STR));
 
-const P_UNCHANGED_LINE: Parser<Line> = map!(and!(character!(' '), P_LINE_AND_END), |res: (
-  char,
-  (String, &str)
-)| {
-  Line {
-    status: HunkLineStatus::Unchanged,
-    text: res.1 .0,
-    line_ending: res.1 .1.to_string(),
+const P_UNCHANGED_LINE: Parser<Line> = map!(
+  and!(character!(' '), P_LINE_AND_END),
+  |res: (char, (String, &str))| {
+    Line {
+      status: HunkLineStatus::Unchanged,
+      text: res.1 .0,
+      line_ending: res.1 .1.to_string(),
+    }
   }
-});
+);
 
-const P_ADDED_LINE: Parser<Line> = map!(and!(character!('+'), P_LINE_AND_END), |res: (
-  char,
-  (String, &str)
-)| {
-  Line {
-    status: HunkLineStatus::Added,
-    text: res.1 .0,
-    line_ending: res.1 .1.to_string(),
+const P_ADDED_LINE: Parser<Line> = map!(
+  and!(character!('+'), P_LINE_AND_END),
+  |res: (char, (String, &str))| {
+    Line {
+      status: HunkLineStatus::Added,
+      text: res.1 .0,
+      line_ending: res.1 .1.to_string(),
+    }
   }
-});
+);
 
-const P_REMOVED_LINE: Parser<Line> = map!(and!(character!('-'), P_LINE_AND_END), |res: (
-  char,
-  (String, &str)
-)| {
-  Line {
-    status: HunkLineStatus::Removed,
-    text: res.1 .0,
-    line_ending: res.1 .1.to_string(),
+const P_REMOVED_LINE: Parser<Line> = map!(
+  and!(character!('-'), P_LINE_AND_END),
+  |res: (char, (String, &str))| {
+    Line {
+      status: HunkLineStatus::Removed,
+      text: res.1 .0,
+      line_ending: res.1 .1.to_string(),
+    }
   }
-});
+);
 
-const P_NO_NEW_LINE: Parser<Line> = map!(and!(character!('\\'), UNTIL_LINE_END), |res: (
-  char,
-  String
-)| {
-  Line {
-    status: HunkLineStatus::Unchanged,
-    text: res.1,
-    line_ending: String::from(""),
+const P_NO_NEW_LINE: Parser<Line> = map!(
+  and!(character!('\\'), UNTIL_LINE_END),
+  |res: (char, String)| {
+    Line {
+      status: HunkLineStatus::Unchanged,
+      text: res.1,
+      line_ending: String::from(""),
+    }
   }
-});
+);
 
 const P_LINE_BREAK: Parser<Line> = map!(LINE_END, |res: &str| {
   Line {
@@ -164,8 +164,8 @@ pub const P_HUNK_LINES: Parser<Vec<Line>> = many!(P_HUNK_LINE);
 mod tests {
   use crate::git::git_types::{HunkLineStatus, HunkRange};
   use crate::git::queries::hunks::hunk_line_parsers::{
-    _generate_line_ranges_text, P_ADDED_LINE, P_HUNK_LINE, P_HUNK_LINES, P_HUNK_LINE_RANGE,
-    P_HUNK_LINE_RANGES,
+    _generate_line_ranges_text, P_ADDED_LINE, P_HUNK_LINE, P_HUNK_LINES,
+    P_HUNK_LINE_RANGE, P_HUNK_LINE_RANGES,
   };
 
   use crate::parser::parse_all;

@@ -3,15 +3,4 @@ import type { BranchState } from "./BranchState";
 import type { GitConfig } from "./GitConfig";
 import type { WipPatches } from "./WipPatches";
 
-export interface RepoStatus {
-  patches: WipPatches;
-  config: GitConfig;
-  branches: Array<string>;
-  branchName: string;
-  headRefId: string;
-  localCommitId: string | null;
-  remoteCommitId: string | null;
-  remoteAhead: number;
-  remoteBehind: number;
-  state: BranchState;
-}
+export type RepoStatus = { patches: WipPatches, config: GitConfig, branches: Array<string>, branchName: string, headRefId: string, localCommitId: string | null, remoteCommitId: string | null, remoteAhead: number, remoteBehind: number, state: BranchState, };

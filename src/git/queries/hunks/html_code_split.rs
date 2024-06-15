@@ -14,8 +14,10 @@ pub fn generate_lines_split(
   println!("{} {}", hl_left.len(), hl_right.len());
   let char_width = get_longest_line(hl_left, hl_right);
 
-  let (left_margin, left_lines) = gen_side(hl_left, hunks, colour, Side::Left, char_width);
-  let (right_margin, right_lines) = gen_side(hl_right, hunks, colour, Side::Right, char_width);
+  let (left_margin, left_lines) =
+    gen_side(hl_left, hunks, colour, Side::Left, char_width);
+  let (right_margin, right_lines) =
+    gen_side(hl_right, hunks, colour, Side::Right, char_width);
 
   let mut left = div("margin", &left_margin);
   left += &div("code", &left_lines);
@@ -74,7 +76,12 @@ enum Side {
   Right,
 }
 
-fn add_margin_line(margin: &mut String, line: &HunkLine, margin_width: usize, side: Side) {
+fn add_margin_line(
+  margin: &mut String,
+  line: &HunkLine,
+  margin_width: usize,
+  side: Side,
+) {
   use HunkLineStatus::*;
 
   let HunkLine { status, .. } = line;

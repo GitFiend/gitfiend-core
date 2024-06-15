@@ -35,7 +35,11 @@ impl Colouring {
     self.theme = *theme;
   }
 
-  pub fn get_colour_line(&mut self, theme: &ThemeColour, file_extension: &str) -> ColourLine {
+  pub fn get_colour_line(
+    &mut self,
+    theme: &ThemeColour,
+    file_extension: &str,
+  ) -> ColourLine {
     self.set_theme(theme);
     let h = self.get_highlighter(file_extension);
 
@@ -48,7 +52,7 @@ impl Colouring {
     ColourLine {
       colouring: self,
       highlight: h,
-      extension: file_extension.to_string(),
+      // extension: file_extension.to_string(),
     }
   }
 
@@ -92,7 +96,7 @@ impl Colouring {
 pub struct ColourLine<'a> {
   pub colouring: &'a Colouring,
   pub highlight: Option<HighlightLines<'a>>,
-  pub extension: String,
+  // pub extension: String,
 }
 
 impl<'a> ColourLine<'a> {

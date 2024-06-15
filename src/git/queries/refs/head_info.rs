@@ -6,7 +6,6 @@ use crate::git::queries::commits::{
   convert_commit, load_head_commit, load_top_commit_for_branch, TopCommitOptions,
 };
 use crate::git::queries::config::GitConfig;
-use crate::git::queries::refs::ref_diffs::calc_remote_ref_diffs;
 use crate::git::store::{PathString, CONFIG, STORE};
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::{ES, R};
@@ -17,8 +16,8 @@ pub struct HeadInfo {
   pub commit: Commit,
   pub remote_ref: Option<RefInfo>,
   pub remote_commit: Option<Commit>,
-  pub remote_ahead: u32,
-  pub remote_behind: u32,
+  // pub remote_ahead: u32,
+  // pub remote_behind: u32,
 }
 
 pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
@@ -32,7 +31,7 @@ pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
 
   if let Some(mut head_info) = head_info {
     if head_info.remote_ref.is_none() {
-      if let Ok((remote_ahead, remote_commit, remote_behind, remote_ref)) =
+      if let Ok((_remote_ahead, remote_commit, _remote_behind, remote_ref)) =
         calc_remote_fallback(repo_path, &mut head_info.ref_info)
       {
         return Ok(HeadInfo {
@@ -40,8 +39,8 @@ pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
           commit: head_info.commit.clone(),
           remote_ref: Some(remote_ref),
           remote_commit: Some(remote_commit),
-          remote_ahead,
-          remote_behind,
+          // remote_ahead,
+          // remote_behind,
         });
       }
     }
@@ -49,7 +48,7 @@ pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
   } else if let Ok((mut head_commit, i)) = calc_head_fallback(repo_path) {
     let head_ref = &mut head_commit.refs[i];
 
-    if let Ok((remote_ahead, remote_commit, remote_behind, remote_ref)) =
+    if let Ok((_remote_ahead, remote_commit, _remote_behind, remote_ref)) =
       calc_remote_fallback(repo_path, head_ref)
     {
       return Ok(HeadInfo {
@@ -57,8 +56,8 @@ pub fn calc_head_info(options: &ReqOptions) -> R<HeadInfo> {
         commit: convert_commit(head_commit),
         remote_ref: Some(remote_ref),
         remote_commit: Some(remote_commit),
-        remote_ahead,
-        remote_behind,
+        // remote_ahead,
+        // remote_behind,
       });
     }
   }
@@ -79,8 +78,8 @@ fn calc_head_info_from_commits(
     .map(|c| (c.id.clone(), c))
     .collect::<AHashMap<String, Commit>>();
 
-  let mut remote_ahead = 0;
-  let mut remote_behind = 0;
+  // let mut remote_ahead = 0;
+  // let mut remote_behind = 0;
 
   for info in refs {
     if info.head {
@@ -100,22 +99,22 @@ fn calc_head_info_from_commits(
         }
       }
 
-      if let Some(remote_ref) = remote_ref {
-        let diffs_map = calc_remote_ref_diffs(&info.commit_id, &all_refs, &commit_map);
+      // if let Some(remote_ref) = remote_ref {
+      //   let diffs_map = calc_remote_ref_diffs(&info.commit_id, &all_refs, &commit_map);
 
-        if let Some(diffs) = diffs_map.get(&remote_ref.id) {
-          remote_ahead = diffs.ahead_of_head;
-          remote_behind = diffs.behind_head;
-        }
-      }
+      // if let Some(diffs) = diffs_map.get(&remote_ref.id) {
+      // remote_ahead = diffs.ahead_of_head;
+      // remote_behind = diffs.behind_head;
+      // }
+      // }
 
       return Some(HeadInfo {
         ref_info: info.clone(),
         commit: commit.clone(),
         remote_ref: remote_ref.cloned(),
         remote_commit: remote_commit.cloned(),
-        remote_ahead,
-        remote_behind,
+        // remote_ahead,
+        // remote_behind,
       });
     }
   }

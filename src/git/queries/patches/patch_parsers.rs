@@ -93,21 +93,20 @@ const P_COPY_PATCH: Parser<PatchData> = map!(
   }
 );
 
-const P_OTHER_PATCH: Parser<PatchData> = map!(and!(P_STATUS, UNTIL_NUL, UNTIL_NUL), |result: (
-  PatchType,
-  String,
-  String
-)| {
-  let (t, _, n) = result;
-  let type_str = t.to_string();
+const P_OTHER_PATCH: Parser<PatchData> = map!(
+  and!(P_STATUS, UNTIL_NUL, UNTIL_NUL),
+  |result: (PatchType, String, String)| {
+    let (t, _, n) = result;
+    let type_str = t.to_string();
 
-  PatchData {
-    patch_type: t,
-    old_file: n.clone(),
-    new_file: n.clone(),
-    id: format!("{}-{}", n, type_str),
+    PatchData {
+      patch_type: t,
+      old_file: n.clone(),
+      new_file: n.clone(),
+      id: format!("{}-{}", n, type_str),
+    }
   }
-});
+);
 
 const P_STATUS: Parser<PatchType> = map!(
   or!(
@@ -143,7 +142,8 @@ mod tests {
   use crate::parser::parse_all;
 
   const P1: &str = "src2/parser-lib/input.ts";
-  const P2: &str = "src2/renderer-process/redux-store/repo-state/commits/commits-reducer.test.ts";
+  const P2: &str =
+    "src2/renderer-process/redux-store/repo-state/commits/commits-reducer.test.ts";
   // const P3: &str = "\"src2/Parser Lib/input.ts\"";
 
   #[test]

@@ -60,7 +60,11 @@ pub fn load_hunks_args(commit: &Commit, patch: &Patch) -> Vec<String> {
 
   if *is_merge {
     // args.extend_from_slice(&[diff, format!("{}^@", id)]);
-    args.extend_from_slice(&[diff, no_colour, f!("{}...{}", parent_ids[0], parent_ids[1])]);
+    args.extend_from_slice(&[
+      diff,
+      no_colour,
+      f!("{}...{}", parent_ids[0], parent_ids[1]),
+    ]);
   } else if !commit.parent_ids.is_empty() {
     args.extend_from_slice(&[diff, no_colour, f!("{}..{}", parent_ids[0], id)]);
   } else {

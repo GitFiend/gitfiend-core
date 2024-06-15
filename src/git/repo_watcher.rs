@@ -154,9 +154,9 @@ fn update_changed(changed_paths: Vec<PathBuf>) {
     .map(|path| path.to_string())
     .collect();
 
-  if !changed_paths.is_empty() {
-    dprintln!("{:?}", changed_paths);
-  }
+  // if !changed_paths.is_empty() {
+  //   dprintln!("{:?}", changed_paths);
+  // }
 
   if let Some(mut watch_dirs) = WATCH_DIRS.get() {
     for changed in changed_paths {

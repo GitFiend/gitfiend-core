@@ -14,7 +14,10 @@ use crate::parser::parse_all_err;
 use crate::server::request_util::R;
 
 #[elapsed]
-pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> R<HashMap<String, Vec<Patch>>> {
+pub fn load_patches(
+  repo_path: &str,
+  commits: &Vec<Commit>,
+) -> R<HashMap<String, Vec<Patch>>> {
   let mut commits_without_patches = Vec::<&Commit>::new();
   let mut stashes_or_merges_without_patches = Vec::<&Commit>::new();
   let mut new_patches = HashMap::<String, Vec<Patch>>::new();
@@ -41,7 +44,8 @@ pub fn load_patches(repo_path: &str, commits: &Vec<Commit>) -> R<HashMap<String,
   }
 
   if cfg!(debug_assertions) {
-    let num_commits_with_no_patches = new_patches.iter().filter(|(_, p)| p.is_empty()).count();
+    let num_commits_with_no_patches =
+      new_patches.iter().filter(|(_, p)| p.is_empty()).count();
 
     dprintln!("******* {} commits_without_patches, {} stashes_or_merges_without_patches, {} commits with 0 *******",
               commits_without_patches.len(), stashes_or_merges_without_patches.len(), num_commits_with_no_patches);

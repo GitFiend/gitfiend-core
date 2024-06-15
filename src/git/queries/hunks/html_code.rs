@@ -1,8 +1,12 @@
 use crate::f;
 use crate::git::git_types::{Commit, Hunk, HunkLine, HunkLineStatus, Patch};
 use crate::git::queries::hunks::html_code_split::generate_lines_split;
-use crate::git::queries::hunks::load_hunks::{load_hunks, load_hunks_split, ReqHunkOptions};
-use crate::git::queries::syntax_colouring::{colour_to_style, ColourLine, ThemeColour, COLOURING};
+use crate::git::queries::hunks::load_hunks::{
+  load_hunks, load_hunks_split, ReqHunkOptions,
+};
+use crate::git::queries::syntax_colouring::{
+  colour_to_style, ColourLine, ThemeColour, COLOURING,
+};
 use crate::server::request_util::R;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -56,7 +60,11 @@ pub fn get_patch_as_html(options: &ReqPatchCodeOptions) -> R<String> {
 }
 
 // Paginate if too large?
-fn generate_lines(hunk_lines: &Vec<HunkLine>, hunks: &[Hunk], colour: &mut ColourLine) -> String {
+fn generate_lines(
+  hunk_lines: &Vec<HunkLine>,
+  hunks: &[Hunk],
+  colour: &mut ColourLine,
+) -> String {
   use HunkLineStatus::*;
 
   let mut margin = String::new();
@@ -87,7 +95,12 @@ fn generate_lines(hunk_lines: &Vec<HunkLine>, hunks: &[Hunk], colour: &mut Colou
   )
 }
 
-pub fn add_line(lines: &mut String, hunk: Option<&Hunk>, line: &HunkLine, colour: &mut ColourLine) {
+pub fn add_line(
+  lines: &mut String,
+  hunk: Option<&Hunk>,
+  line: &HunkLine,
+  colour: &mut ColourLine,
+) {
   use HunkLineStatus::*;
   let text = if let Ok(parts) = colour.colour(&f!("{}\n", line.text)) {
     build_line(parts, &colour.colouring.theme)

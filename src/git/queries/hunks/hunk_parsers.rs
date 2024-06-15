@@ -1,5 +1,7 @@
 use crate::git::git_types::{Hunk, HunkLine, HunkLineStatus, HunkRange};
-use crate::git::queries::hunks::hunk_line_parsers::{Line, P_HUNK_LINES, P_HUNK_LINE_RANGES};
+use crate::git::queries::hunks::hunk_line_parsers::{
+  Line, P_HUNK_LINES, P_HUNK_LINE_RANGES,
+};
 use crate::parser::standard_parsers::{UNTIL_LINE_END, WS};
 use crate::parser::Parser;
 use crate::{and, many, map, map2, or, word};
@@ -82,48 +84,48 @@ const P_HUNK: Parser<Hunk> = map2!(
   }
 );
 
-pub const P_HUNKS: Parser<Vec<Hunk>> = map!(and!(P_DIFF_HEADER, many!(P_HUNK)), |res: (
-  FileInfo,
-  Vec<Hunk>
-)| {
-  if res.0.is_binary {
-    return vec![Hunk {
-      old_line_range: HunkRange {
-        start: 0,
-        length: 0,
-      },
-      new_line_range: HunkRange {
-        start: 0,
-        length: 0,
-      },
-      context_line: String::from(""),
-      lines: Vec::new(),
-      index: 0,
-    }];
+pub const P_HUNKS: Parser<Vec<Hunk>> = map!(
+  and!(P_DIFF_HEADER, many!(P_HUNK)),
+  |res: (FileInfo, Vec<Hunk>)| {
+    if res.0.is_binary {
+      return vec![Hunk {
+        old_line_range: HunkRange {
+          start: 0,
+          length: 0,
+        },
+        new_line_range: HunkRange {
+          start: 0,
+          length: 0,
+        },
+        context_line: String::from(""),
+        lines: Vec::new(),
+        index: 0,
+      }];
+    }
+
+    res
+      .1
+      .into_iter()
+      .enumerate()
+      .map(|(i, mut hunk)| {
+        let index = i as i32;
+
+        hunk.index = index;
+
+        hunk.lines = hunk
+          .lines
+          .into_iter()
+          .map(|mut line| {
+            line.hunk_index = index;
+            line
+          })
+          .collect();
+
+        hunk
+      })
+      .collect()
   }
-
-  res
-    .1
-    .into_iter()
-    .enumerate()
-    .map(|(i, mut hunk)| {
-      let index = i as i32;
-
-      hunk.index = index;
-
-      hunk.lines = hunk
-        .lines
-        .into_iter()
-        .map(|mut line| {
-          line.hunk_index = index;
-          line
-        })
-        .collect();
-
-      hunk
-    })
-    .collect()
-});
+);
 
 fn get_hunk_lines(old_num: i32, new_num: i32, lines: Vec<Line>) -> Vec<HunkLine> {
   let mut old_num = old_num;

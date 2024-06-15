@@ -7,7 +7,7 @@ use std::fmt;
 // See https://git-scm.com/docs/git-config#_syntax
 pub enum ConfigFile {
   Section(ConfigSection),
-  Other(Other),
+  Other(()),
 }
 
 pub struct ConfigSection(pub Heading, pub Vec<Row>);
@@ -25,12 +25,12 @@ impl fmt::Display for Heading {
 
 pub enum Row {
   Data(String, String),
-  Other(Other),
+  Other(()),
 }
 
 pub enum Other {
-  Comment(String),
-  Unknown(String),
+  Comment(()),
+  Unknown(()),
 }
 
 const P_HEADING_1: Parser<Heading> =
@@ -70,20 +70,20 @@ const P_SECTION: Parser<ConfigFile> = map2!(
 
 const P_COMMENT: Parser<Other> = map2!(
   and!(WS, or!(character!(';'), character!('#')), UNTIL_LINE_END),
-  res,
-  Other::Comment(res.2)
+  _res,
+  Other::Comment(())
 );
 
 // Make sure we don't accidentally parse a row or heading as an unknown.
 const P_UNKNOWN: Parser<Other> = map2!(
   and!(not!(P_HEADING), not!(P_ROW), UNTIL_LINE_END),
-  res,
-  Other::Unknown(res.2)
+  _res,
+  Other::Unknown(())
 );
 
 const P_OTHER: Parser<Other> = or!(P_COMMENT, P_UNKNOWN);
-const P_CONFIG_OTHER: Parser<ConfigFile> = map2!(P_OTHER, res, ConfigFile::Other(res));
-const P_ROW_OTHER: Parser<Row> = map2!(P_OTHER, res, Row::Other(res));
+const P_CONFIG_OTHER: Parser<ConfigFile> = map2!(P_OTHER, _res, ConfigFile::Other(()));
+const P_ROW_OTHER: Parser<Row> = map2!(P_OTHER, _res, Row::Other(()));
 
 pub fn parse_config_file(input: &str) -> R<Vec<ConfigFile>> {
   parse_all_err(P_CONFIG_FILE, input)

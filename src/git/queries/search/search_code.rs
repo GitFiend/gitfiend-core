@@ -110,8 +110,8 @@ pub fn search_code_command(options: &CodeSearchOpts, search_id: u32) -> Option<S
     if search_cancelled(search_id) {
       dprintln!("Killing search {search_id} \"{search_text}\"");
 
-      if let Err(e) = cmd.kill() {
-        dprintln!("{}", e);
+      if let Err(_e) = cmd.kill() {
+        dprintln!("{}", _e);
       }
       return None;
     }

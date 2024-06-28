@@ -15,6 +15,7 @@ use crate::git::store::{PathString, STORE};
 use crate::parser::parse_all_err;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::{ES, R};
+#[allow(unused_imports)]
 use crate::{dprintln, time_result};
 use ahash::AHashMap;
 use serde::{Deserialize, Serialize};

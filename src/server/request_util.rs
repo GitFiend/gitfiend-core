@@ -45,15 +45,15 @@ macro_rules! parse_json {
   ($request: expr) => {{
     let mut content = String::new();
 
-    if let Err(e) = $request.as_reader().read_to_string(&mut content) {
-      dprintln!("{}", e);
+    if let Err(_e) = $request.as_reader().read_to_string(&mut content) {
+      dprintln!("{}", _e);
       return;
     }
 
     match serde_json::from_str(&content) {
       Ok(options) => options,
-      Err(e) => {
-        dprintln!("{}", e);
+      Err(_e) => {
+        dprintln!("{}", _e);
         None
       }
     }
@@ -69,13 +69,13 @@ macro_rules! send_response {
       Ok(serialized) => {
         match $request.respond(Response::from_string(serialized)) {
           Ok(_) => {}
-          Err(e) => {
-            dprintln!("{}", e);
+          Err(_e) => {
+            dprintln!("{}", _e);
           }
         };
       }
-      Err(e) => {
-        dprintln!("{}", e);
+      Err(_e) => {
+        dprintln!("{}", _e);
       }
     }
   }};
@@ -104,8 +104,8 @@ macro_rules! handle_function_request {
         $crate::handle_request!($request, $handler);
       },
       )*
-      unknown_url => {
-        dprintln!("Unknown url {}", unknown_url);
+      _unknown_url => {
+        dprintln!("Unknown url {}", _unknown_url);
       }
     }
   }};

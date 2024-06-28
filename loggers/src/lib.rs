@@ -1,5 +1,8 @@
+#[allow(unused_imports)]
 use proc_macro::TokenStream;
+#[cfg(debug_assertions)]
 use quote::quote;
+#[cfg(debug_assertions)]
 use syn::{Item, ItemFn};
 
 /*
@@ -7,6 +10,7 @@ This is taken and modified from https://github.com/nmeylan/elapsed-time
  */
 
 // We don't bother printing time if it took less than this.
+#[cfg(debug_assertions)]
 const MIN_ELAPSED_MS: u128 = 1;
 
 #[cfg(not(debug_assertions))]

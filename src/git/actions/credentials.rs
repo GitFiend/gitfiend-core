@@ -45,6 +45,7 @@ pub fn get_ask_pass_path() -> R<PathBuf> {
     "ask-pass"
   };
 
+  #[cfg(debug_assertions)]
   let dir = env::current_dir()?;
 
   let missing_parent = ES::from("get_ask_pass_path: Couldn't get parent dir.");

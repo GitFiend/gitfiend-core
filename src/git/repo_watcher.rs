@@ -111,8 +111,8 @@ fn watch(root_dir: String) -> Result<()> {
     Ok(event) => {
       update_changed(event.paths);
     }
-    Err(e) => {
-      dprintln!("watch error: {:?}", e);
+    Err(_e) => {
+      dprintln!("watch error: {:?}", _e);
     }
   })?;
 

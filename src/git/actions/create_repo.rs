@@ -7,8 +7,8 @@ use crate::server::git_request::ReqOptions;
 pub fn create_repo(options: &ReqOptions) -> u32 {
   let ReqOptions { repo_path } = options;
 
-  if let Err(e) = fs::create_dir_all(&repo_path) {
-    dprintln!("{:?}", e);
+  if let Err(_e) = fs::create_dir_all(repo_path) {
+    dprintln!("{:?}", _e);
     return 0;
   }
 

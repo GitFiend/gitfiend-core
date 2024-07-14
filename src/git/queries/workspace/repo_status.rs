@@ -47,12 +47,23 @@ pub fn load_repo_status(options: &ReqOptions) -> R<RepoStatus> {
   let (head_id, current_branch) = load_current_branch(repo_path)?;
 
   let Refs {
-    local_id,
+    mut local_id,
     mut remote_id,
     mut others,
   } = read_refs(repo_path, &current_branch)?;
 
   let packed_refs = load_packed_refs(repo_path).unwrap_or_else(|_| Vec::new());
+
+  if local_id.is_none() {
+    for r in packed_refs.iter() {
+      if let PackedRef::Local(local) = r {
+        if local.name == current_branch {
+          local_id = Some(local.commit_id.clone());
+          break;
+        }
+      }
+    }
+  }
 
   if remote_id.is_none() {
     for r in packed_refs.iter() {

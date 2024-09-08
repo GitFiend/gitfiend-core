@@ -6,6 +6,7 @@ use crate::server::request_util::{ES, R};
 use serde::Deserialize;
 use std::fs::{read_dir, read_to_string};
 use std::path::{Path, PathBuf};
+use ahash::HashSet;
 use ts_rs::TS;
 
 const MAX_SCAN_DEPTH: u8 = 5;
@@ -19,7 +20,7 @@ pub struct ScanOptions {
   pub workspaces_enabled: bool,
 }
 
-pub fn scan_workspace(options: &ScanOptions) -> Vec<PathBuf> {
+pub fn scan_workspace(options: &ScanOptions) -> HashSet<PathBuf> {
   let dir = PathBuf::from(&options.repo_path);
 
   let repo_paths = if !options.workspaces_enabled {
@@ -38,7 +39,7 @@ pub fn scan_workspace(options: &ScanOptions) -> Vec<PathBuf> {
   if !repo_paths.is_empty() {
     STORE.set_repo_paths(repo_paths);
   }
-
+  
   result
 }
 

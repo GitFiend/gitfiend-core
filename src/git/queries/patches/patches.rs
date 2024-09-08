@@ -93,7 +93,7 @@ pub fn load_patches(
 
 fn load_normal_patches(
   repo_path: &str,
-  commits_without_patches: &Vec<&Commit>,
+  commits_without_patches: &[&Commit],
   num_commits: u32,
 ) -> R<HashMap<String, Vec<Patch>>> {
   if commits_without_patches.len() > 20 {

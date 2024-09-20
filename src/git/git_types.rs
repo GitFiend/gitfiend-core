@@ -4,8 +4,8 @@ use ts_rs::TS;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct DateResult {
-  pub ms: f32,
-  pub adjustment: i32,
+  pub ms: i64,
+  pub adjustment: i64,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, TS)]
@@ -74,7 +74,7 @@ pub struct RefInfo {
   pub ref_type: RefType,
   pub head: bool,
   pub commit_id: String,
-  pub time: f32,
+  pub time: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

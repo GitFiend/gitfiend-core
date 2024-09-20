@@ -24,6 +24,7 @@ mod tests {
     );
 
     assert!(res.is_some());
+    assert_eq!(res.unwrap().date.ms, 1648863350000)
   }
 
   #[test]

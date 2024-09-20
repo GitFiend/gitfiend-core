@@ -29,7 +29,7 @@ const P_DATE: Parser<DateResult> = map!(and!(UNSIGNED_INT, WS, SIGNED_INT), |res
   String
 )| {
   DateResult {
-    ms: res.0.parse::<f32>().unwrap() * 1000.0,
+    ms: res.0.parse::<i64>().unwrap() * 1000,
     adjustment: res.2.parse().unwrap(),
   }
 });

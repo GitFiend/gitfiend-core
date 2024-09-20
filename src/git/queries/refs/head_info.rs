@@ -87,8 +87,8 @@ fn calc_head_info_from_commits(
       let mut remote_commit: Option<&Commit> = None;
       let commit = commit_map.get(&info.commit_id)?;
 
-      if let Some(sibling_id) = &info.sibling_id {
-        remote_ref = all_refs.get(sibling_id);
+      if !info.sibling_id.is_empty() {
+        remote_ref = all_refs.get(&info.sibling_id);
         if let Some(remote_ref) = remote_ref {
           remote_commit = commit_map.get(&remote_ref.commit_id);
         } else {
@@ -156,8 +156,8 @@ pub fn calc_remote_fallback(
     .iter_mut()
     .find(|r| r.short_name == head_ref.short_name && r.location == RefLocation::Remote)
   {
-    head_ref.sibling_id = Some(remote_ref.id.to_string());
-    remote_ref.sibling_id = Some(head_ref.id.to_string());
+    head_ref.sibling_id = remote_ref.id.to_string();
+    remote_ref.sibling_id = head_ref.id.to_string();
 
     let remote_ref = remote_ref.clone();
 

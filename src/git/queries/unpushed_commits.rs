@@ -150,8 +150,8 @@ fn get_head_ref(refs: &[RefInfo]) -> Option<&RefInfo> {
 }
 
 fn find_sibling_ref<'a>(ri: &RefInfo, refs: &'a [RefInfo]) -> Option<&'a RefInfo> {
-  if let Some(sibling_id) = &ri.sibling_id {
-    return refs.iter().find(|r| &r.id == sibling_id);
+  if !ri.sibling_id.is_empty() {
+    return refs.iter().find(|r| r.id == ri.sibling_id);
   }
   None
 }

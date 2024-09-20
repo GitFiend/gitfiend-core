@@ -70,7 +70,7 @@ pub struct RefInfo {
   pub full_name: String,
   pub short_name: String,
   pub remote_name: Option<String>,
-  pub sibling_id: Option<String>,
+  pub sibling_id: String,
   pub ref_type: RefType,
   pub head: bool,
   pub commit_id: String,

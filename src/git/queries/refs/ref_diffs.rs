@@ -171,8 +171,8 @@ fn get_sibling(
     ..
   } = ref_info;
 
-  if let Some(id) = sibling_id {
-    if let Some(sibling) = refs.get(id) {
+  if !sibling_id.is_empty() {
+    if let Some(sibling) = refs.get(sibling_id) {
       let remote = config.get_remote_for_branch(short_name);
 
       if let Some(name) = &sibling.remote_name {

@@ -2,4 +2,4 @@
 import type { RefLocation } from "./RefLocation";
 import type { RefType } from "./RefType";
 
-export type RefInfo = { id: string, location: RefLocation, fullName: string, shortName: string, remoteName: string | null, siblingId: string | null, refType: RefType, head: boolean, commitId: string, time: number, };
+export type RefInfo = { id: string, location: RefLocation, fullName: string, shortName: string, remoteName: string | null, siblingId: string, refType: RefType, head: boolean, commitId: string, time: number, };

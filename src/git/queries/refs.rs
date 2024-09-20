@@ -25,7 +25,7 @@ pub const P_REF_NAME: Parser<RefInfoPart> = map!(REF_NAME_PARSER, |result: Strin
     short_name: get_short_name(&parts),
     full_name: cleaned.to_owned(),
     remote_name: get_remote_name(&parts),
-    sibling_id: None,
+    sibling_id: String::new(),
     head: false,
   }
 });
@@ -194,23 +194,23 @@ pub fn finish_properties_on_refs(
 //     .collect()
 // }
 
-fn get_sibling_id_for_ref(ri: &RefInfo, refs: &[RefInfo]) -> Option<String> {
+fn get_sibling_id_for_ref(ri: &RefInfo, refs: &[RefInfo]) -> String {
   if ri.location == RefLocation::Remote {
     if let Some(local) = refs
       .iter()
       .find(|i| i.location == RefLocation::Local && i.short_name == ri.short_name)
     {
-      return Some(local.id.clone());
+      return local.id.clone();
     }
   } else if let Some(remote) = refs.iter().find(|i| {
     i.location == RefLocation::Remote
       && i.short_name == ri.short_name
       && i.remote_name == ri.remote_name
   }) {
-    return Some(remote.id.clone());
+    return remote.id.clone();
   }
 
-  None
+  String::new()
 }
 
 pub struct RefInfoPart {
@@ -219,7 +219,7 @@ pub struct RefInfoPart {
   pub full_name: String,
   pub short_name: String,
   pub remote_name: Option<String>,
-  pub sibling_id: Option<String>,
+  pub sibling_id: String,
   pub ref_type: RefType,
   pub head: bool,
 }

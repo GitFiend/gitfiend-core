@@ -4,8 +4,8 @@ use ts_rs::TS;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct DateResult {
-  pub ms: i64,
-  pub adjustment: i64,
+  pub ms: usize,
+  pub adjustment: usize,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, TS)]
@@ -35,7 +35,7 @@ pub struct CommitInfo {
   pub parent_ids: Vec<String>,
   pub is_merge: bool,
   pub message: String,
-  pub stash_id: Option<String>,
+  pub stash_id: String,
   pub refs: Vec<RefInfo>,
 
   pub filtered: bool,
@@ -54,7 +54,7 @@ pub struct Commit {
   pub parent_ids: Vec<String>,
   pub is_merge: bool,
   pub message: String,
-  pub stash_id: Option<String>,
+  pub stash_id: String,
   pub refs: Vec<String>,
 
   pub filtered: bool,
@@ -74,7 +74,7 @@ pub struct RefInfo {
   pub ref_type: RefType,
   pub head: bool,
   pub commit_id: String,
-  pub time: i64,
+  pub time: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

@@ -27,7 +27,7 @@ pub fn load_stashes(repo_path: &PathString) -> R<Vec<CommitInfo>> {
   let mut commits = parse_all_err(P_COMMITS, out.as_str())?;
 
   for (i, c) in commits.iter_mut().enumerate() {
-    c.stash_id = Some(format!("refs/stash@{{{}}}", i));
+    c.stash_id = format!("refs/stash@{{{}}}", i);
     c.is_merge = false;
     c.refs.clear();
 

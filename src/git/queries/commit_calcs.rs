@@ -1,5 +1,4 @@
 use ahash::{AHashMap, AHashSet};
-
 use crate::git::git_types::Commit;
 use crate::git::run_git::{run_git_err, RunGitOptions};
 use crate::git::store::REF_DIFFS;
@@ -56,7 +55,7 @@ fn find_commit_descendants_inner(
 
   loop {
     let c = &commits[i];
-    if c.stash_id.is_none() && c.parent_ids.contains(&commit.id) {
+    if c.stash_id.is_empty() && c.parent_ids.contains(&commit.id) {
       descendants.push(c.id.clone());
       find_commit_descendants_inner(c, commits, descendants);
       break;

@@ -105,7 +105,7 @@ fn get_all_commits_with_branch_name<'a>(
 
   // We include any stashes that have one of our commits as a parent.
   for (id, c) in commits {
-    if c.stash_id.is_some()
+    if !c.stash_id.is_empty()
       && c
         .parent_ids
         .iter()

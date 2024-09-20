@@ -95,7 +95,7 @@ fn get_remote_name(parts: &[&str]) -> Option<String> {
   }
 }
 
-pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: i64) -> RefInfo {
+pub fn make_ref_info(info: RefInfoPart, commit_id: String, time: usize) -> RefInfo {
   let RefInfoPart {
     id,
     location,

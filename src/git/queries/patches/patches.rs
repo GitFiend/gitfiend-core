@@ -26,7 +26,7 @@ pub fn load_patches(
     for c in commits.iter() {
       if let Some(patch) = patches.get(&c.id) {
         new_patches.insert(c.id.clone(), patch.clone());
-      } else if c.stash_id.is_none() && !c.is_merge {
+      } else if c.stash_id.is_empty() && !c.is_merge {
         commits_without_patches.push(c);
       } else {
         stashes_or_merges_without_patches.push(c);
@@ -35,7 +35,7 @@ pub fn load_patches(
   } else {
     // No existing patch cache.
     for c in commits {
-      if c.stash_id.is_none() && !c.is_merge {
+      if c.stash_id.is_empty() && !c.is_merge {
         commits_without_patches.push(c);
       } else {
         stashes_or_merges_without_patches.push(c);
@@ -172,11 +172,11 @@ fn load_patches_for_commit(repo_path: &str, commit: &Commit) -> R<(String, Vec<P
       ],
     }),
     Commit {
-      stash_id: Some(_),
+      stash_id,
       parent_ids,
       id,
       ..
-    } => run_git_err(RunGitOptions {
+    } if !stash_id.is_empty() => run_git_err(RunGitOptions {
       repo_path,
       args: [
         diff,

@@ -146,7 +146,7 @@ fn load_commits_unfiltered(
     }
 
     commits.sort_by(|a, b| {
-      if b.stash_id.is_some() || a.stash_id.is_some() {
+      if !b.stash_id.is_empty() || !a.stash_id.is_empty() {
         b.date.ms.partial_cmp(&a.date.ms).unwrap_or(Ordering::Equal)
       } else {
         Ordering::Equal

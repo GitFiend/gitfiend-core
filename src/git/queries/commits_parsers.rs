@@ -29,7 +29,7 @@ const P_DATE: Parser<DateResult> = map!(and!(UNSIGNED_INT, WS, SIGNED_INT), |res
   String
 )| {
   DateResult {
-    ms: res.0.parse::<i64>().unwrap() * 1000,
+    ms: res.0.parse::<usize>().unwrap() * 1000,
     adjustment: res.2.parse().unwrap(),
   }
 });
@@ -91,7 +91,7 @@ pub const P_COMMIT_ROW: Parser<CommitInfo> = map!(
       parent_ids: result.8,
       is_merge: num_parents > 1,
       message: result.10,
-      stash_id: None,
+      stash_id: String::new(),
       refs,
       filtered: false,
       num_skipped: 0,

@@ -15,7 +15,7 @@ pub fn load_stashes(repo_path: &PathString) -> R<Vec<CommitInfo>> {
       "reflog",
       "show",
       "stash",
-      "-z",
+      // "-z",
       "--decorate=full",
       PRETTY_FORMATTED,
       "--date=raw",

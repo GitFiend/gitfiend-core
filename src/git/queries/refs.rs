@@ -195,15 +195,21 @@ pub fn finish_properties_on_refs(
 // }
 
 fn get_sibling_id_for_ref(ri: &RefInfo, refs: &[RefInfo]) -> String {
+  if ri.ref_type == RefType::Tag {
+    return String::new();
+  }
+
   if ri.location == RefLocation::Remote {
-    if let Some(local) = refs
-      .iter()
-      .find(|i| i.location == RefLocation::Local && i.short_name == ri.short_name)
-    {
+    if let Some(local) = refs.iter().find(|i| {
+      i.ref_type == RefType::Branch
+        && i.location == RefLocation::Local
+        && i.short_name == ri.short_name
+    }) {
       return local.id.clone();
     }
   } else if let Some(remote) = refs.iter().find(|i| {
-    i.location == RefLocation::Remote
+    i.ref_type == RefType::Branch
+      && i.location == RefLocation::Remote
       && i.short_name == ri.short_name
       && i.remote_name == ri.remote_name
   }) {

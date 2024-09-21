@@ -121,7 +121,7 @@ fn poll_diff_search_inner(options: &PollSearchOpts) -> Option<PollSearchResult> 
 // last result yet.
 pub fn clear_completed_searches() {
   if let Ok(mut searches) = DIFF_SEARCHES.data.write() {
-    (*searches) = (*searches)
+    *searches = (*searches)
       .clone()
       .into_iter()
       .filter(|search| !search.1.completed)

@@ -64,6 +64,29 @@ pub struct Refs {
   pub others: HashSet<String>,
 }
 
+fn read_local_refs2(
+  current_path: &PathBuf,
+  start_path: &PathRef,
+  branch_name: &str,
+  refs_result: &mut Refs,
+) -> R<()> {
+  for item in read_dir(current_path)? {
+    let path = item?.path();
+    
+    if path.is_dir() {
+      return read_local_refs2(&path, start_path, branch_name, refs_result);
+    }
+    
+    let file_name = path.file_name().unwrap().to_str().unwrap();
+    if !file_name.starts_with(".") && file_name != "HEAD" {
+      //
+    }
+   
+  }
+
+  Ok(())
+}
+
 fn read_local_refs(
   current_path: &PathBuf,
   start_path: &PathBuf,

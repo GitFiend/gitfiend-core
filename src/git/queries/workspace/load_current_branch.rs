@@ -42,12 +42,14 @@ pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
   let heads_dir = path.join("heads");
 
   read_local_refs(&heads_dir, &heads_dir, branch_name, &mut refs)?;
-  
+
   let mut refs2 = Refs {
-    local_id: None, remote_id: None, others: HashSet::new()
+    local_id: None,
+    remote_id: None,
+    others: HashSet::new(),
   };
   read_local_refs2(&heads_dir, &heads_dir, branch_name, &mut refs2)?;
-  
+
   println!("local refs match: {}", refs == refs2);
 
   let remotes_dir = path.join("remotes");
@@ -57,7 +59,14 @@ pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
     for item in remotes {
       let p = item?.path();
       let _ = read_remote_refs(&p, &p, branch_name, &mut refs);
+      let _ = read_remote_refs2(&p, &p, branch_name, &mut refs2);
     }
+  }
+
+  if refs == refs2 {
+    println!("ALL REFS MATCH")
+  } else {
+    println!("{:?}, {:?}", refs, refs2);
   }
 
   Ok(refs)
@@ -82,7 +91,7 @@ fn read_local_refs2(
     if path.is_dir() {
       return read_local_refs2(&path, start_path, branch_name, refs_result);
     }
-    
+
     let file_name = path.file_name().unwrap().to_str().unwrap();
     if !file_name.starts_with(".") && file_name != "HEAD" {
       let found_ref = get_ref_name_from_path(&path, start_path);
@@ -105,6 +114,42 @@ fn get_ref_name_from_path(file: &Path, start_dir: &PathBuf) -> String {
     .filter_map(|p| p.to_str())
     .collect::<Vec<&str>>()
     .join("/")
+}
+
+fn read_remote_refs2(
+  current_dir: &PathBuf,
+  start_dir: &PathBuf,
+  branch_name: &str,
+  refs: &mut Refs,
+) -> R<()> {
+  for item in read_dir(current_dir)? {
+    let p = item?.path();
+
+    if p.is_dir() {
+      return read_remote_refs2(&p, start_dir, branch_name, refs);
+    }
+
+    let file_name = p.file_name().unwrap().to_str().unwrap();
+    if file_name.starts_with('.') {
+      continue;
+    }
+    if file_name == "HEAD" {
+      let head_branch_full_name = read_head_file(&p)?;
+
+      if head_branch_full_name.ends_with(branch_name) {
+        refs.remote_id = refs.local_id.clone();
+      }
+    } else {
+      let found = get_ref_name_from_path(&p, start_dir);
+      if found == branch_name {
+        refs.remote_id = read_id_from_ref_file(&p).ok();
+      } else {
+        refs.others.insert(found);
+      }
+    }
+  }
+
+  Ok(())
 }
 
 fn read_local_refs(
@@ -228,9 +273,9 @@ mod tests {
   fn test_get_ref_name() {
     let start: PathBuf = ["aa", "bb"].iter().collect();
     let ref_parts: PathBuf = ["aa", "bb", "cc", "dd"].iter().collect();
-    
+
     let res = get_ref_name_from_path(&ref_parts, &start);
-    
+
     assert_eq!(res, "cc/dd")
   }
 }

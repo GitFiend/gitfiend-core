@@ -43,15 +43,6 @@ pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
 
   read_local_refs(&heads_dir, &heads_dir, branch_name, &mut refs)?;
 
-  let mut refs2 = Refs {
-    local_id: None,
-    remote_id: None,
-    others: HashSet::new(),
-  };
-  read_local_refs2(&heads_dir, &heads_dir, branch_name, &mut refs2)?;
-
-  println!("local refs match: {}", refs == refs2);
-
   let remotes_dir = path.join("remotes");
 
   // Sometimes remotes folder doesn't exist.
@@ -59,14 +50,7 @@ pub fn read_refs(repo_path: &str, branch_name: &str) -> R<Refs> {
     for item in remotes {
       let p = item?.path();
       let _ = read_remote_refs(&p, &p, branch_name, &mut refs);
-      let _ = read_remote_refs2(&p, &p, branch_name, &mut refs2);
     }
-  }
-
-  if refs == refs2 {
-    println!("ALL REFS MATCH")
-  } else {
-    println!("{:?}, {:?}", refs, refs2);
   }
 
   Ok(refs)
@@ -79,7 +63,7 @@ pub struct Refs {
   pub others: HashSet<String>,
 }
 
-fn read_local_refs2(
+fn read_local_refs(
   current_path: &PathBuf,
   start_path: &PathBuf,
   branch_name: &str,
@@ -89,7 +73,7 @@ fn read_local_refs2(
     let path = item?.path();
 
     if path.is_dir() {
-      return read_local_refs2(&path, start_path, branch_name, refs_result);
+      return read_local_refs(&path, start_path, branch_name, refs_result);
     }
 
     let file_name = path.file_name().unwrap().to_str().unwrap();
@@ -116,7 +100,7 @@ fn get_ref_name_from_path(file: &Path, start_dir: &PathBuf) -> String {
     .join("/")
 }
 
-fn read_remote_refs2(
+fn read_remote_refs(
   current_dir: &PathBuf,
   start_dir: &PathBuf,
   branch_name: &str,
@@ -126,7 +110,7 @@ fn read_remote_refs2(
     let p = item?.path();
 
     if p.is_dir() {
-      return read_remote_refs2(&p, start_dir, branch_name, refs);
+      return read_remote_refs(&p, start_dir, branch_name, refs);
     }
 
     let file_name = p.file_name().unwrap().to_str().unwrap();
@@ -150,101 +134,6 @@ fn read_remote_refs2(
   }
 
   Ok(())
-}
-
-fn read_local_refs(
-  current_path: &PathBuf,
-  start_path: &PathBuf,
-  branch_name: &str,
-  refs_result: &mut Refs,
-) -> R<()> {
-  for item in read_dir(current_path)? {
-    let path = item?.path();
-
-    match read_ref_path(&path, start_path) {
-      PathRef::Dir => read_local_refs(&path, start_path, branch_name, refs_result)?,
-      PathRef::Ref(name) => {
-        if name == branch_name {
-          refs_result.local_id = Some(read_to_string(path)?.trim().to_string());
-        } else {
-          refs_result.others.insert(name);
-        }
-      }
-      PathRef::Hidden | PathRef::Head | PathRef::Unknown => {}
-    }
-  }
-
-  Ok(())
-}
-
-fn read_remote_refs(
-  current_path: &PathBuf,
-  start_path: &PathBuf,
-  branch_name: &str,
-  refs_result: &mut Refs,
-) -> R<()> {
-  for item in read_dir(current_path)? {
-    let path = item?.path();
-
-    match read_ref_path(&path, start_path) {
-      PathRef::Dir => read_remote_refs(&path, start_path, branch_name, refs_result)?,
-      PathRef::Ref(name) => {
-        if name == branch_name {
-          refs_result.remote_id = Some(read_to_string(path)?.trim().to_string());
-        } else {
-          refs_result.others.insert(name);
-        }
-      }
-      PathRef::Head => {
-        if read_head_file(&path)?.ends_with(branch_name) {
-          refs_result.remote_id = refs_result.local_id.clone();
-        }
-      }
-      PathRef::Hidden | PathRef::Unknown => {}
-    }
-  }
-
-  Ok(())
-}
-
-enum PathRef {
-  Dir,
-  Hidden,
-  Head,
-  Ref(String),
-  Unknown,
-}
-
-fn read_ref_path(path: &Path, root_path: &PathBuf) -> PathRef {
-  if path.is_dir() {
-    PathRef::Dir
-  } else if path.is_file() {
-    path
-      .file_name()
-      .and_then(|name| name.to_str())
-      .map(|name| {
-        if name.starts_with('.') {
-          PathRef::Hidden
-        } else if name == "HEAD" {
-          PathRef::Head
-        } else {
-          if let Ok(ref_path) = path.strip_prefix(root_path) {
-            return PathRef::Ref(
-              ref_path
-                .components()
-                .map(|component| component.as_os_str().to_string_lossy().into_owned())
-                .collect::<Vec<String>>()
-                .join("/"),
-            );
-          }
-
-          PathRef::Unknown
-        }
-      })
-      .unwrap_or(PathRef::Unknown)
-  } else {
-    PathRef::Unknown
-  }
 }
 
 // E.g. "ref: refs/remotes/origin/develop"

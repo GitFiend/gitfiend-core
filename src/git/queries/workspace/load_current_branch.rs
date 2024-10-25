@@ -73,7 +73,7 @@ fn read_local_refs(
     let path = item?.path();
 
     if path.is_dir() {
-      return read_local_refs(&path, start_path, branch_name, refs_result);
+      read_local_refs(&path, start_path, branch_name, refs_result)?;
     }
 
     let file_name = path.file_name().unwrap().to_str().unwrap();
@@ -110,7 +110,7 @@ fn read_remote_refs(
     let p = item?.path();
 
     if p.is_dir() {
-      return read_remote_refs(&p, start_dir, branch_name, refs);
+      read_remote_refs(&p, start_dir, branch_name, refs)?;
     }
 
     let file_name = p.file_name().unwrap().to_str().unwrap();

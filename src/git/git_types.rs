@@ -5,7 +5,7 @@ use ts_rs::TS;
 #[ts(export)]
 pub struct DateResult {
   pub ms: usize,
-  pub adjustment: usize,
+  pub adjustment: i32,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, TS)]

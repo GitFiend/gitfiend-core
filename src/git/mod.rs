@@ -6,7 +6,6 @@ pub(crate) mod git_types;
 pub(crate) mod git_types_extra_impl;
 pub(crate) mod git_version;
 pub(crate) mod queries;
-pub(crate) mod repo_watcher;
 pub(crate) mod run_git;
 pub(crate) mod run_git_action;
 pub(crate) mod store;

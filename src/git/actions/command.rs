@@ -1,4 +1,3 @@
-use crate::git::repo_watcher::mark_changed;
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -13,8 +12,6 @@ pub struct CommandOptions {
 }
 
 pub fn command(options: &CommandOptions) -> u32 {
-  mark_changed(&options.repo_path);
-
   run_git_action(RunGitActionOptions {
     repo_path: &options.repo_path,
     commands: [options

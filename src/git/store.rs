@@ -3,7 +3,6 @@ use crate::git::git_version::GitVersion;
 use crate::git::queries::config::GitConfig;
 use crate::git::queries::patches::cache::clear_patch_cache;
 use crate::git::queries::search::search_request::clear_completed_searches;
-use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::{ES, R};
 use crate::util::global::{Glo, Global};
@@ -55,10 +54,6 @@ impl Store {
     if let Ok(mut cr) = COMMITS_AND_REFS.write() {
       (*cr).insert(repo_path.to_string(), (commits.to_owned(), refs.to_owned()));
     }
-
-    clear_repo_changed_status(&ReqOptions {
-      repo_path: repo_path.to_string(),
-    });
   }
 
   pub fn get_commits_and_refs(&self, repo_path: &PathString) -> Option<CommitsAndRefs> {

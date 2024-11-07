@@ -8,6 +8,7 @@ use std::fs::{read_dir, read_to_string};
 use std::path::{Path, PathBuf};
 use ahash::HashSet;
 use ts_rs::TS;
+use crate::dprintln;
 
 const MAX_SCAN_DEPTH: u8 = 5;
 const MAX_DIR_SIZE: usize = 50;
@@ -31,7 +32,7 @@ pub fn scan_workspace(options: &ScanOptions) -> HashSet<PathBuf> {
     repo_paths
   };
 
-  println!("repo_paths: {:?}", repo_paths);
+  dprintln!("repo_paths: {:?}", repo_paths);
 
   let result = repo_paths.iter().map(|r| r.path.clone()).collect();
 

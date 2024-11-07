@@ -6,7 +6,6 @@ use crate::git::queries::workspace::load_current_branch::{
   load_current_branch, read_refs, Refs,
 };
 use crate::git::queries::workspace::load_packed_refs::{load_packed_refs, PackedRef};
-use crate::git::repo_watcher::clear_repo_changed_status;
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
 use serde::Serialize;
@@ -88,8 +87,6 @@ pub fn load_repo_status(options: &ReqOptions) -> R<RepoStatus> {
       let remote_behind =
         count_commits_between_fallback(repo_path, &remote_id, &local_id);
 
-      clear_repo_changed_status(options);
-
       return Ok(RepoStatus {
         patches,
         config,
@@ -117,8 +114,6 @@ pub fn load_repo_status(options: &ReqOptions) -> R<RepoStatus> {
     (false, true) => BranchState::Remote,
     (false, false) => BranchState::Local,
   };
-
-  clear_repo_changed_status(options);
 
   Ok(RepoStatus {
     patches,

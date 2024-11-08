@@ -117,7 +117,7 @@ fn poll_diff_search_inner(options: &PollSearchOpts) -> Option<PollSearchResult> 
   None
 }
 
-// Be careful with this as all searches my be completed but client has polled and gotten the
+// Be careful with this as all searches may be completed before client has polled and gotten the
 // last result yet.
 pub fn clear_completed_searches() {
   if let Ok(mut searches) = DIFF_SEARCHES.data.write() {

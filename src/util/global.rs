@@ -28,7 +28,7 @@ pub type Glo<T> = Lazy<RwLock<T>>;
 impl<T: Clone> Global<T> {
   pub fn set(&self, new_data: T) {
     if let Ok(mut data) = self.data.write() {
-      (*data) = new_data;
+      *data = new_data;
     }
   }
 

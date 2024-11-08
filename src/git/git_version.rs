@@ -77,7 +77,7 @@ const P_VERSION: Parser<Option<GitVersion>> =
 
     Some(GitVersion {
       major: nums
-        .get(0)
+        .first()
         .unwrap_or(&String::from(""))
         .parse()
         .unwrap_or(0),

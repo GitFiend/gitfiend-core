@@ -1,8 +1,8 @@
 use crate::git::git_settings::set_git_env;
 use crate::git::git_version::load_git_version;
-use crate::server::requests::start_async_server;
 use eframe::egui;
-use std::thread;
+use eframe::egui::ComboBox;
+use eframe::egui::{Style, Visuals};
 
 mod config;
 pub(crate) mod git;
@@ -14,10 +14,7 @@ mod util;
 fn main() -> eframe::Result {
   set_git_env();
   load_git_version();
-
-  thread::spawn(|| {
-    start_async_server();
-  });
+  // start_async_server();
 
   start_gui()
 }
@@ -29,12 +26,14 @@ fn start_gui() -> eframe::Result {
   };
 
   eframe::run_native(
-    "My egui App",
+    "GitFiend2",
     options,
     Box::new(|cc| {
-      // This gives us image support:
       egui_extras::install_image_loaders(&cc.egui_ctx);
-
+      cc.egui_ctx.set_style(Style {
+        visuals: Visuals::light(),
+        ..Style::default()
+      });
       Ok(Box::<MyApp>::default())
     }),
   )
@@ -43,6 +42,8 @@ fn start_gui() -> eframe::Result {
 struct MyApp {
   name: String,
   age: u32,
+  repos: Vec<String>,
+  selected: usize,
 }
 
 impl Default for MyApp {
@@ -50,6 +51,12 @@ impl Default for MyApp {
     Self {
       name: "Arthur".to_owned(),
       age: 42,
+      repos: vec![
+        String::from("gitfiend-core"),
+        String::from("egui"),
+        String::from("cottontail-js"),
+      ],
+      selected: 0,
     }
   }
 }
@@ -57,12 +64,32 @@ impl Default for MyApp {
 impl eframe::App for MyApp {
   fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
     egui::CentralPanel::default().show(ctx, |ui| {
-      ui.heading("My egui Application");
+      ComboBox::from_id_salt("repo-selector")
+        .selected_text(self.repos[self.selected].to_string())
+        .show_ui(ui, |ui| {
+          for i in 0..self.repos.len() {
+            let value = ui.selectable_value(
+              &mut &self.repos[i],
+              &self.repos[self.selected],
+              &self.repos[i],
+            );
+            if value.clicked() {
+              self.selected = i;
+            }
+          }
+        });
+      ui.horizontal(|ui| {
+        // ui
+        let _ = ui.button("Repo");
+        let _ = ui.button("Branch");
+      });
+
       ui.horizontal(|ui| {
         let name_label = ui.label("Your name: ");
         ui.text_edit_singleline(&mut self.name)
           .labelled_by(name_label.id);
       });
+
       ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
       if ui.button("Increment").clicked() {
         self.age += 1;

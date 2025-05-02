@@ -21,6 +21,7 @@ syntect = "5.2.0"
 chardetng = "0.1.17"
 encoding_rs = "0.8.35"
 fix-path-env = {git = "https://github.com/tauri-apps/fix-path-env-rs"}
+iced = "0.13.1"
 
 [profile.dev]
 #opt-level = 1

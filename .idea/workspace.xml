@@ -12,13 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4a193a2b-c64e-4341-9f38-96485e8cdaa0" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.cargo/config.toml" beforeDir="false" afterPath="$PROJECT_DIR$/.cargo/config.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/git/actions/credentials.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/git/actions/credentials.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/git/git_settings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/git/git_settings.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/git/store.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/git/store.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -34,6 +28,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$USER_HOME$/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/iced-0.13.1/src/lib.rs" root0="SKIP_INSPECTION" />
     <setting file="file://$USER_HOME$/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/iced_widget-0.13.4/src/helpers.rs" root0="SKIP_INSPECTION" />
   </component>
   <component name="MacroExpansionManager">
@@ -123,7 +118,7 @@
       <workItem from="1746161126898" duration="146000" />
       <workItem from="1746161278697" duration="44000" />
       <workItem from="1746161328161" duration="1387000" />
-      <workItem from="1746162748033" duration="1022000" />
+      <workItem from="1746162748033" duration="4074000" />
     </task>
     <servers />
   </component>

@@ -2,6 +2,7 @@ use std::env;
 use std::path::PathBuf;
 
 use crate::dprintln;
+use crate::git::git_settings::set_env_var;
 use crate::server::request_util::{ES, R};
 use serde::Deserialize;
 use ts_rs::TS;
@@ -14,13 +15,13 @@ pub struct Credentials {
 }
 
 pub fn set_credentials(credentials: &Credentials) -> R<()> {
-  env::set_var("GITFIEND_USERNAME", &credentials.username);
-  env::set_var("GITFIEND_PASSWORD", &credentials.password);
+  set_env_var("GITFIEND_USERNAME", &credentials.username);
+  set_env_var("GITFIEND_PASSWORD", &credentials.password);
 
   let path = get_ask_pass_path()?;
   dprintln!("Setting GIT_ASKPASS to {:?}", path.to_str());
 
-  env::set_var(
+  set_env_var(
     "GIT_ASKPASS",
     path
       .to_str()

@@ -1,3 +1,4 @@
+use crate::git::git_settings::set_env_var;
 use crate::git::git_types::{Commit, Patch, RefInfo};
 use crate::git::git_version::GitVersion;
 use crate::git::queries::config::GitConfig;
@@ -148,5 +149,5 @@ pub fn clear_all_caches(_: &ReqOptions) {
 pub fn override_git_home(options: &ReqOptions) {
   dprintln!("HOME before override: {:?}", env::var("HOME"));
 
-  env::set_var("HOME", &options.repo_path);
+  set_env_var("HOME", &options.repo_path);
 }

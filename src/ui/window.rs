@@ -8,6 +8,7 @@ struct App {
 #[derive(Debug, Clone, Copy)]
 enum Message {
   IncrementCount,
+  Add(i32),
   DecrementCount,
 }
 
@@ -19,6 +20,7 @@ impl App {
   fn update(&mut self, message: Message) -> iced::Task<Message> {
     // handle emitted messages
     match message {
+      Message::Add(n) => self.count += n,
       Message::IncrementCount => self.count += 1,
       Message::DecrementCount => self.count -= 1,
     }
@@ -31,9 +33,10 @@ impl App {
       Space::with_width(100),
       text(self.count.to_string()),
       Space::with_width(100),
-      button("+").on_press(Message::IncrementCount)
+      button("+").on_press(Message::IncrementCount),
+      button("add 2").on_press(Message::Add(2))
     ];
-    row.into()
+    row.padding(10).into()
   }
 }
 

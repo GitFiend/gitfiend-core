@@ -1,35 +1,44 @@
-use iced::widget::{button, column, row, text};
-use iced::{Element, Theme};
+use iced::Theme;
+use iced::widget::{Space, button, row, text};
 
-#[derive(Debug, Clone)]
-enum Message {
-  Increment,
+struct App {
+  count: i32,
 }
 
-#[derive(Default)]
-struct State {
-  pub counter: u64,
+#[derive(Debug, Clone, Copy)]
+enum Message {
+  IncrementCount,
+  DecrementCount,
+}
+
+impl App {
+  fn new() -> Self {
+    Self { count: 0 }
+  }
+
+  fn update(&mut self, message: Message) -> iced::Task<Message> {
+    // handle emitted messages
+    match message {
+      Message::IncrementCount => self.count += 1,
+      Message::DecrementCount => self.count -= 1,
+    }
+    iced::Task::none()
+  }
+
+  fn view(&self) -> iced::Element<'_, Message> {
+    let row = row![
+      button("-").on_press(Message::DecrementCount),
+      Space::with_width(100),
+      text(self.count.to_string()),
+      Space::with_width(100),
+      button("+").on_press(Message::IncrementCount)
+    ];
+    row.into()
+  }
 }
 
 pub fn make_application_window() -> iced::Result {
-  iced::application("GitFiend", update, view)
+  iced::application("GitFiend", App::update, App::view)
     .theme(|_| Theme::Dark)
-    .centered()
-    .run()
-}
-
-fn view(state: &State) -> Element<Message> {
-  column! {
-    row! {
-      button(text("Hello2")).on_press(Message::Increment),
-      button(text(state.counter)).on_press(Message::Increment)
-    }
-  }
-  .into()
-}
-
-fn update(state: &mut State, message: Message) {
-  match message {
-    Message::Increment => state.counter += 1,
-  }
+    .run_with(|| (App::new(), iced::Task::none()))
 }

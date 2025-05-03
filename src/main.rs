@@ -1,8 +1,7 @@
 use crate::git::git_settings::set_git_env;
 use crate::git::git_version::load_git_version;
 use crate::server::requests::start_async_server;
-use iced::widget::{button, column, row, text};
-use iced::{Application, Element, Theme};
+use crate::ui::window::make_application_window;
 use std::thread;
 
 mod config;
@@ -10,6 +9,7 @@ pub mod git;
 mod index;
 mod parser;
 mod server;
+mod ui;
 mod util;
 
 fn main() -> iced::Result {
@@ -24,34 +24,5 @@ fn main() -> iced::Result {
     }
   });
 
-  println!("{:?}", Theme::default());
-
-  iced::application("GitFiend", update, view).theme(|_| Theme::Dark).centered().run()
-  // iced::run("GitFiend", update, view)
-}
-
-#[derive(Debug, Clone)]
-enum Message {
-  Increment,
-}
-
-#[derive(Default)]
-struct State {
-  pub counter: u64,
-}
-
-fn view(state: &State) -> Element<Message> {
-  column! {
-    row! {
-      button(text("Hello2")).on_press(Message::Increment),
-      button(text(state.counter)).on_press(Message::Increment)
-    }
-  }
-  .into()
-}
-
-fn update(state: &mut State, message: Message) {
-  match message {
-    Message::Increment => state.counter += 1,
-  }
+  make_application_window()
 }

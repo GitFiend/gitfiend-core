@@ -26,7 +26,8 @@ fn main() -> iced::Result {
 
   println!("{:?}", Theme::default());
 
-  iced::run("GitFiend", update, view)
+  iced::application("GitFiend", update, view).theme(|_| Theme::Dark).centered().run()
+  // iced::run("GitFiend", update, view)
 }
 
 #[derive(Debug, Clone)]

@@ -134,6 +134,7 @@ pub fn add_line(
   }
 }
 
+#[cfg(feature = "syntect")]
 fn build_line(parts: Vec<(Style, &str)>, theme: &ThemeColour) -> String {
   let mut line = String::new();
 

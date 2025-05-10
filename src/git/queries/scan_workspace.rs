@@ -1,14 +1,14 @@
+use crate::dprintln;
 use crate::git::queries::config::config_file_parser::{
-  parse_config_file, ConfigFile, ConfigSection, Row,
+  ConfigFile, ConfigSection, Row, parse_config_file,
 };
 use crate::git::store::{RepoPath, STORE};
 use crate::server::request_util::{ES, R};
+use ahash::HashSet;
 use serde::Deserialize;
 use std::fs::{read_dir, read_to_string};
 use std::path::{Path, PathBuf};
-use ahash::HashSet;
 use ts_rs::TS;
-use crate::dprintln;
 
 const MAX_SCAN_DEPTH: u8 = 5;
 const MAX_DIR_SIZE: usize = 50;
@@ -40,7 +40,7 @@ pub fn scan_workspace(options: &ScanOptions) -> HashSet<PathBuf> {
   if !repo_paths.is_empty() {
     STORE.set_repo_paths(repo_paths);
   }
-  
+
   result
 }
 
@@ -149,7 +149,7 @@ fn parse_submodule_git_file(text: &str) -> Option<String> {
 }
 
 fn is_hidden(entry: &Path) -> bool {
-  if let Some(last) = entry.components().last() {
+  if let Some(last) = entry.components().next_back() {
     return last.as_os_str().to_str().unwrap_or("").starts_with('.');
   }
   false

@@ -65,36 +65,36 @@ impl Store {
     None
   }
 
-  fn get_all_commits_and_refs(&self) -> Option<AHashMap<PathString, CommitsAndRefs>> {
-    let cr = COMMITS_AND_REFS.read().ok()?;
-
-    Some((*cr).to_owned())
-  }
-
-  pub fn clear_unwatched_repos_from_commits(
-    &self,
-    watched_repos: &HashMap<String, bool>,
-  ) -> Option<()> {
-    let commits = self
-      .get_all_commits_and_refs()?
-      .into_iter()
-      .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
-      .collect();
-
-    if let Ok(mut cr) = COMMITS_AND_REFS.write() {
-      *cr = commits
-    }
-
-    let configs = CONFIG
-      .get()?
-      .into_iter()
-      .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
-      .collect();
-
-    CONFIG.set(configs);
-
-    Some(())
-  }
+  // fn get_all_commits_and_refs(&self) -> Option<AHashMap<PathString, CommitsAndRefs>> {
+  //   let cr = COMMITS_AND_REFS.read().ok()?;
+  //
+  //   Some((*cr).to_owned())
+  // }
+  //
+  // pub fn clear_unwatched_repos_from_commits(
+  //   &self,
+  //   watched_repos: &HashMap<String, bool>,
+  // ) -> Option<()> {
+  //   let commits = self
+  //     .get_all_commits_and_refs()?
+  //     .into_iter()
+  //     .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
+  //     .collect();
+  //
+  //   if let Ok(mut cr) = COMMITS_AND_REFS.write() {
+  //     *cr = commits
+  //   }
+  //
+  //   let configs = CONFIG
+  //     .get()?
+  //     .into_iter()
+  //     .filter(|(repo_path, _)| watched_repos.contains_key(repo_path))
+  //     .collect();
+  //
+  //   CONFIG.set(configs);
+  //
+  //   Some(())
+  // }
 
   pub fn insert_patches(&self, repo_path: &str, patches: &HashMap<String, Vec<Patch>>) {
     time_block!("insert_patches", {

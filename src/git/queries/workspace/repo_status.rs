@@ -1,11 +1,11 @@
 use crate::git::queries::commit_calcs::count_commits_between_fallback;
-use crate::git::queries::config::load_full_config;
 use crate::git::queries::config::GitConfig;
-use crate::git::queries::wip::wip_patches::{load_wip_patches, WipPatches};
+use crate::git::queries::config::load_full_config;
+use crate::git::queries::wip::wip_patches::{WipPatches, load_wip_patches};
 use crate::git::queries::workspace::load_current_branch::{
-  load_current_branch, read_refs, Refs,
+  Refs, load_current_branch, read_refs,
 };
-use crate::git::queries::workspace::load_packed_refs::{load_packed_refs, PackedRef};
+use crate::git::queries::workspace::load_packed_refs::{PackedRef, load_packed_refs};
 use crate::server::git_request::ReqOptions;
 use crate::server::request_util::R;
 use serde::Serialize;
@@ -16,17 +16,17 @@ use ts_rs::TS;
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct RepoStatus {
-  patches: WipPatches,
-  config: GitConfig,
+  pub patches: WipPatches,
+  pub config: GitConfig,
   // These are just short names. Don't include remote name or whether local.
-  branches: HashSet<String>,
-  branch_name: String,
-  head_ref_id: String,
-  local_commit_id: Option<String>,
-  remote_commit_id: Option<String>,
-  remote_ahead: u32,
-  remote_behind: u32,
-  state: BranchState,
+  pub branches: HashSet<String>,
+  pub branch_name: String,
+  pub head_ref_id: String,
+  pub local_commit_id: Option<String>,
+  pub remote_commit_id: Option<String>,
+  pub remote_ahead: u32,
+  pub remote_behind: u32,
+  pub state: BranchState,
 }
 
 #[derive(Debug, Serialize, TS)]

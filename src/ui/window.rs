@@ -4,7 +4,7 @@ use crate::git::queries::scan_workspace::{ScanOptions, scan_workspace};
 use crate::git::queries::workspace::repo_status::{RepoStatus, load_repo_status};
 use crate::server::git_request::ReqOptions;
 use crate::ui::toolbar::toolbar;
-use iced::widget::{Space, button, row, text};
+use iced::widget::column;
 use iced::{Element, Result, Size, Subscription, Task, Theme, application, window};
 use std::env;
 
@@ -16,10 +16,11 @@ pub struct App {
 }
 
 #[derive(Debug)]
-struct Repo {
-  status: RepoStatus,
-  commits: Vec<Commit>,
-  refs: Vec<RefInfo>,
+pub struct Repo {
+  pub status: RepoStatus,
+  pub commits: Vec<Commit>,
+  pub refs: Vec<RefInfo>,
+  pub repo_path: String,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -46,7 +47,7 @@ impl App {
         repo_path: repo_path.clone(),
       }) {
         if let Ok((commits, refs)) = load_commits_and_refs(&ReqCommitsOptions2 {
-          repo_path,
+          repo_path: repo_path.clone(),
           num_commits: 1000,
           filters: Vec::default(),
           fast: false,
@@ -56,6 +57,7 @@ impl App {
             status,
             commits,
             refs,
+            repo_path,
           });
         }
       }
@@ -86,8 +88,8 @@ impl App {
   }
 
   fn view(&self) -> Element<Message> {
-    let row = row![toolbar(self)];
-    row.height(48).into()
+    let row = column![toolbar(self)];
+    row.into()
   }
 
   fn subscription(&self) -> Subscription<Message> {

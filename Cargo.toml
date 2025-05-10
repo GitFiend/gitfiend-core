@@ -26,7 +26,7 @@ syntect = { version = "5.2.0", optional = true }
 chardetng = "0.1.17"
 encoding_rs = "0.8.35"
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
-iced = { version = "0.13.1" }
+iced = { version = "0.13.1", features = ["svg"] }
 #onig_sys = "69.8.1"
 
 #[patch.crates-io]

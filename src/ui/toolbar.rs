@@ -1,7 +1,11 @@
 use crate::ui::window::{App, Message};
-use iced::widget::{Space, Text, button, column, row, svg};
-use iced::{Element, Length};
+use iced::widget::{Button, Space, Svg, Text, button, column, row, svg};
+use iced::{Alignment, Element, Length};
 use std::path::Path;
+
+const CHANGES_SVG: &[u8] = include_bytes!("../../resources/changes-view.svg");
+const COMMITS_SVG: &[u8] = include_bytes!("../../resources/commits-view.svg");
+const SEARCH_SVG: &[u8] = include_bytes!("../../resources/search.svg");
 
 pub fn toolbar(app: &App) -> Element<Message> {
   let side_width = (app.window_size.width - 180.0) / 2.0;
@@ -15,12 +19,9 @@ pub fn toolbar(app: &App) -> Element<Message> {
     ]
     .width(side_width),
     row![
-      nav_button(
-        include_bytes!("../../resources/changes-view.svg"),
-        "Changes"
-      ),
-      button("Commits"),
-      button("Search")
+      nav_button(CHANGES_SVG, "Changes"),
+      nav_button(COMMITS_SVG, "Commits"),
+      nav_button(SEARCH_SVG, "Search"),
     ]
     .width(180),
     row![
@@ -54,12 +55,19 @@ fn repo_button(app: &App) -> Element<Message> {
   button("Recent...").into()
 }
 
-fn nav_button<'a>(icon: &'a [u8], text: &'a str) -> Element<'a, Message> {
-  let b = include_bytes!("../../resources/changes-view.svg");
+fn nav_button<'a>(icon: &'static [u8], text: &'a str) -> Element<'a, Message> {
+  let icon: Svg = svg(svg::Handle::from_memory(icon)).width(21).height(19);
 
-  let icon = svg(svg::Handle::from_memory(b)).width(21);
-
-  button(column![icon, Text::new(text).size(12)])
-    .width(60)
-    .into()
+  button(
+    row![
+      column![icon, Space::with_height(3), Text::new(text).size(12)]
+        .width(60)
+        .align_x(Alignment::Center),
+    ]
+    .height(48)
+    .align_y(Alignment::Center),
+  )
+  .padding(0)
+  .width(60)
+  .into()
 }

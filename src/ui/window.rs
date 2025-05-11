@@ -10,7 +10,6 @@ use std::env;
 
 #[derive(Default)]
 pub struct App {
-  pub count: i32,
   pub repo: Option<Repo>,
   pub window_size: Size,
 }
@@ -25,9 +24,6 @@ pub struct Repo {
 
 #[derive(Debug, Clone, Copy)]
 pub enum Message {
-  IncrementCount,
-  Add(i32),
-  DecrementCount,
   WindowResized(Size),
 }
 
@@ -68,18 +64,6 @@ impl App {
 
   fn update(&mut self, message: Message) -> Task<Message> {
     match message {
-      Message::Add(n) => {
-        self.count += n;
-        Task::none()
-      }
-      Message::IncrementCount => {
-        self.count += 1;
-        Task::none()
-      }
-      Message::DecrementCount => {
-        self.count -= 1;
-        Task::none()
-      }
       Message::WindowResized(size) => {
         self.window_size = size;
         Task::none()

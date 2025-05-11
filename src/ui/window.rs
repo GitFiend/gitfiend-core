@@ -3,7 +3,7 @@ use crate::git::queries::commits::{ReqCommitsOptions2, load_commits_and_refs};
 use crate::git::queries::scan_workspace::{ScanOptions, scan_workspace};
 use crate::git::queries::workspace::repo_status::{RepoStatus, load_repo_status};
 use crate::server::git_request::ReqOptions;
-use crate::ui::toolbar::toolbar;
+use crate::ui::toolbar::{CurrentView, ToolbarMsg, on_toolbar_message, toolbar};
 use iced::widget::column;
 use iced::{Element, Result, Size, Subscription, Task, Theme, application, window};
 use std::env;
@@ -12,6 +12,7 @@ use std::env;
 pub struct App {
   pub repo: Option<Repo>,
   pub window_size: Size,
+  pub view: CurrentView,
 }
 
 #[derive(Debug)]
@@ -25,6 +26,7 @@ pub struct Repo {
 #[derive(Debug, Clone, Copy)]
 pub enum Message {
   WindowResized(Size),
+  Toolbar(ToolbarMsg),
 }
 
 impl App {
@@ -68,6 +70,7 @@ impl App {
         self.window_size = size;
         Task::none()
       }
+      Message::Toolbar(toolbar) => on_toolbar_message(self, toolbar),
     }
   }
 

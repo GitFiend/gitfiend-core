@@ -1,11 +1,38 @@
 use crate::ui::window::{App, Message};
-use iced::widget::{Button, Space, Svg, Text, button, column, row, svg};
-use iced::{Alignment, Element, Length};
+use iced::widget::button::text;
+use iced::widget::{Space, Svg, Text, button, column, row, svg};
+use iced::{Alignment, Element, Length, Task};
 use std::path::Path;
 
 const CHANGES_SVG: &[u8] = include_bytes!("../../resources/changes-view.svg");
 const COMMITS_SVG: &[u8] = include_bytes!("../../resources/commits-view.svg");
 const SEARCH_SVG: &[u8] = include_bytes!("../../resources/search.svg");
+const PULL_SVG: &[u8] = include_bytes!("../../resources/pull.svg");
+const PUSH_SVG: &[u8] = include_bytes!("../../resources/push.svg");
+const FETCH_SVG: &[u8] = include_bytes!("../../resources/fetch.svg");
+
+#[derive(Debug, Clone, Copy)]
+pub enum ToolbarMsg {
+  Changes,
+  Commits,
+  Search,
+  Pull,
+  Push,
+  Fetch,
+}
+
+#[derive(Default)]
+pub enum CurrentView {
+  Changes,
+  #[default]
+  Commits,
+  Branches,
+}
+
+pub fn on_toolbar_message(app: &mut App, msg: ToolbarMsg) -> Task<Message> {
+  println!("Toolbar message: {:?}", msg);
+  Task::none()
+}
 
 pub fn toolbar(app: &App) -> Element<Message> {
   let side_width = (app.window_size.width - 180.0) / 2.0;
@@ -19,16 +46,24 @@ pub fn toolbar(app: &App) -> Element<Message> {
     ]
     .width(side_width),
     row![
-      nav_button(CHANGES_SVG, "Changes"),
-      nav_button(COMMITS_SVG, "Commits"),
-      nav_button(SEARCH_SVG, "Search"),
+      nav_button(
+        CHANGES_SVG,
+        "Changes",
+        Message::Toolbar(ToolbarMsg::Changes)
+      ),
+      nav_button(
+        COMMITS_SVG,
+        "Commits",
+        Message::Toolbar(ToolbarMsg::Commits)
+      ),
+      nav_button(SEARCH_SVG, "Search", Message::Toolbar(ToolbarMsg::Search)),
     ]
     .width(180),
     row![
       Space::with_width(Length::Fill),
-      button("Pull"),
-      button("Push"),
-      button("Fetch"),
+      icon_button(PULL_SVG, "Pull", Message::Toolbar(ToolbarMsg::Pull)),
+      icon_button(PUSH_SVG, "Push", Message::Toolbar(ToolbarMsg::Push)),
+      icon_button(FETCH_SVG, "Fetch", Message::Toolbar(ToolbarMsg::Fetch)),
       Space::with_width(Length::Fill),
     ]
     .width(side_width),
@@ -55,12 +90,39 @@ fn repo_button(app: &App) -> Element<Message> {
   button("Recent...").into()
 }
 
-fn nav_button<'a>(icon: &'static [u8], text: &'a str) -> Element<'a, Message> {
+fn icon_button<'a>(
+  icon: &'static [u8],
+  label: &'a str,
+  msg: Message,
+) -> Element<'a, Message> {
   let icon: Svg = svg(svg::Handle::from_memory(icon)).width(21).height(19);
 
   button(
     row![
-      column![icon, Space::with_height(3), Text::new(text).size(12)]
+      column![icon, Space::with_height(3), Text::new(label).size(12)]
+        .width(50)
+        .align_x(Alignment::Center),
+    ]
+    .height(48)
+    .align_y(Alignment::Center),
+  )
+  .padding(0)
+  .width(60)
+  .style(text)
+  .on_press(msg)
+  .into()
+}
+
+fn nav_button<'a>(
+  icon: &'static [u8],
+  label: &'a str,
+  msg: Message,
+) -> Element<'a, Message> {
+  let icon: Svg = svg(svg::Handle::from_memory(icon)).width(21).height(19);
+
+  button(
+    row![
+      column![icon, Space::with_height(3), Text::new(label).size(12)]
         .width(60)
         .align_x(Alignment::Center),
     ]
@@ -69,5 +131,7 @@ fn nav_button<'a>(icon: &'static [u8], text: &'a str) -> Element<'a, Message> {
   )
   .padding(0)
   .width(60)
+  .style(text)
+  .on_press(msg)
   .into()
 }

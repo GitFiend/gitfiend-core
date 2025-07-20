@@ -15,7 +15,9 @@ use crate::git::queries::commits::{
   commit_ids_between_commits, commit_is_ancestor, commit_is_on_branch,
   get_all_commits_on_current_branch, load_commits_and_refs,
 };
+#[cfg(feature = "syntect")]
 use crate::git::queries::hunks::html_code::get_patch_as_html;
+
 use crate::git::queries::hunks::images::load_commit_image;
 use crate::git::queries::hunks::load_hunks::{load_hunks, load_hunks_split};
 use crate::git::queries::patches::patches_for_commit::load_patches_for_commit;
@@ -90,7 +92,8 @@ pub fn start_async_server() {
           load_wip_hunk_lines,
           load_wip_hunks_split,
           load_conflicted_file,
-          get_patch_as_html,
+
+          // get_patch_as_html,
 
           load_wip_patches,
           load_patches_for_commit,

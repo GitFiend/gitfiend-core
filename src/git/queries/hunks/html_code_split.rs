@@ -1,5 +1,6 @@
 use crate::f;
 use crate::git::git_types::{Hunk, HunkLine, HunkLineStatus};
+
 use crate::git::queries::hunks::html_code::{
   add_line, div, get_margin_width, make_spaces, pad_left, s,
 };

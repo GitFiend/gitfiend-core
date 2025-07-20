@@ -1,15 +1,17 @@
+mod repo_selector;
+
 use crate::ui::window::{App, Message};
 use iced::widget::button::text;
-use iced::widget::{Space, Svg, Text, button, column, row, svg};
+use iced::widget::{Space, Svg, Text, button, column, pick_list, row, svg};
 use iced::{Alignment, Element, Length, Task};
 use std::path::Path;
 
-const CHANGES_SVG: &[u8] = include_bytes!("../../resources/changes-view.svg");
-const COMMITS_SVG: &[u8] = include_bytes!("../../resources/commits-view.svg");
-const SEARCH_SVG: &[u8] = include_bytes!("../../resources/search.svg");
-const PULL_SVG: &[u8] = include_bytes!("../../resources/pull.svg");
-const PUSH_SVG: &[u8] = include_bytes!("../../resources/push.svg");
-const FETCH_SVG: &[u8] = include_bytes!("../../resources/fetch.svg");
+const CHANGES_SVG: &[u8] = include_bytes!("../../../resources/changes-view.svg");
+const COMMITS_SVG: &[u8] = include_bytes!("../../../resources/commits-view.svg");
+const SEARCH_SVG: &[u8] = include_bytes!("../../../resources/search.svg");
+const PULL_SVG: &[u8] = include_bytes!("../../../resources/pull.svg");
+const PUSH_SVG: &[u8] = include_bytes!("../../../resources/push.svg");
+const FETCH_SVG: &[u8] = include_bytes!("../../../resources/fetch.svg");
 
 #[derive(Debug, Clone, Copy)]
 pub enum ToolbarMsg {

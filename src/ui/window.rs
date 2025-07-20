@@ -88,7 +88,7 @@ impl App {
 
 pub fn make_application_window() -> Result {
   application("GitFiend", App::update, App::view)
-    .theme(|_| Theme::Dark)
+    .theme(|_| Theme::Light)
     .subscription(App::subscription)
     .run_with(|| (App::new(), Task::none()))
 }
